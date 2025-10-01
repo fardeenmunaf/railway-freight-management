@@ -1,0 +1,22 @@
+name: "Bug Report"
+description: "Report a problem"
+title: "[BUG] - "
+labels: ["BUG"]
+body:
+  - type: textarea
+    id: how-to-reproduce
+    attributes:
+      label: "How to Reproduce"
+      description: "List the steps to reproduce the issue"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "Define what conditions must be met for this bug to be considered fixed"
+  - type: textarea
+    id: test-cases
+    attributes:
+      label: "Test Cases"
+      description: "Add test cases that validate the fix"
