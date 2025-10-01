@@ -1,0 +1,20 @@
+name: "Task"
+description: "General development or project task"
+title: "[TASK] - "
+labels: ["Task"]
+body:
+  - type: textarea
+    id: user-story
+    attributes:
+      label: "User Story"
+      description: "As a [user], I want [task] so that [benefit]"
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "List the conditions of satisfaction"
+  - type: textarea
+    id: test-cases
+    attributes:
+      label: "Test Cases"
+      description: "Describe test cases to validate this task"
