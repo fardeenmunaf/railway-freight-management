@@ -1,0 +1,27 @@
+name: "Scrum Daily Meeting"
+description: "Template for Scrum daily meeting notes"
+title: "[SCRUM] Daily Meeting"
+labels: ["SCRUM"]
+body:
+  - type: textarea
+    id: attendees
+    attributes:
+      label: "Attendees"
+      description: "List who attended the meeting"
+    validations:
+      required: true
+  - type: textarea
+    id: discussion-points
+    attributes:
+      label: "Discussion Points"
+      description: "Record the main discussion topics from the meeting"
+  - type: textarea
+    id: blockers
+    attributes:
+      label: "Blockers"
+      description: "List any blockers or impediments raised"
+  - type: textarea
+    id: action-items
+    attributes:
+      label: "Action Items"
+      description: "Add any follow-up actions or decisions"
