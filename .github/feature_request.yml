@@ -1,0 +1,22 @@
+name: "Feature"
+description: "Request or describe a new feature"
+title: "[FEAT] - "
+labels: ["Feature"]
+body:
+  - type: textarea
+    id: user-story
+    attributes:
+      label: "User Story"
+      description: "As a [user], I want [feature] so that [benefit]"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "List the conditions of satisfaction"
+  - type: textarea
+    id: test-cases
+    attributes:
+      label: "Test Cases"
+      description: "Describe test cases to validate this feature"
