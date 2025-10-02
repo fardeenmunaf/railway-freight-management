@@ -1,6 +1,6 @@
 name: "User Story"
 description: "Request or describe a new task to do"
-title: "[US] - "
+title: ""
 labels: ["User Story"]
 body:
   - type: textarea
