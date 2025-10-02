@@ -12,7 +12,14 @@ body:
     id: acceptance-criteria
     attributes:
       label: "Acceptance Criteria"
-      description: "List the conditions of satisfaction"
+      description: "List the conditions of satisfaction, As [user], i want [x] and it makes [y]"
+  - type: textarea
+    id: done-concept
+    attributes:
+      label: "Done Concept"
+      description: "Describe concept of done to everyone know when this task is completed"
+    validations:
+      required: true
   - type: textarea
     id: test-cases
     attributes:
