@@ -1,7 +1,7 @@
 name: "User Story"
 description: "Request or describe a new feature"
 title: "[FEAT] - "
-labels: ["Feature"]
+labels: ["User Story"]
 body:
   - type: textarea
     id: user-story
