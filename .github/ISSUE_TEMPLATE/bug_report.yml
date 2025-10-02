@@ -14,7 +14,14 @@ body:
     id: acceptance-criteria
     attributes:
       label: "Acceptance Criteria"
+      description: "List the conditions of satisfaction, As [user], i want [x] and it makes [y]"
+  - type: textarea
+    id: done-concept
+    attributes:
+      label: "Done Concept"
       description: "Define what conditions must be met for this bug to be considered fixed"
+    validations:
+      required: true
   - type: textarea
     id: test-cases
     attributes:
