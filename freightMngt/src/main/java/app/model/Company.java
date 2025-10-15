@@ -1,25 +1,25 @@
 package app.model;
 
 public class Company {
-    private Integer company_id;
+    private Integer companyId;
     private String name;
 
     public Company() {
-        company_id = null;
+        companyId = null;
         name = null;
     }
 
-    public Company(Integer company_id, String name) {
-        this.company_id = company_id;
+    public Company(Integer companyId, String name) {
+        this.companyId = companyId;
         this.name = name;
     }
 
-    public Integer getCompany_id() {
-        return company_id;
+    public Integer getCompanyId() {
+        return companyId;
     }
 
-    public void setCompany_id(Integer company_id) {
-        this.company_id = company_id;
+    public void setCompanyId(Integer companyId) {
+        this.companyId = companyId;
     }
 
     public String getName() {
@@ -33,7 +33,7 @@ public class Company {
     @Override
     public String toString() {
         return "Company{" +
-                "company_id=" + company_id +
+                "companyId=" + companyId +
                 ", name='" + name + '\'' +
                 '}';
     }
