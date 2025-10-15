@@ -1,0 +1,302 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+hide circle
+hide methods
+
+title "Logistics On Rails - Domain Model"
+
+' === RAILWAY INFRASTRUCTURE ===
+class Line {
+    id
+    name
+    owner
+}
+
+class LineSegment {
+    id
+    gauge
+    maxWeight
+    speedLimit
+    isElectrified
+    trackType
+    length
+}
+
+class Station {
+    id
+    name
+    coordinates
+}
+
+class Terminal {
+    id
+    name
+    type
+}
+
+class FreightYard {
+    id
+    name
+    capacity
+}
+
+class Siding {
+    id
+    name
+    length
+}
+
+' === ROLLING STOCK ===
+class Operator {
+    id
+    name
+    license
+}
+
+class Locomotive {
+    id
+    registrationNumber
+    operatorId
+}
+
+class LocomotiveModel {
+    make
+    model
+    entryYear
+    type
+    power
+    acceleration
+    dimensions
+    maxWeight
+    fuelCapacity
+    gauge
+}
+
+class Wagon {
+    id
+    registrationNumber
+    operatorId
+}
+
+class WagonModel {
+    type
+    payload
+    tare
+    volumeCapacity
+    dimensions
+    gauge
+}
+
+class Train {
+    id
+    serviceNumber
+}
+
+' === OPERATIONS ===
+class Freight {
+    id
+    weight
+    volume
+}
+
+class Route {
+    id
+    name
+    type
+}
+
+class Path {
+    id
+    distance
+    travelTime
+}
+
+class Journey {
+    id
+    departureTime
+    arrivalTime
+    status
+}
+
+' === WAREHOUSE MANAGEMENT ===
+class Warehouse {
+    id
+    name
+    totalCapacity
+}
+
+class Aisle {
+    id
+    number
+    width
+}
+
+class Bay {
+    id
+    number
+    capacityBoxes
+    currentOccupancy
+}
+
+class UnloadingDock {
+    id
+    number
+    maxCapacity
+}
+
+class Box {
+    id
+    sku
+    qty
+    expiryDate
+    receivedAt
+    weight
+}
+
+class Product {
+    sku
+    name
+    category
+    unit
+    volume
+    unitWeight
+    description
+}
+
+class Order {
+    id
+    customerId
+    dueDate
+    priority
+    status
+}
+
+class OrderLine {
+    lineNo
+    qty
+    unitPrice
+}
+
+class Return {
+    id
+    qty
+    reason
+    timestamp
+    expiryDate
+    condition
+}
+
+' === USERS ===
+class User {
+    id
+    name
+    email
+    role
+    permissions
+}
+
+class TrainDriver {
+    licenseNumber
+    licenseExpiry
+    certifications
+}
+
+class StationMaster {
+    stationId
+    authorityLevel
+}
+
+class StorageManager {
+    warehouseId
+    specializations
+}
+
+class FreightManager {
+    terminalId
+    experience
+}
+
+class Planner {
+    planningScope
+    expertise
+}
+
+class Customer {
+    companyName
+    contactInfo
+    creditRating
+}
+
+' === RELATIONSHIPS ===
+
+' Infrastructure relationships
+Line "1" -- "*" LineSegment : composed of >
+LineSegment "*" -- "2" Station : connects >
+Station "1" -- "*" Terminal : has >
+Station "1" -- "*" FreightYard : has >
+Station "1" -- "*" Siding : has >
+
+' Rolling stock relationships
+Operator "1" -- "*" Locomotive : owns >
+Operator "1" -- "*" Wagon : owns >
+Locomotive "1" -- "1" LocomotiveModel : is described by >
+Wagon "1" -- "1" WagonModel : is described by >
+Train "1" -- "1..*" Locomotive : uses >
+Train "1" -- "*" Wagon : composed of >
+
+' Operations relationships
+Journey "1" -- "1" Train : assigns >
+Journey "1" -- "1" Route : follows >
+Route "1" -- "*" Path : contains >
+Path "*" -- "2..*" Station : passes through >
+Freight "1" -- "*" Wagon : transported by >
+Freight "*" -- "1" Station : origin >
+Freight "*" -- "1" Station : destination >
+
+' Warehouse relationships
+Terminal "1" -- "*" Warehouse : contains >
+Warehouse "1" -- "*" Aisle : organized in >
+Aisle "1" -- "*" Bay : contains >
+Warehouse "1" -- "*" UnloadingDock : has >
+Bay "1" -- "*" Box : stores >
+Box "*" -- "1" Product : contains >
+Wagon "*" -- "*" Box : transports >
+
+' Order management
+Customer "1" -- "*" Order : places >
+Order "1" -- "*" OrderLine : composed of >
+OrderLine "*" -- "1" Product : requests >
+Order "*" -- "*" Freight : generates >
+
+' Returns management
+Return "*" -- "1" Product : returned item >
+Return "*" -- "1" Customer : returned by >
+
+' User relationships
+User <|-- TrainDriver
+User <|-- StationMaster
+User <|-- StorageManager
+User <|-- FreightManager
+User <|-- Planner
+User <|-- Customer
+
+' User associations
+StationMaster "1" -- "1" Station : manages >
+StorageManager "1" -- "1..*" Warehouse : manages >
+FreightManager "1" -- "1" Terminal : manages freight >
+TrainDriver "*" -- "*" Train : operates >
+Planner "1" -- "*" Route : plans >
+
+note bottom of Terminal
+    Terminal is a specialized type of Station that handles freight operations.
+    It contains warehouses and provides cargo handling facilities.
+end note
+
+note bottom of Freight
+    Freight represents cargo being transported from origin to destination.
+    It can be split across multiple wagons and follow different paths.
+end note
+
+@enduml
