@@ -1,23 +1,5 @@
 @startuml
-
-skinparam monochrome true
-skinparam packageStyle rectangle
-skinparam shadowing false
-hide circle
-
-!theme plain
-skinparam backgroundColor white
-skinparam class {
-    BackgroundColor white
-    BorderColor black
-    ArrowColor black
-}
-skinparam package {
-    BackgroundColor lightgray
-    BorderColor black
-}
-
-title Logistics On Rails - Class Diagram
+skinparam classAttributeIconSize 0
 
 ' --- User and Company Management ---
 class Company {
@@ -70,6 +52,10 @@ class UserRole {
     +getRoleId()
     +setRoleId()
 }
+
+Company -- User
+User -- UserRole
+Role -- UserRole
 
 ' --- Railway Infrastructure ---
 class Gauge {
@@ -221,6 +207,19 @@ class LineSegmentFacility {
     +getFacilityId()
     +setFacilityId()
 }
+
+Company -- Line
+Line *-- LineSegment
+Line -- ParkingTrack
+LineSegment -- TrackType
+LineSegment ..> ElectrificationType
+LineSegment -- Gauge
+LineSegment *-- LineSegmentFacility
+LineSegmentFacility -- Facility
+Facility -- FacilityType
+Facility -- FacilityFeature
+FacilityFeature -- FacilityFeatureType
+Facility -- ParkingTrack
 
 ' --- Rolling Stock ---
 class Locomotive {
@@ -385,6 +384,18 @@ class ParkingQueue {
     +setStatus()
 }
 
+User -- Locomotive
+User -- Wagon
+Locomotive -- LocomotiveType
+Locomotive ..> LocomotiveDiesel
+Locomotive -- LocomotiveGauge
+Wagon -- WagonType
+Wagon -- WagonGauge
+Gauge -- LocomotiveGauge
+Gauge -- WagonGauge
+ParkingTrack *-- ParkingQueue
+ParkingQueue ..> Wagon
+
 ' --- Train Operations ---
 class Train {
     -train_id
@@ -488,6 +499,16 @@ class TrainStop {
     +setActStopTime()
 }
 
+Train ..> User
+Train *-- TrainService
+TrainService *-- ServiceLocomotive
+TrainService *-- TrainStop
+ServiceLocomotive ..> Locomotive
+ServiceLocomotive *-- TrainServiceComposition
+TrainServiceComposition ..> Wagon
+TrainStop ..> Facility
+TrainStop ..> ParkingTrack
+
 ' --- Items and Inventory ---
 class Item {
     -item_id
@@ -579,6 +600,11 @@ class InventoryMove {
     +setCreatedAt()
 }
 
+Item -- ItemCategory
+Item *-- InventoryLot
+InventoryLot *-- InventoryBalance
+InventoryLot *-- InventoryMove
+
 ' --- Warehouse ---
 class Warehouse {
     -warehouse_id
@@ -621,6 +647,11 @@ class WarehouseBay {
     +getCapacityBox()
     +setCapacityBox()
 }
+
+Facility *-- Warehouse
+Warehouse *-- WarehouseAisle
+WarehouseAisle *-- WarehouseBay
+InventoryBalance ..> WarehouseBay
 
 ' --- Orders ---
 class Order {
@@ -725,6 +756,13 @@ class QaInspection {
     +setInspectedAt()
 }
 
+Order *-- OrderLine
+OrderLine ..> Item
+ReturnOrder *-- ReturnLine
+ReturnLine ..> Item
+ReturnOrder ..> QuarantineHold
+ReturnLine ..> QaInspection
+
 ' --- Picking Operations ---
 class Cart {
     -cart_id
@@ -777,70 +815,9 @@ class PickTask {
     +setPosSeq()
 }
 
-' --- Relationships ---
-Company ||--o{ User : employs
-User ||--o{ UserRole : has
-Role ||--o{ UserRole : assigned_to
-
-Company ||--o{ Line : owns
-Line ||--o{ LineSegment : composed_of
-Line ||--o{ ParkingTrack : has
-
-LineSegment }o--|| TrackType : has
-LineSegment }o--|| ElectrificationType : uses
-LineSegment }o--|| Gauge : has
-LineSegment ||--o{ LineSegmentFacility : connects_to
-LineSegmentFacility }o--|| Facility : at
-
-Facility }o--|| FacilityType : is_type
-Facility ||--o{ FacilityFeature : has
-FacilityFeature }o--|| FacilityFeatureType : of_type
-Facility ||--o{ ParkingTrack : contains
-Facility ||--o{ Warehouse : contains
-
-User ||--o{ Locomotive : operates
-User ||--o{ Wagon : operates
-Locomotive }o--|| LocomotiveType : is_type
-Locomotive ||--o{ LocomotiveDiesel : specializes
-Locomotive ||--o{ LocomotiveGauge : supports
-Wagon }o--|| WagonType : is_type
-Wagon ||--o{ WagonGauge : supports
-
-Gauge ||--o{ LocomotiveGauge : compatible
-Gauge ||--o{ WagonGauge : compatible
-
-ParkingTrack ||--o{ ParkingQueue : queues
-ParkingQueue }o--|| Wagon : contains
-
-Train }o--|| User : operated_by
-Train ||--o{ TrainService : scheduled
-TrainService ||--o{ ServiceLocomotive : uses
-TrainService ||--o{ TrainStop : stops_at
-ServiceLocomotive }o--|| Locomotive : uses
-ServiceLocomotive ||--o{ TrainServiceComposition : pulls
-TrainServiceComposition }o--|| Wagon : includes
-TrainStop }o--|| Facility : at
-TrainStop }o--|| ParkingTrack : uses
-
-Item }o--|| ItemCategory : belongs_to
-Item ||--o{ InventoryLot : tracked_in
-InventoryLot ||--o{ InventoryBalance : stored_in
-InventoryBalance }o--|| WarehouseBay : located_at
-InventoryLot ||--o{ InventoryMove : moved
-
-Warehouse ||--o{ WarehouseAisle : organized_in
-WarehouseAisle ||--o{ WarehouseBay : contains
-
-Order ||--o{ OrderLine : contains
-OrderLine }o--|| Item : requests
-ReturnOrder ||--o{ ReturnLine : contains
-ReturnLine }o--|| Item : returns
-ReturnOrder ||--o{ QuarantineHold : may_hold
-ReturnLine ||--o{ QaInspection : inspected
-
-Cart ||--o{ PickWave : uses
-PickWave ||--o{ PickTask : contains
-PickTask }o--|| OrderLine : picks_for
-PickTask }o--|| InventoryBalance : from
+Cart *-- PickWave
+PickWave *-- PickTask
+PickTask ..> OrderLine
+PickTask ..> InventoryBalance
 
 @enduml
