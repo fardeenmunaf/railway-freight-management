@@ -1,5 +1,11 @@
 package app.model;
 
+/**
+ * Represents the relationship between a user and their role.
+ * <p>
+ * Associates a user with a specific role in the system.
+ * </p>
+ */
 public class UserRole {
     private User user;
     private Role userRole;

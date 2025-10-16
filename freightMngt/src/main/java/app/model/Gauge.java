@@ -1,5 +1,12 @@
 package app.model;
 
+/**
+ * Represents the gauge used by rolling stock.
+ * <p>
+ * Contains an identifier, a descriptive name and the gauge size in
+ * millimeters.
+ * </p>
+ */
 public class Gauge {
     private Integer gaugeId;
     private String gaugeName;

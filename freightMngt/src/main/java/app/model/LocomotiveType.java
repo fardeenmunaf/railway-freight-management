@@ -1,5 +1,11 @@
 package app.model;
 
+/**
+ * Represents a locomotive type (e.g., diesel, electric, steam).
+ * <p>
+ * Contains the type identifier and descriptive name.
+ * </p>
+ */
 public class LocomotiveType {
     private Integer locomotiveTypeId;
     private String name;

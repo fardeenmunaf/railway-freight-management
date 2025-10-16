@@ -1,5 +1,12 @@
 package app.model;
 
+/**
+ * Represents the dimensions of an object in meters.
+ * <p>
+ * Contains width, length and height in meters and
+ * utility methods for calculating volume, area and perimeter.
+ * </p>
+ */
 public class Dimensions {
     private Double width;   // largura em metros
     private Double length;  // comprimento em metros
@@ -41,7 +48,12 @@ public class Dimensions {
         this.height = height;
     }
 
-    // Métodos úteis para cálculos
+    /**
+     * Returns the volume (width * length * height) in cubic meters, or
+     * {@code null} if any dimension is unknown.
+     *
+     * @return volume in m³ or {@code null}
+     */
     public Double getVolume() {
         if (width != null && length != null && height != null) {
             return width * length * height;
@@ -49,6 +61,12 @@ public class Dimensions {
         return null;
     }
 
+    /**
+     * Returns the base area (width * length) in square meters, or
+     * {@code null} if width or length are unknown.
+     *
+     * @return area in m² or {@code null}
+     */
     public Double getArea() {
         if (width != null && length != null) {
             return width * length;
@@ -56,6 +74,12 @@ public class Dimensions {
         return null;
     }
 
+    /**
+     * Returns the base perimeter (2 * (width + length)) in meters, or
+     * {@code null} if width or length are unknown.
+     *
+     * @return perimeter in m or {@code null}
+     */
     public Double getPerimeter() {
         if (width != null && length != null) {
             return 2 * (width + length);

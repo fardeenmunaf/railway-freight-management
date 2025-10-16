@@ -2,6 +2,13 @@ package app.model;
 
 import java.awt.*;
 
+/**
+ * Represents a locomotive with its main attributes.
+ * <p>
+ * Includes references to the operator, locomotive type, physical
+ * characteristics and performance metrics (power, speed, weights, etc.).
+ * </p>
+ */
 public class Locomotive {
     private Integer locomotiveId;
     private User operator; //operator equals company
@@ -172,4 +179,3 @@ public class Locomotive {
                 '}';
     }
 }
-

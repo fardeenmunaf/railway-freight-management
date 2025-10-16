@@ -1,5 +1,11 @@
 package app.model;
 
+/**
+ * Represents a user in the system.
+ * <p>
+ * Contains user credentials, associated company and active status.
+ * </p>
+ */
 public class User {
     private Integer userId;
     private String username;

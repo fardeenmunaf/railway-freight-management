@@ -1,5 +1,11 @@
 package app.model;
 
+/**
+ * Represents a user role in the system.
+ * <p>
+ * Contains the role identifier and name (e.g., admin, operator, viewer).
+ * </p>
+ */
 public class Role {
     private Integer roleId;
     private String name;

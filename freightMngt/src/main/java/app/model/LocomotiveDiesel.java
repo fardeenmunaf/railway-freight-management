@@ -2,6 +2,13 @@ package app.model;
 
 import java.awt.*;
 
+/**
+ * Extension of locomotive specific for diesel locomotives.
+ * <p>
+ * Contains the base locomotive reference and additional information such as
+ * fuel capacity in liters.
+ * </p>
+ */
 public class LocomotiveDiesel extends Locomotive{
     private Locomotive locomotive;
     private Double fuelCapacity; //in liters

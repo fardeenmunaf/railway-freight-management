@@ -1,5 +1,11 @@
 package app.model;
 
+/**
+ * Represents a company (operator) in the system.
+ * <p>
+ * Stores the company identifier and name.
+ * </p>
+ */
 public class Company {
     private Integer companyId;
     private String name;

@@ -1,5 +1,11 @@
 package app.model;
 
+/**
+ * Represents the relationship between a locomotive and its gauge.
+ * <p>
+ * Associates a locomotive with the track gauge it uses.
+ * </p>
+ */
 public class LocomotiveGauge {
     private Locomotive locomotive;
     private Gauge gauge;
