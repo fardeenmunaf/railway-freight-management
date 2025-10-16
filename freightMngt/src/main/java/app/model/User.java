@@ -1,37 +1,43 @@
 package app.model;
 
+/**
+ * Represents a user in the system.
+ * <p>
+ * Contains user credentials, associated company and active status.
+ * </p>
+ */
 public class User {
-    private Integer user_id;
+    private Integer userId;
     private String username;
     private String email;
     private String password;
-    private Company company_id;
-    private Boolean is_active;
+    private Company companyId;
+    private Boolean isActive;
 
     public User() {
-        user_id = null;
+        userId = null;
         username = null;
         email = null;
         password = null;
-        company_id = null;
-        is_active = null;
+        companyId = null;
+        isActive = null;
     }
 
-    public User(Integer user_id, String username, String email, String password, Company company_id, Boolean is_active) {
-        this.user_id = user_id;
+    public User(Integer userId, String username, String email, String password, Company companyId, Boolean isActive) {
+        this.userId = userId;
         this.username = username;
         this.email = email;
         this.password = password;
-        this.company_id = company_id;
-        this.is_active = is_active;
+        this.companyId = companyId;
+        this.isActive = isActive;
     }
 
-    public Integer getUser_id() {
-        return user_id;
+    public Integer getUserId() {
+        return userId;
     }
 
-    public void setUser_id(Integer user_id) {
-        this.user_id = user_id;
+    public void setUserId(Integer userId) {
+        this.userId = userId;
     }
 
     public String getUsername() {
@@ -58,32 +64,31 @@ public class User {
         this.password = password;
     }
 
-    public Company getCompany_id() {
-        return company_id;
+    public Company getCompanyId() {
+        return companyId;
     }
 
-    public void setCompany_id(Company company_id) {
-        this.company_id = company_id;
+    public void setCompanyId(Company companyId) {
+        this.companyId = companyId;
     }
 
-    public Boolean getIs_active() {
-        return is_active;
+    public Boolean getIsActive() {
+        return isActive;
     }
 
-    public void setIs_active(Boolean is_active) {
-        this.is_active = is_active;
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
-
 
     @Override
     public String toString() {
         return "User{" +
-                "user_id=" + user_id +
+                "userId=" + userId +
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
-                ", company_id=" + company_id +
-                ", is_active=" + is_active +
+                ", companyId=" + companyId +
+                ", isActive=" + isActive +
                 '}';
     }
 }
