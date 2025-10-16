@@ -78,6 +78,9 @@ SELECT name, pdb, network_name FROM cdb_services ORDER BY 1; -- esperado ser XEP
 
 ## 👤 4. Criar o usuário da aplicação (`APPUSER`)
 
+> [!important]
+> Tem de ser feito no `jdbc:oracle:thin:@//localhost:1521/XEPDB1` com `SYSTEM`
+
 Conecte-se como `SYSTEM` (ou `SYS AS SYSDBA`) na PDB **XEPDB1**
 e execute o script:
 
