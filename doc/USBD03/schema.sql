@@ -1,3 +1,6 @@
+alter session set current_schema = APPUSER;
+
+
 -- Drop tables if they exist (in reverse order due to foreign keys)
 DECLARE
     PROCEDURE drop_if_exists(p_table IN VARCHAR2) IS
