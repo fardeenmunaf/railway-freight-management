@@ -296,12 +296,34 @@ COMMIT;
 -- NÍVEL 3: Tabelas que dependem do NÍVEL 2
 -- ============================================================
 
--- LINE_SEGMENT_FACILITY depende de LINE_SEGMENT e FACILITY
-INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (1, 5);
+-- Ramal 1: São Bento - Campanhã
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (1, 7);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (1, 5);
+
+-- Ramal 2: Campanhã - Nine
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (10, 5);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (11, 20);
+
+-- Ramal 3: Nine - Barcelos
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (15, 20);
-INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (16, 20);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (16, 8);
+
+-- Ramal 4: Barcelos - Viana
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (14, 8);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (13, 17);
+
+-- Ramal 5: Viana - Caminha
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (20, 17);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (22, 21);
+
+-- Ramal 6: Caminha - Torre
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (25, 21);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (25, 16);
+
+-- Ramal 7: Torre - Valença
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (26, 16);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (26, 11);
+
 COMMIT;
 -- WAREHOUSE_BAY depende de WAREHOUSE_AISLE
 INSERT INTO WAREHOUSE_BAY (bay_id, aisle_id, bay_no, capacity_box) VALUES (1, 1, 1, 500);
