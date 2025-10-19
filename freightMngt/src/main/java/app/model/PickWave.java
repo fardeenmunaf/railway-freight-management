@@ -2,12 +2,14 @@ package app.model;
 
 /**
  * Represents a pick wave in the freight management system.
- * <p>
- * Contains information about picking operations including the assigned cart,
- * picking strategy, and current status. Used to organize and optimize
+ * Each pick wave contains information about picking operations including the assigned cart,
+ * picking strategy, and current status. This class is used to organize and optimize
  * warehouse picking activities by grouping related pick tasks.
- * </p>
+ *
+ * @author G113 2DK
+ * @version 1.0
  */
+
 public class PickWave {
     private Integer pickWaveId;
     private Cart cart;
@@ -15,9 +17,10 @@ public class PickWave {
     private String status;
 
     /**
-     * Default constructor for PickWave.
+     * Default constructor that creates a PickWave with null values.
      * Initializes all fields to null.
      */
+
     public PickWave() {
         this.pickWaveId = null;
         this.cart = null;
@@ -26,13 +29,14 @@ public class PickWave {
     }
 
     /**
-     * Parameterized constructor for PickWave.
+     * Parameterized constructor that creates a PickWave with specified values.
      *
-     * @param pickWaveId the unique identifier for the pick wave
-     * @param cart       the cart assigned to this pick wave
-     * @param strategy   the picking strategy to be used
-     * @param status     the current status of the pick wave
+     * @param pickWaveId the unique identifier for this pick wave
+     * @param cart the cart assigned to this pick wave
+     * @param strategy the picking strategy to be used
+     * @param status the current status of the pick wave
      */
+
     public PickWave(Integer pickWaveId, Cart cart, String strategy, String status) {
         this.pickWaveId = pickWaveId;
         this.cart = cart;
@@ -41,37 +45,41 @@ public class PickWave {
     }
 
     /**
-     * Gets the pick wave identifier.
+     * Gets the unique identifier of this pick wave.
      *
-     * @return the pick wave ID
+     * @return the pick wave identifier as an Integer
      */
+
     public Integer getPickWaveId() {
         return pickWaveId;
     }
 
     /**
-     * Sets the pick wave identifier.
+     * Sets the unique identifier of this pick wave.
      *
-     * @param pickWaveId the pick wave ID to set
+     * @param pickWaveId the pick wave identifier to set
      */
+
     public void setPickWaveId(Integer pickWaveId) {
         this.pickWaveId = pickWaveId;
     }
 
     /**
-     * Gets the assigned cart.
+     * Gets the cart assigned to this pick wave.
      *
-     * @return the cart assigned to this pick wave
+     * @return the cart as a Cart object
      */
+
     public Cart getCart() {
         return cart;
     }
 
     /**
-     * Sets the assigned cart.
+     * Sets the cart assigned to this pick wave.
      *
-     * @param cart the cart to assign to this pick wave
+     * @param cart the cart to set
      */
+
     public void setCart(Cart cart) {
         this.cart = cart;
     }
@@ -79,8 +87,9 @@ public class PickWave {
     /**
      * Gets the picking strategy.
      *
-     * @return the picking strategy
+     * @return the picking strategy as a String
      */
+
     public String getStrategy() {
         return strategy;
     }
@@ -90,24 +99,27 @@ public class PickWave {
      *
      * @param strategy the picking strategy to set
      */
+
     public void setStrategy(String strategy) {
         this.strategy = strategy;
     }
 
     /**
-     * Gets the pick wave status.
+     * Gets the current status of this pick wave.
      *
-     * @return the current status
+     * @return the status as a String
      */
+
     public String getStatus() {
         return status;
     }
 
     /**
-     * Sets the pick wave status.
+     * Sets the current status of this pick wave.
      *
      * @param status the status to set
      */
+
     public void setStatus(String status) {
         this.status = status;
     }

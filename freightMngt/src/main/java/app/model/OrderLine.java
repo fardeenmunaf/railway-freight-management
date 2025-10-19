@@ -2,12 +2,14 @@ package app.model;
 
 /**
  * Represents an order line item in the freight management system.
- * <p>
- * Contains information about individual line items within an order,
+ * Each order line contains information about individual line items within an order,
  * including the associated order, item details, and quantity specifications.
- * Used to break down orders into specific item requirements.
- * </p>
+ * This class is used to break down orders into specific item requirements.
+ *
+ * @author G113 2DK
+ * @version 1.0
  */
+
 public class OrderLine {
     private Integer orderLineId;
     private Order order;
@@ -15,9 +17,10 @@ public class OrderLine {
     private Double qty;
 
     /**
-     * Default constructor for OrderLine.
+     * Default constructor that creates an OrderLine with null values.
      * Initializes all fields to null.
      */
+
     public OrderLine() {
         this.orderLineId = null;
         this.order = null;
@@ -26,13 +29,14 @@ public class OrderLine {
     }
 
     /**
-     * Parameterized constructor for OrderLine.
+     * Parameterized constructor that creates an OrderLine with specified values.
      *
-     * @param orderLineId the unique identifier for the order line
-     * @param order        the parent order this line belongs to
-     * @param sku          the item (SKU) for this order line
-     * @param qty          the quantity of the item requested
+     * @param orderLineId the unique identifier for this order line
+     * @param order the parent order this line belongs to
+     * @param sku the item for this order line
+     * @param qty the quantity of the item requested
      */
+
     public OrderLine(Integer orderLineId, Order order, Item sku, Double qty) {
         this.orderLineId = orderLineId;
         this.order = order;
@@ -41,55 +45,61 @@ public class OrderLine {
     }
 
     /**
-     * Gets the order line identifier.
+     * Gets the unique identifier of this order line.
      *
-     * @return the order line ID
+     * @return the order line identifier as an Integer
      */
+
     public Integer getOrderLineId() {
         return orderLineId;
     }
 
     /**
-     * Sets the order line identifier.
+     * Sets the unique identifier of this order line.
      *
-     * @param orderLineId the order line ID to set
+     * @param orderLineId the order line identifier to set
      */
+
     public void setOrderLineId(Integer orderLineId) {
         this.orderLineId = orderLineId;
     }
 
     /**
-     * Gets the parent order.
+     * Gets the parent order this line belongs to.
      *
-     * @return the order this line belongs to
+     * @return the order as an Order object
      */
+
     public Order getOrder() {
         return order;
     }
 
     /**
-     * Sets the parent order.
+     * Sets the parent order this line belongs to.
      *
-     * @param order the order to set for this line
+     * @param order the order to set
      */
+
     public void setOrder(Order order) {
         this.order = order;
     }
 
     /**
-     * Gets the item (SKU) for this order line.
+     * Gets the item for this order line.
      *
-     * @return the item
+     * @return the item as an Item object
      */
+
     public Item getSku() {
         return sku;
     }
 
     /**
-     * Sets the item (SKU) for this order line.
+     * Sets the item for this order line.
      *
      * @param sku the item to set
      */
+
     public void setSku(Item sku) {
         this.sku = sku;
     }
@@ -97,8 +107,9 @@ public class OrderLine {
     /**
      * Gets the quantity requested.
      *
-     * @return the quantity
+     * @return the quantity as a Double
      */
+
     public Double getQty() {
         return qty;
     }
@@ -108,6 +119,7 @@ public class OrderLine {
      *
      * @param qty the quantity to set
      */
+
     public void setQty(Double qty) {
         this.qty = qty;
     }

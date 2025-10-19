@@ -118,7 +118,7 @@ public class Facility {
     /**
      * Gets the latitude coordinate of this facility.
      *
-     * @return the latitude in degrees as a double
+     * @return the latitude in degrees as a Double
      */
 
     public Double getLat() {
@@ -138,7 +138,7 @@ public class Facility {
     /**
      * Gets the longitude coordinate of this facility.
      *
-     * @return the longitude in degrees as a double
+     * @return the longitude in degrees as a Double
      */
 
     public Double getLon() {
@@ -158,7 +158,7 @@ public class Facility {
     /**
      * Gets whether this facility supports intermodal operations.
      *
-     * @return true if the facility is intermodal, false otherwise
+     * @return true if the facility is intermodal, false otherwise, as a Boolean
      */
 
     public Boolean getIsIntermodal() {

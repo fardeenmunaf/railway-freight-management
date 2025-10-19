@@ -157,7 +157,7 @@ public class TrainService {
     }
 
     /**
-     * Gets the current status of this service.
+     * Gets the current status of the service.
      *
      * @return the status as a String
      */
@@ -167,7 +167,7 @@ public class TrainService {
     }
 
     /**
-     * Sets the current status of this service.
+     * Sets the current status of the service.
      *
      * @param status the status to set
      */

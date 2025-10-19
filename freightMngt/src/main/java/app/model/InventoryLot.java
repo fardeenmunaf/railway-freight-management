@@ -102,7 +102,7 @@ public class InventoryLot {
     }
 
     /**
-     * Sets the code identifying the box type or packaging.
+     * Sets the box code identifying the box type or packaging.
      *
      * @param boxCode the box code to set
      */

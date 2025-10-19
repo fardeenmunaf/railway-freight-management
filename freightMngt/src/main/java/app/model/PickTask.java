@@ -2,13 +2,15 @@ package app.model;
 
 /**
  * Represents a pick task in the freight management system.
- * <p>
- * Contains detailed information about individual picking operations including
+ * Each pick task contains detailed information about individual picking operations including
  * the associated pick wave, order line, balance tracking, quantity specifications,
- * and position sequencing. Used to manage specific item picking activities
+ * and position sequencing. This class is used to manage specific item picking activities
  * within warehouse operations.
- * </p>
+ *
+ * @author G113 2DK
+ * @version 1.0
  */
+
 public class PickTask {
     private Integer pickTaskId;
     private PickWave pickWave;
@@ -18,9 +20,10 @@ public class PickTask {
     private Integer positionSequence;
 
     /**
-     * Default constructor for PickTask.
+     * Default constructor that creates a PickTask with null values.
      * Initializes all fields to null.
      */
+
     public PickTask() {
         this.pickTaskId = null;
         this.pickWave = null;
@@ -31,15 +34,16 @@ public class PickTask {
     }
 
     /**
-     * Parameterized constructor for PickTask.
+     * Parameterized constructor that creates a PickTask with specified values.
      *
-     * @param pickTaskId the unique identifier for the pick task
+     * @param pickTaskId the unique identifier for this pick task
      * @param pickWave the pick wave this task belongs to
      * @param orderLine the order line associated with this pick task
      * @param balance the balance or remaining quantity to be picked
      * @param qty the quantity to be picked for this task
      * @param positionSequence the sequence position for optimized picking route
      */
+
     public PickTask(Integer pickTaskId, PickWave pickWave, OrderLine orderLine, Integer balance, Double qty, Integer positionSequence) {
         this.pickTaskId = pickTaskId;
         this.pickWave = pickWave;
@@ -50,109 +54,121 @@ public class PickTask {
     }
 
     /**
-     * Gets the pick task identifier.
+     * Gets the unique identifier of this pick task.
      *
-     * @return the pick task ID
+     * @return the pick task identifier as an Integer
      */
+
     public Integer getPickTaskId() {
         return pickTaskId;
     }
 
     /**
-     * Sets the pick task identifier.
+     * Sets the unique identifier of this pick task.
      *
-     * @param pickTaskId the pick task ID to set
+     * @param pickTaskId the pick task identifier to set
      */
+
     public void setPickTaskId(Integer pickTaskId) {
         this.pickTaskId = pickTaskId;
     }
 
     /**
-     * Gets the associated pick wave.
+     * Gets the pick wave this task belongs to.
      *
-     * @return the pick wave this task belongs to
+     * @return the pick wave as a PickWave object
      */
+
     public PickWave getPickWave() {
         return pickWave;
     }
 
     /**
-     * Sets the associated pick wave.
+     * Sets the pick wave this task belongs to.
      *
-     * @param pickWave the pick wave to associate with this task
+     * @param pickWave the pick wave to set
      */
+
     public void setPickWave(PickWave pickWave) {
         this.pickWave = pickWave;
     }
 
     /**
-     * Gets the associated order line.
+     * Gets the order line associated with this pick task.
      *
-     * @return the order line for this pick task
+     * @return the order line as an OrderLine object
      */
+
     public OrderLine getOrderLine() {
         return orderLine;
     }
 
     /**
-     * Sets the associated order line.
+     * Sets the order line associated with this pick task.
      *
-     * @param orderLine the order line to associate with this task
+     * @param orderLine the order line to set
      */
+
     public void setOrderLine(OrderLine orderLine) {
         this.orderLine = orderLine;
     }
 
     /**
-     * Gets the balance or remaining quantity.
+     * Gets the balance or remaining quantity to be picked.
      *
-     * @return the balance to be picked
+     * @return the balance as an Integer
      */
+
     public Integer getBalance() {
         return balance;
     }
 
     /**
-     * Sets the balance or remaining quantity.
+     * Sets the balance or remaining quantity to be picked.
      *
      * @param balance the balance to set
      */
+
     public void setBalance(Integer balance) {
         this.balance = balance;
     }
 
     /**
-     * Gets the quantity to be picked.
+     * Gets the quantity to be picked for this task.
      *
-     * @return the quantity for this pick task
+     * @return the quantity as a Double
      */
+
     public Double getQty() {
         return qty;
     }
 
     /**
-     * Sets the quantity to be picked.
+     * Sets the quantity to be picked for this task.
      *
-     * @param qty the quantity to set for this pick task
+     * @param qty the quantity to set
      */
+
     public void setQty(Double qty) {
         this.qty = qty;
     }
 
     /**
-     * Gets the position sequence for picking optimization.
+     * Gets the sequence position for optimized picking route.
      *
-     * @return the position sequence number
+     * @return the position sequence as an Integer
      */
+
     public Integer getPositionSequence() {
         return positionSequence;
     }
 
     /**
-     * Sets the position sequence for picking optimization.
+     * Sets the sequence position for optimized picking route.
      *
      * @param positionSequence the position sequence to set
      */
+
     public void setPositionSequence(Integer positionSequence) {
         this.positionSequence = positionSequence;
     }

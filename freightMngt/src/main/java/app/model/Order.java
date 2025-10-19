@@ -4,10 +4,11 @@ import java.time.LocalDateTime;
 
 /**
  * Represents an order in the freight management system.
- * <p>
  * Contains order information including identification, status tracking,
  * priority levels, and due date management for logistics operations.
- * </p>
+ *
+ * @author G113 2DK
+ * @version 1.0
  */
 public class Order {
     private Integer orderId;
