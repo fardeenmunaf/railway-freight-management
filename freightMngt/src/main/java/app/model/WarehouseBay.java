@@ -11,10 +11,10 @@ package app.model;
  */
 public class WarehouseBay {
 
-    private Integer bay_id;
+    private Integer bayId;
     private WarehouseAisle aisle;
-    private Integer bay_no;
-    private Integer capacity_box;
+    private Integer bayNo;
+    private Integer capacityBox;
 
     /**
      * Default constructor that creates a WarehouseBay with null/default values.
@@ -22,26 +22,26 @@ public class WarehouseBay {
      */
 
     public WarehouseBay() {
-        this.bay_id = null;
+        this.bayId = null;
         this.aisle = null;
-        this.bay_no = null;
-        this.capacity_box = null;
+        this.bayNo = null;
+        this.capacityBox = null;
     }
 
     /**
      * Parameterized constructor that creates a WarehouseBay with specified values.
      *
-     * @param bay_id the unique identifier for this bay
+     * @param bayId the unique identifier for this bay
      * @param aisle the warehouse aisle this bay belongs to
-     * @param bay_no the sequential number of this bay within the aisle
-     * @param capacity_box the storage capacity of this bay measured in number of boxes
+     * @param bayNo the sequential number of this bay within the aisle
+     * @param capacityBox the storage capacity of this bay measured in number of boxes
      */
 
-    public WarehouseBay(Integer bay_id, WarehouseAisle aisle, Integer bay_no, Integer capacity_box) {
-        this.bay_id = bay_id;
+    public WarehouseBay(Integer bayId, WarehouseAisle aisle, Integer bayNo, Integer capacityBox) {
+        this.bayId = bayId;
         this.aisle = aisle;
-        this.bay_no = bay_no;
-        this.capacity_box = capacity_box;
+        this.bayNo = bayNo;
+        this.capacityBox = capacityBox;
     }
 
     /**
@@ -51,17 +51,17 @@ public class WarehouseBay {
      */
 
     public Integer getBayId() {
-        return bay_id;
+        return bayId;
     }
 
     /**
      * Sets the unique identifier of this bay.
      *
-     * @param bay_id the bay identifier to set
+     * @param bayId the bay identifier to set
      */
 
-    public void setBayId(Integer bay_id) {
-        this.bay_id = bay_id;
+    public void setBayId(Integer bayId) {
+        this.bayId = bayId;
     }
 
     /**
@@ -70,7 +70,7 @@ public class WarehouseBay {
      * @return the warehouse aisle as a WarehouseAisle object
      */
 
-    public WarehouseAisle getAisleId() {
+    public WarehouseAisle getAisle() {
         return aisle;
     }
 
@@ -80,7 +80,7 @@ public class WarehouseBay {
      * @param aisle the warehouse aisle to set
      */
 
-    public void setAisleId(WarehouseAisle aisle) {
+    public void setAisle(WarehouseAisle aisle) {
         this.aisle = aisle;
     }
 
@@ -91,17 +91,17 @@ public class WarehouseBay {
      */
 
     public Integer getBayNo() {
-        return bay_no;
+        return bayNo;
     }
 
     /**
      * Sets the sequential number of this bay within the aisle.
      *
-     * @param bay_no the bay number to set
+     * @param bayNo the bay number to set
      */
 
-    public void setBayNo(Integer bay_no) {
-        this.bay_no = bay_no;
+    public void setBayNo(Integer bayNo) {
+        this.bayNo = bayNo;
     }
 
     /**
@@ -111,16 +111,16 @@ public class WarehouseBay {
      */
 
     public Integer getCapacityBox() {
-        return capacity_box;
+        return capacityBox;
     }
 
     /**
      * Sets the storage capacity of this bay measured in number of boxes.
      *
-     * @param capacity_box the capacity in boxes to set
+     * @param capacityBox the capacity in boxes to set
      */
 
-    public void setCapacityBox(Integer capacity_box) {
-        this.capacity_box = capacity_box;
+    public void setCapacityBox(Integer capacityBox) {
+        this.capacityBox = capacityBox;
     }
 }

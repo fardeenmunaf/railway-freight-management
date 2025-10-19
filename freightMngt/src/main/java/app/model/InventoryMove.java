@@ -14,49 +14,49 @@ import java.time.LocalDateTime;
 
 public class InventoryMove {
 
-    private Integer move_id;
+    private Integer moveId;
     private InventoryLot lot;
-    private WarehouseBay from_bay;
-    private WarehouseBay to_bay;
+    private WarehouseBay fromBay;
+    private WarehouseBay toBay;
     private Integer qty;
     private String reason;
-    private LocalDateTime created_at;
+    private LocalDateTime createdAt;
 
     /**
      * Default constructor that creates an InventoryMove with null/default values.
-     * Initializes object references to null, and created_at to current timestamp.
+     * Initializes object references to null, and createdAt to current timestamp.
      */
 
     public InventoryMove() {
-        this.move_id = null;
+        this.moveId = null;
         this.lot= null;
-        this.from_bay = null;
-        this.to_bay = null;
+        this.fromBay = null;
+        this.toBay = null;
         this.qty = null;
         this.reason = null;
-        this.created_at = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
     /**
      * Parameterized constructor that creates an InventoryMove with specified values.
      *
-     * @param move_id the unique identifier for this inventory move
-     * @param lot_id the inventory lot being moved
-     * @param from_bay the source bay from which the inventory is moved
-     * @param to_bay the destination bay to which the inventory is moved
+     * @param moveId the unique identifier for this inventory move
+     * @param lotId the inventory lot being moved
+     * @param fromBay the source bay from which the inventory is moved
+     * @param toBay the destination bay to which the inventory is moved
      * @param qty the quantity of items being moved
      * @param reason the reason for this inventory movement
-     * @param created_at the timestamp when this move was created
+     * @param createdAt the timestamp when this move was created
      */
 
-    public InventoryMove(Integer move_id, InventoryLot lot_id, WarehouseBay from_bay, WarehouseBay to_bay, Integer qty, String reason, LocalDateTime created_at) {
-        this.move_id = move_id;
-        this.lot = lot_id;
-        this.from_bay = from_bay;
-        this.to_bay = to_bay;
+    public InventoryMove(Integer moveId, InventoryLot lotId, WarehouseBay fromBay, WarehouseBay toBay, Integer qty, String reason, LocalDateTime createdAt) {
+        this.moveId = moveId;
+        this.lot = lotId;
+        this.fromBay = fromBay;
+        this.toBay = toBay;
         this.qty = qty;
         this.reason = reason;
-        this.created_at = created_at;
+        this.createdAt = createdAt;
     }
 
     /**
@@ -66,17 +66,17 @@ public class InventoryMove {
      */
 
     public Integer getMoveId() {
-        return move_id;
+        return moveId;
     }
 
     /**
      * Sets the unique identifier of this inventory move.
      *
-     * @param move_id the move identifier to set
+     * @param moveId the move identifier to set
      */
 
-    public void setMoveId(Integer move_id) {
-        this.move_id = move_id;
+    public void setMoveId(Integer moveId) {
+        this.moveId = moveId;
     }
 
     /**
@@ -106,17 +106,17 @@ public class InventoryMove {
      */
 
     public WarehouseBay getFromBay() {
-        return from_bay;
+        return fromBay;
     }
 
     /**
      * Sets the source bay from which the inventory is moved.
      *
-     * @param from_bay the source bay to set
+     * @param fromBay the source bay to set
      */
 
-    public void setFromBayId(WarehouseBay from_bay) {
-        this.from_bay = from_bay;
+    public void setFromBayId(WarehouseBay fromBay) {
+        this.fromBay = fromBay;
     }
 
     /**
@@ -126,17 +126,17 @@ public class InventoryMove {
      */
 
     public WarehouseBay getToBay() {
-        return to_bay;
+        return toBay;
     }
 
     /**
      * Sets the destination bay to which the inventory is moved.
      *
-     * @param to_bay the destination bay to set
+     * @param toBay the destination bay to set
      */
 
-    public void setToBay(WarehouseBay to_bay) {
-        this.to_bay = to_bay;
+    public void setToBay(WarehouseBay toBay) {
+        this.toBay = toBay;
     }
 
     /**
@@ -186,16 +186,16 @@ public class InventoryMove {
      */
 
     public LocalDateTime getCreatedAt() {
-        return created_at;
+        return createdAt;
     }
 
     /**
      * Sets the timestamp when this move was created.
      *
-     * @param created_at the creation timestamp to set
+     * @param createdAt the creation timestamp to set
      */
 
-    public void setCreatedAt(LocalDateTime created_at) {
-        this.created_at = created_at;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

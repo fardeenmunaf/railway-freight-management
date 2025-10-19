@@ -12,7 +12,7 @@ package app.model;
 
 public class InventoryBalance {
 
-    private Integer balance_id;
+    private Integer balanceId;
     private WarehouseBay bay;
     private InventoryLot lot;
     private Integer qty;
@@ -23,7 +23,7 @@ public class InventoryBalance {
      */
 
     public InventoryBalance() {
-        this.balance_id = null;
+        this.balanceId = null;
         this.bay = null;
         this.lot = null;
         this.qty = null;
@@ -32,14 +32,14 @@ public class InventoryBalance {
     /**
      * Parameterized constructor that creates an InventoryBalance with specified values.
      *
-     * @param balance_id the unique identifier for this inventory balance record
+     * @param balanceId the unique identifier for this inventory balance record
      * @param bay the warehouse bay where the inventory is stored
      * @param lot the inventory lot being tracked
      * @param qty the quantity of items in this balance record
      */
 
-    public InventoryBalance(Integer balance_id, WarehouseBay bay, InventoryLot lot, Integer qty) {
-        this.balance_id = balance_id;
+    public InventoryBalance(Integer balanceId, WarehouseBay bay, InventoryLot lot, Integer qty) {
+        this.balanceId = balanceId;
         this.bay = bay;
         this.lot = lot;
         this.qty = qty;
@@ -52,17 +52,17 @@ public class InventoryBalance {
      */
 
     public Integer getBalanceId() {
-        return balance_id;
+        return balanceId;
     }
 
     /**
      * Sets the unique identifier of this inventory balance record.
      *
-     * @param balance_id the balance identifier to set
+     * @param balanceId the balance identifier to set
      */
 
-    public void setBalanceId(Integer balance_id) {
-        this.balance_id = balance_id;
+    public void setBalanceId(Integer balanceId) {
+        this.balanceId = balanceId;
     }
 
     /**

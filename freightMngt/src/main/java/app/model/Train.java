@@ -12,7 +12,7 @@ package app.model;
 
 public class Train {
 
-    private Integer train_id;
+    private Integer trainId;
     private Integer code;
     private String departure;
     private String destination;
@@ -24,7 +24,7 @@ public class Train {
      */
 
     public Train() {
-        this.train_id = null;
+        this.trainId = null;
         this.code = null;
         this.departure = null;
         this.destination = null;
@@ -34,15 +34,15 @@ public class Train {
     /**
      * Parameterized constructor that creates a Train with specified values.
      *
-     * @param train_id    the unique identifier for this train
+     * @param trainId    the unique identifier for this train
      * @param code        the operational code of the train
      * @param departure   the departure location or station
      * @param destination the destination location or station
      * @param operator    the company operating this train
      */
 
-    public Train(Integer train_id, Integer code, String departure, String destination, Company operator) {
-        this.train_id = train_id;
+    public Train(Integer trainId, Integer code, String departure, String destination, Company operator) {
+        this.trainId = trainId;
         this.code = code;
         this.departure = departure;
         this.destination = destination;
@@ -56,17 +56,17 @@ public class Train {
      */
 
     public Integer getTrainId() {
-        return train_id;
+        return trainId;
     }
 
     /**
      * Sets the unique identifier of this train.
      *
-     * @param train_id the train identifier to set
+     * @param trainId the train identifier to set
      */
 
-    public void setTrainId(Integer train_id) {
-        this.train_id = train_id;
+    public void setTrainId(Integer trainId) {
+        this.trainId = trainId;
     }
 
     /**

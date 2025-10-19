@@ -14,12 +14,12 @@ import javax.swing.text.StyledEditorKit;
 
 public class Facility {
 
-    private Integer facility_id;
+    private Integer facilityId;
     private String name;
-    private FacilityType facility_type;
+    private FacilityType facilityType;
     private Double lat;
     private Double lon;
-    private Boolean is_intermodal;
+    private Boolean isIntermodal;
 
     /**
      * Default constructor that creates a Facility with null/default values.
@@ -27,32 +27,32 @@ public class Facility {
      */
 
     public Facility() {
-        this.facility_id = null;
+        this.facilityId = null;
         this.name = null;
-        this.facility_type = null;
+        this.facilityType = null;
         this.lat = null;
         this.lon = null;
-        this.is_intermodal = null;
+        this.isIntermodal = null;
     }
 
     /**
      * Parameterized constructor that creates a Facility with specified values.
      *
-     * @param facility_id   the unique identifier for this facility
+     * @param facilityId   the unique identifier for this facility
      * @param name          the name of the facility
-     * @param facility_type the type/category of this facility
+     * @param facilityType the type/category of this facility
      * @param lat           the latitude coordinate in degrees
      * @param lon           the longitude coordinate in degrees
-     * @param is_intermodal true if the facility supports intermodal operations, false otherwise
+     * @param isIntermodal true if the facility supports intermodal operations, false otherwise
      */
 
-    public Facility(Integer facility_id, String name, FacilityType facility_type, Double lat, Double lon, Boolean is_intermodal) {
-        this.facility_id = facility_id;
+    public Facility(Integer facilityId, String name, FacilityType facilityType, Double lat, Double lon, Boolean isIntermodal) {
+        this.facilityId = facilityId;
         this.name = name;
-        this.facility_type = facility_type;
+        this.facilityType = facilityType;
         this.lat = lat;
         this.lon = lon;
-        this.is_intermodal = is_intermodal;
+        this.isIntermodal = isIntermodal;
     }
 
     /**
@@ -62,17 +62,17 @@ public class Facility {
      */
 
     public Integer getFacilityId() {
-        return facility_id;
+        return facilityId;
     }
 
     /**
      * Sets the unique identifier of this facility.
      *
-     * @param facility_id the facility identifier to set
+     * @param facilityId the facility identifier to set
      */
 
-    public void setFacilityId(Integer facility_id) {
-        this.facility_id = facility_id;
+    public void setFacilityId(Integer facilityId) {
+        this.facilityId = facilityId;
     }
 
     /**
@@ -102,17 +102,17 @@ public class Facility {
      */
 
     public FacilityType getFacilityType() {
-        return facility_type;
+        return facilityType;
     }
 
     /**
      * Sets the type of this facility.
      *
-     * @param facility_type the facility type to set
+     * @param facilityType the facility type to set
      */
 
-    public void setFacilityType(FacilityType facility_type) {
-        this.facility_type = facility_type;
+    public void setFacilityType(FacilityType facilityType) {
+        this.facilityType = facilityType;
     }
 
     /**
@@ -162,16 +162,16 @@ public class Facility {
      */
 
     public Boolean getIsIntermodal() {
-        return is_intermodal;
+        return isIntermodal;
     }
 
     /**
      * Sets whether this facility supports intermodal operations.
      *
-     * @param is_intermodal true to mark as intermodal, false otherwise
+     * @param isIntermodal true to mark as intermodal, false otherwise
      */
 
-    public void setIsIntermodal(Boolean is_intermodal) {
-        this.is_intermodal = is_intermodal;
+    public void setIsIntermodal(Boolean isIntermodal) {
+        this.isIntermodal = isIntermodal;
     }
 }

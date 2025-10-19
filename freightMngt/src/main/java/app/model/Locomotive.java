@@ -20,9 +20,9 @@ public class Locomotive {
     private Double acceleration; //in m/s^2
     private Dimension dimensions;
     private Double maxSpeed; //in Km/h
-    private Double max_weight; //in Kg
-    private Double total_weight; //in Kg
-    private Integer max_bogies;
+    private Double maxWeight; //in Kg
+    private Double totalWeight; //in Kg
+    private Integer maxBogies;
 
     public Locomotive() {
         this.locomotiveId = null;
@@ -35,12 +35,12 @@ public class Locomotive {
         this.acceleration = null;
         this.dimensions = null;
         this.maxSpeed = null;
-        this.max_weight = null;
-        this.total_weight = null;
-        this.max_bogies = null;
+        this.maxWeight = null;
+        this.totalWeight = null;
+        this.maxBogies = null;
     }
 
-    public Locomotive(Integer locomotiveId, User operator, LocomotiveType locomotiveType, String brand, String model, Integer year, Integer power, Double acceleration, Dimension dimensions, Double maxSpeed, Double max_weight, Double total_weight, Integer max_bogies) {
+    public Locomotive(Integer locomotiveId, User operator, LocomotiveType locomotiveType, String brand, String model, Integer year, Integer power, Double acceleration, Dimension dimensions, Double maxSpeed, Double maxWeight, Double totalWeight, Integer maxBogies) {
         this.locomotiveId = locomotiveId;
         this.operator = operator;
         this.locomotiveType = locomotiveType;
@@ -51,9 +51,9 @@ public class Locomotive {
         this.acceleration = acceleration;
         this.dimensions = dimensions;
         this.maxSpeed = maxSpeed;
-        this.max_weight = max_weight;
-        this.total_weight = total_weight;
-        this.max_bogies = max_bogies;
+        this.maxWeight = maxWeight;
+        this.totalWeight = totalWeight;
+        this.maxBogies = maxBogies;
     }
 
     public Integer getLocomotiveId() {
@@ -136,28 +136,28 @@ public class Locomotive {
         this.maxSpeed = maxSpeed;
     }
 
-    public Double getMax_weight() {
-        return max_weight;
+    public Double getMaxWeight() {
+        return maxWeight;
     }
 
-    public void setMax_weight(Double max_weight) {
-        this.max_weight = max_weight;
+    public void setMaxWeight(Double maxWeight) {
+        this.maxWeight = maxWeight;
     }
 
-    public Double getTotal_weight() {
-        return total_weight;
+    public Double getTotalWeight() {
+        return totalWeight;
     }
 
-    public void setTotal_weight(Double total_weight) {
-        this.total_weight = total_weight;
+    public void setTotalWeight(Double totalWeight) {
+        this.totalWeight = totalWeight;
     }
 
-    public Integer getMax_bogies() {
-        return max_bogies;
+    public Integer getMaxBogies() {
+        return maxBogies;
     }
 
-    public void setMax_bogies(Integer max_bogies) {
-        this.max_bogies = max_bogies;
+    public void setMaxBogies(Integer maxBogies) {
+        this.maxBogies = maxBogies;
     }
 
     @Override
@@ -173,9 +173,9 @@ public class Locomotive {
                 ", acceleration=" + acceleration +
                 ", dimensions=" + dimensions +
                 ", maxSpeed=" + maxSpeed +
-                ", max_weight=" + max_weight +
-                ", total_weight=" + total_weight +
-                ", max_bogies=" + max_bogies +
+                ", maxWeight=" + maxWeight +
+                ", totalWeight=" + totalWeight +
+                ", maxBogies=" + maxBogies +
                 '}';
     }
 }
