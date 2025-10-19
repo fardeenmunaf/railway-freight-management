@@ -11,13 +11,12 @@ package app.model;
  */
 
 public class ItemCategory {
-
     private Integer categoryId;
     private String name;
 
     /**
-     * Default constructor that creates an ItemCategory with null values.
-     * Initializes both categoryId and name to null.
+     * Default constructor for ItemCategory.
+     * Initializes all fields to null.
      */
 
     public ItemCategory() {
@@ -26,41 +25,38 @@ public class ItemCategory {
     }
 
     /**
-     * Parameterized constructor that creates an ItemCategory with specified values.
+     * Parameterized constructor for ItemCategory.
      *
-     * @param categoryId the unique identifier for this item category
-     * @param name        the descriptive name of this item category
+     * @param categoryId the unique identifier for the category
+     * @param name the name of the category
      */
-
     public ItemCategory(Integer categoryId, String name) {
         this.categoryId = categoryId;
         this.name = name;
     }
 
     /**
-     * Gets the unique identifier of this item category.
+     * Gets the category identifier.
      *
-     * @return the category identifier as a Integer
+     * @return the category ID
      */
-
     public Integer getCategoryId() {
         return categoryId;
     }
 
     /**
-     * Sets the unique identifier of this item category.
+     * Sets the category identifier.
      *
-     * @param categoryId the category identifier to set
+     * @param categoryId the category ID to set
      */
-
     public void setCategoryId(Integer categoryId) {
         this.categoryId = categoryId;
     }
 
     /**
-     * Gets the name of this item category.
+     * Gets the category name.
      *
-     * @return the category name as a String
+     * @return the category name
      */
 
     public String getName() {
@@ -68,12 +64,20 @@ public class ItemCategory {
     }
 
     /**
-     * Sets the name of this item category.
+     * Sets the category name.
      *
      * @param name the category name to set
      */
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "ItemCategory{" +
+                "categoryId=" + categoryId +
+                ", name='" + name + '\'' +
+                '}';
     }
 }
