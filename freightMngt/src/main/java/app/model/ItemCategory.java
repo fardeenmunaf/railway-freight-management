@@ -1,79 +1,77 @@
 package app.model;
 
 /**
- * Represents a category of items in the freight management system.
- * This class defines groupings or classifications for items, allowing
- * for better organization and management of inventory. Each category
- * has a unique identifier and descriptive name.
- *
- * @author G113 2DK
- * @version 1.0
+ * Represents an item category in the freight management system.
+ * <p>
+ * Contains information about category identification and naming,
+ * used to classify items in the inventory system.
+ * </p>
  */
-
 public class ItemCategory {
-
-    private Integer category_id;
+    private Integer categoryId;
     private String name;
 
     /**
-     * Default constructor that creates an ItemCategory with null values.
-     * Initializes both category_id and name to null.
+     * Default constructor for ItemCategory.
+     * Initializes all fields to null.
      */
-
     public ItemCategory() {
-        this.category_id = null;
+        this.categoryId = null;
         this.name = null;
     }
 
     /**
-     * Parameterized constructor that creates an ItemCategory with specified values.
+     * Parameterized constructor for ItemCategory.
      *
-     * @param category_id the unique identifier for this item category
-     * @param name        the descriptive name of this item category
+     * @param categoryId the unique identifier for the category
+     * @param name the name of the category
      */
-
-    public ItemCategory(Integer category_id, String name) {
-        this.category_id = category_id;
+    public ItemCategory(Integer categoryId, String name) {
+        this.categoryId = categoryId;
         this.name = name;
     }
 
     /**
-     * Gets the unique identifier of this item category.
+     * Gets the category identifier.
      *
-     * @return the category identifier as a Integer
+     * @return the category ID
      */
-
     public Integer getCategoryId() {
-        return category_id;
+        return categoryId;
     }
 
     /**
-     * Sets the unique identifier of this item category.
+     * Sets the category identifier.
      *
-     * @param category_id the category identifier to set
+     * @param categoryId the category ID to set
      */
-
-    public void setCategoryId(Integer category_id) {
-        this.category_id = category_id;
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
     }
 
     /**
-     * Gets the name of this item category.
+     * Gets the category name.
      *
-     * @return the category name as a String
+     * @return the category name
      */
-
     public String getName() {
         return name;
     }
 
     /**
-     * Sets the name of this item category.
+     * Sets the category name.
      *
      * @param name the category name to set
      */
-
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "ItemCategory{" +
+                "categoryId=" + categoryId +
+                ", name='" + name + '\'' +
+                '}';
     }
 }
