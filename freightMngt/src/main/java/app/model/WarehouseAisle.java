@@ -10,10 +10,10 @@ package app.model;
  */
 public class WarehouseAisle {
 
-    private Integer aisle_id;
+    private Integer aisleId;
     private Warehouse warehouse;
-    private Integer aisle_no;
-    private String unique_code;
+    private Integer aisleNo;
+    private String uniqueCode;
 
     /**
      * Default constructor that creates a WarehouseAisle with null/default values.
@@ -21,26 +21,26 @@ public class WarehouseAisle {
      */
 
     public WarehouseAisle() {
-        this.aisle_id = null;
+        this.aisleId = null;
         this.warehouse = null;
-        this.aisle_no = null;
-        this.unique_code = null;
+        this.aisleNo = null;
+        this.uniqueCode = null;
     }
 
     /**
      * Parameterized constructor that creates a WarehouseAisle with specified values.
      *
-     * @param aisle_id the unique identifier for this aisle
+     * @param aisleId the unique identifier for this aisle
      * @param warehouse the warehouse this aisle belongs to
-     * @param aisle_no the sequential number of this aisle within the warehouse
-     * @param unique_code the unique code assigned to this aisle
+     * @param aisleNo the sequential number of this aisle within the warehouse
+     * @param uniqueCode the unique code assigned to this aisle
      */
 
-    public WarehouseAisle(Integer aisle_id, Warehouse warehouse, Integer aisle_no, String unique_code) {
-        this.aisle_id = aisle_id;
+    public WarehouseAisle(Integer aisleId, Warehouse warehouse, Integer aisleNo, String uniqueCode) {
+        this.aisleId = aisleId;
         this.warehouse = warehouse;
-        this.aisle_no = aisle_no;
-        this.unique_code = unique_code;
+        this.aisleNo = aisleNo;
+        this.uniqueCode = uniqueCode;
     }
 
     /**
@@ -50,17 +50,17 @@ public class WarehouseAisle {
      */
 
     public Integer getAisleId() {
-        return aisle_id;
+        return aisleId;
     }
 
     /**
      * Sets the unique identifier of this aisle.
      *
-     * @param aisle_id the aisle identifier to set
+     * @param aisleId the aisle identifier to set
      */
 
-    public void setAisleId(Integer aisle_id) {
-        this.aisle_id = aisle_id;
+    public void setAisleId(Integer aisleId) {
+        this.aisleId = aisleId;
     }
 
     /**
@@ -79,7 +79,7 @@ public class WarehouseAisle {
      * @param warehouse the warehouse to set
      */
 
-    public void setWarehouseId(Warehouse warehouse) {
+    public void setWarehouse(Warehouse warehouse) {
         this.warehouse = warehouse;
     }
 
@@ -90,17 +90,17 @@ public class WarehouseAisle {
      */
 
     public Integer getAisleNo() {
-        return aisle_no;
+        return aisleNo;
     }
 
     /**
      * Sets the sequential number of this aisle within the warehouse.
      *
-     * @param aisle_no the aisle number to set
+     * @param aisleNo the aisle number to set
      */
 
-    public void setAisleNo(Integer aisle_no) {
-        this.aisle_no = aisle_no;
+    public void setAisleNo(Integer aisleNo) {
+        this.aisleNo = aisleNo;
     }
 
     /**
@@ -110,16 +110,16 @@ public class WarehouseAisle {
      */
 
     public String getUniqueCode() {
-        return unique_code;
+        return uniqueCode;
     }
 
     /**
      * Sets the unique code assigned to this aisle.
      *
-     * @param unique_code the unique code to set
+     * @param uniqueCode the unique code to set
      */
 
-    public void setUniqueCode(String unique_code) {
-        this.unique_code = unique_code;
+    public void setUniqueCode(String uniqueCode) {
+        this.uniqueCode = uniqueCode;
     }
 }

@@ -13,13 +13,13 @@ package app.model;
 
 public class Item {
 
-    private Integer item_id;
-    private ItemCategory item_category;
+    private Integer itemId;
+    private ItemCategory itemCategory;
     private String sku;
     private String name;
     private String uom;
     private Double volume;
-    private Double unit_weight;
+    private Double unitWeight;
 
     /**
      * Default constructor that creates an Item with null/default values.
@@ -28,35 +28,35 @@ public class Item {
      */
 
     public Item() {
-        this.item_id = null;
-        this.item_category = null;
+        this.itemId = null;
+        this.itemCategory = null;
         this.sku = null;
         this.name = null;
         this.uom = null;
         this.volume = 0.0;
-        this.unit_weight = 0.0;
+        this.unitWeight = 0.0;
     }
 
     /**
      * Parameterized constructor that creates an Item with specified values.
      *
-     * @param item_id       the unique identifier for this item
-     * @param item_category the category this item belongs to
+     * @param itemId       the unique identifier for this item
+     * @param itemCategory the category this item belongs to
      * @param sku           the stock keeping unit code
      * @param name          the descriptive name of the item
      * @param uom           the unit of measure for this item
      * @param volume        the volume of the item
-     * @param unit_weight   the weight per unit of the item
+     * @param unitWeight   the weight per unit of the item
      */
 
-    public Item(Integer item_id, ItemCategory item_category, String sku, String name, String uom, Double volume, Double unit_weight) {
-        this.item_id = item_id;
-        this.item_category = item_category;
+    public Item(Integer itemId, ItemCategory itemCategory, String sku, String name, String uom, Double volume, Double unitWeight) {
+        this.itemId = itemId;
+        this.itemCategory = itemCategory;
         this.sku = sku;
         this.name = name;
         this.uom = uom;
         this.volume = volume;
-        this.unit_weight = unit_weight;
+        this.unitWeight = unitWeight;
     }
 
     /**
@@ -66,17 +66,17 @@ public class Item {
      */
 
     public Integer getItemId() {
-        return item_id;
+        return itemId;
     }
 
     /**
      * Sets the unique identifier of this item.
      *
-     * @param item_id the item identifier to set
+     * @param itemId the item identifier to set
      */
 
-    public void setItemId(Integer item_id) {
-        this.item_id = item_id;
+    public void setItemId(Integer itemId) {
+        this.itemId = itemId;
     }
 
     /**
@@ -86,17 +86,17 @@ public class Item {
      */
 
     public ItemCategory getItemCategory() {
-        return item_category;
+        return itemCategory;
     }
 
     /**
      * Sets the category of this item.
      *
-     * @param item_category the item category to set
+     * @param itemCategory the item category to set
      */
 
-    public void setItemCategory(ItemCategory item_category) {
-        this.item_category = item_category;
+    public void setItemCategory(ItemCategory itemCategory) {
+        this.itemCategory = itemCategory;
     }
 
     /**
@@ -186,16 +186,16 @@ public class Item {
      */
 
     public double getUnitWeight() {
-        return unit_weight;
+        return unitWeight;
     }
 
     /**
      * Sets the unit weight of this item.
      *
-     * @param unit_weight the unit weight to set
+     * @param unitWeight the unit weight to set
      */
 
-    public void setUnitWeight(double unit_weight) {
-        this.unit_weight = unit_weight;
+    public void setUnitWeight(double unitWeight) {
+        this.unitWeight = unitWeight;
     }
 }

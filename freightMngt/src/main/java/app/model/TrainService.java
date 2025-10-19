@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 
 public class TrainService {
 
-    private Integer service_id;
+    private Integer serviceId;
     private Train train;
-    private LocalDateTime departure_date;
-    private LocalDateTime arrival_date;
-    private User train_driver;
+    private LocalDateTime departureDate;
+    private LocalDateTime arrivalDate;
+    private User trainDriver;
     private String status;
 
     /**
@@ -27,32 +27,32 @@ public class TrainService {
      */
 
     public TrainService() {
-        this.service_id = null;
+        this.serviceId = null;
         this.train = null;
-        this.departure_date = null;
-        this.arrival_date = null;
-        this.train_driver = null;
+        this.departureDate = null;
+        this.arrivalDate = null;
+        this.trainDriver = null;
         this.status = null;
     }
 
     /**
      * Parameterized constructor that creates a TrainService with specified values.
      *
-     * @param service_id     the unique identifier for this train service
+     * @param serviceId     the unique identifier for this train service
      * @param train          the train assigned to this service
-     * @param departure_date the scheduled departure date and time
-     * @param arrival_date   the scheduled arrival date and time
-     * @param train_driver   the user assigned as the train driver
+     * @param departureDate the scheduled departure date and time
+     * @param arrivalDate   the scheduled arrival date and time
+     * @param trainDriver   the user assigned as the train driver
      * @param status         the current status of the service
      */
 
-    public TrainService(Integer service_id, Train train, LocalDateTime departure_date, LocalDateTime arrival_date,
-                        User train_driver, String status) {
-        this.service_id = service_id;
+    public TrainService(Integer serviceId, Train train, LocalDateTime departureDate, LocalDateTime arrivalDate,
+                        User trainDriver, String status) {
+        this.serviceId = serviceId;
         this.train = train;
-        this.departure_date = departure_date;
-        this.arrival_date = arrival_date;
-        this.train_driver = train_driver;
+        this.departureDate = departureDate;
+        this.arrivalDate = arrivalDate;
+        this.trainDriver = trainDriver;
         this.status = status;
     }
 
@@ -63,17 +63,17 @@ public class TrainService {
      */
 
     public Integer getServiceId() {
-        return service_id;
+        return serviceId;
     }
 
     /**
      * Sets the unique identifier of this train service.
      *
-     * @param service_id the service identifier to set
+     * @param serviceId the service identifier to set
      */
 
-    public void setServiceId(Integer service_id) {
-        this.service_id = service_id;
+    public void setServiceId(Integer serviceId) {
+        this.serviceId = serviceId;
     }
 
     /**
@@ -103,17 +103,17 @@ public class TrainService {
      */
 
     public LocalDateTime getDepartureDate() {
-        return departure_date;
+        return departureDate;
     }
 
     /**
      * Sets the scheduled departure date and time.
      *
-     * @param departure_date the departure date to set
+     * @param departureDate the departure date to set
      */
 
-    public void setDepartureDate(LocalDateTime departure_date) {
-        this.departure_date = departure_date;
+    public void setDepartureDate(LocalDateTime departureDate) {
+        this.departureDate = departureDate;
     }
 
     /**
@@ -123,17 +123,17 @@ public class TrainService {
      */
 
     public LocalDateTime getArrivalDate() {
-        return arrival_date;
+        return arrivalDate;
     }
 
     /**
      * Sets the scheduled arrival date and time.
      *
-     * @param arrival_date the arrival date to set
+     * @param arrivalDate the arrival date to set
      */
 
-    public void setArrivalDate(LocalDateTime arrival_date) {
-        this.arrival_date = arrival_date;
+    public void setArrivalDate(LocalDateTime arrivalDate) {
+        this.arrivalDate = arrivalDate;
     }
 
     /**
@@ -143,17 +143,17 @@ public class TrainService {
      */
 
     public User getTrainDriver() {
-        return train_driver;
+        return trainDriver;
     }
 
     /**
      * Sets the user assigned as the train driver.
      *
-     * @param train_driver the train driver to set
+     * @param trainDriver the train driver to set
      */
 
-    public void setTrainDriver(User train_driver) {
-        this.train_driver = train_driver;
+    public void setTrainDriver(User trainDriver) {
+        this.trainDriver = trainDriver;
     }
 
     /**

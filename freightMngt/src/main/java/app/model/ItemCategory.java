@@ -12,28 +12,28 @@ package app.model;
 
 public class ItemCategory {
 
-    private Integer category_id;
+    private Integer categoryId;
     private String name;
 
     /**
      * Default constructor that creates an ItemCategory with null values.
-     * Initializes both category_id and name to null.
+     * Initializes both categoryId and name to null.
      */
 
     public ItemCategory() {
-        this.category_id = null;
+        this.categoryId = null;
         this.name = null;
     }
 
     /**
      * Parameterized constructor that creates an ItemCategory with specified values.
      *
-     * @param category_id the unique identifier for this item category
+     * @param categoryId the unique identifier for this item category
      * @param name        the descriptive name of this item category
      */
 
-    public ItemCategory(Integer category_id, String name) {
-        this.category_id = category_id;
+    public ItemCategory(Integer categoryId, String name) {
+        this.categoryId = categoryId;
         this.name = name;
     }
 
@@ -44,17 +44,17 @@ public class ItemCategory {
      */
 
     public Integer getCategoryId() {
-        return category_id;
+        return categoryId;
     }
 
     /**
      * Sets the unique identifier of this item category.
      *
-     * @param category_id the category identifier to set
+     * @param categoryId the category identifier to set
      */
 
-    public void setCategoryId(Integer category_id) {
-        this.category_id = category_id;
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
     }
 
     /**

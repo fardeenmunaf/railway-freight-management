@@ -14,11 +14,11 @@ import java.time.LocalDate;
 
 public class InventoryLot {
 
-    private String lot_id;
+    private String lotId;
     private String sku;
-    private String box_code;
-    private LocalDate exp_date;
-    private LocalDate received_date;
+    private String boxCode;
+    private LocalDate expDate;
+    private LocalDate receivedDate;
 
     /**
      * Default constructor that creates an InventoryLot with null/default values.
@@ -26,29 +26,29 @@ public class InventoryLot {
      */
 
     public InventoryLot() {
-        this.lot_id = null;
+        this.lotId = null;
         this.sku = null;
-        this.box_code = null;
-        this.exp_date = null;
-        this.received_date = null;
+        this.boxCode = null;
+        this.expDate = null;
+        this.receivedDate = null;
     }
 
     /**
      * Parameterized constructor that creates an InventoryLot with specified values.
      *
-     * @param lot_id the unique identifier for this inventory lot
+     * @param lotId the unique identifier for this inventory lot
      * @param sku the stock keeping unit identifier for the product
-     * @param box_code the code identifying the box type or packaging
-     * @param exp_date the expiration date of the products in this lot
-     * @param received_date the date when this lot was received in the warehouse
+     * @param boxCode the code identifying the box type or packaging
+     * @param expDate the expiration date of the products in this lot
+     * @param receivedDate the date when this lot was received in the warehouse
      */
 
-    public InventoryLot(String lot_id, String sku, String box_code, LocalDate exp_date, LocalDate received_date) {
-        this.lot_id = lot_id;
+    public InventoryLot(String lotId, String sku, String boxCode, LocalDate expDate, LocalDate receivedDate) {
+        this.lotId = lotId;
         this.sku = sku;
-        this.box_code = box_code;
-        this.exp_date = exp_date;
-        this.received_date = received_date;
+        this.boxCode = boxCode;
+        this.expDate = expDate;
+        this.receivedDate = receivedDate;
     }
 
     /**
@@ -58,17 +58,17 @@ public class InventoryLot {
      */
 
     public String getLotId() {
-        return lot_id;
+        return lotId;
     }
 
     /**
      * Sets the unique identifier of this inventory lot.
      *
-     * @param lot_id the lot identifier to set
+     * @param lotId the lot identifier to set
      */
 
-    public void setLotId(String lot_id) {
-        this.lot_id = lot_id;
+    public void setLotId(String lotId) {
+        this.lotId = lotId;
     }
 
     /**
@@ -98,17 +98,17 @@ public class InventoryLot {
      */
 
     public String getBoxCode() {
-        return box_code;
+        return boxCode;
     }
 
     /**
      * Sets the code identifying the box type or packaging.
      *
-     * @param box_code the box code to set
+     * @param boxCode the box code to set
      */
 
-    public void setBoxCode(String box_code) {
-        this.box_code = box_code;
+    public void setBoxCode(String boxCode) {
+        this.boxCode = boxCode;
     }
 
     /**
@@ -118,17 +118,17 @@ public class InventoryLot {
      */
 
     public LocalDate getExpDate() {
-        return exp_date;
+        return expDate;
     }
 
     /**
      * Sets the expiration date of the products in this lot.
      *
-     * @param exp_date the expiration date to set
+     * @param expDate the expiration date to set
      */
 
-    public void setExpDate(LocalDate exp_date) {
-        this.exp_date = exp_date;
+    public void setExpDate(LocalDate expDate) {
+        this.expDate = expDate;
     }
 
     /**
@@ -138,16 +138,16 @@ public class InventoryLot {
      */
 
     public LocalDate getReceivedDate() {
-        return received_date;
+        return receivedDate;
     }
 
     /**
      * Sets the date when this lot was received in the warehouse.
      *
-     * @param received_date the received date to set
+     * @param receivedDate the received date to set
      */
 
-    public void setReceivedDate(LocalDate received_date) {
-        this.received_date = received_date;
+    public void setReceivedDate(LocalDate receivedDate) {
+        this.receivedDate = receivedDate;
     }
 }
