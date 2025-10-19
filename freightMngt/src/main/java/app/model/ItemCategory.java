@@ -1,12 +1,15 @@
 package app.model;
 
 /**
- * Represents an item category in the freight management system.
- * <p>
- * Contains information about category identification and naming,
- * used to classify items in the inventory system.
- * </p>
+ * Represents a category of items in the freight management system.
+ * This class defines groupings or classifications for items, allowing
+ * for better organization and management of inventory. Each category
+ * has a unique identifier and descriptive name.
+ *
+ * @author G113 2DK
+ * @version 1.0
  */
+
 public class ItemCategory {
     private Integer categoryId;
     private String name;
@@ -15,6 +18,7 @@ public class ItemCategory {
      * Default constructor for ItemCategory.
      * Initializes all fields to null.
      */
+
     public ItemCategory() {
         this.categoryId = null;
         this.name = null;
@@ -54,6 +58,7 @@ public class ItemCategory {
      *
      * @return the category name
      */
+
     public String getName() {
         return name;
     }
@@ -63,6 +68,7 @@ public class ItemCategory {
      *
      * @param name the category name to set
      */
+
     public void setName(String name) {
         this.name = name;
     }

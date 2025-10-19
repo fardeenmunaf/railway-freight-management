@@ -12,17 +12,17 @@ package app.model;
 
 public class Warehouse{
 
-    private Integer warehouse_id;
+    private Integer warehouseId;
     private Facility facility;
     private String name;
 
     /**
      * Default constructor that creates a Warehouse with null values.
-     * Initializes warehouse_id, facility_id, and name to null.
+     * Initializes warehouseId, facility, and name to null.
      */
 
     public Warehouse() {
-        this.warehouse_id = null;
+        this.warehouseId = null;
         this.facility = null;
         this.name = null;
     }
@@ -30,13 +30,13 @@ public class Warehouse{
     /**
      * Parameterized constructor that creates a Warehouse with specified values.
      *
-     * @param warehouse_id the unique identifier for this warehouse
+     * @param warehouseId the unique identifier for this warehouse
      * @param facility the facility this warehouse belongs to
      * @param name the descriptive name of this warehouse
      */
 
-    public Warehouse(Integer warehouse_id, Facility facility, String name) {
-        this.warehouse_id = warehouse_id;
+    public Warehouse(Integer warehouseId, Facility facility, String name) {
+        this.warehouseId = warehouseId;
         this.facility = facility;
         this.name = name;
     }
@@ -47,24 +47,24 @@ public class Warehouse{
      * @return the warehouse identifier as an Integer
      */
 
-    public Integer getWarehouse_id() {
-        return warehouse_id;
+    public Integer getWarehouseId() {
+        return warehouseId;
     }
 
     /**
      * Sets the unique identifier of this warehouse.
      *
-     * @param warehouse_id the warehouse identifier to set
+     * @param warehouseId the warehouse identifier to set
      */
 
-    public void setWarehouse_id(Integer warehouse_id) {
-        this.warehouse_id = warehouse_id;
+    public void setWarehouseId(Integer warehouseId) {
+        this.warehouseId = warehouseId;
     }
 
     /**
-     * Gets the identifier of the facility this warehouse belongs to.
+     * Gets the facility this warehouse belongs to.
      *
-     * @return the facility identifier as a String
+     * @return the facility as a Facility object
      */
 
     public Facility getFacility() {
@@ -72,12 +72,12 @@ public class Warehouse{
     }
 
     /**
-     * Sets the identifier of the facility this warehouse belongs to.
+     * Sets the facility this warehouse belongs to.
      *
-     * @param facility the facility identifier to set
+     * @param facility the facility to set
      */
 
-    public void setFacility_id(Facility facility) {
+    public void setFacility(Facility facility) {
         this.facility = facility;
     }
 

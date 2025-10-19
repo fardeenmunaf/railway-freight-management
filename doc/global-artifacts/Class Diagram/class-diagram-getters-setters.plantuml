@@ -3,7 +3,7 @@ skinparam classAttributeIconSize 0
 
 ' --- User and Company Management ---
 class Company {
-    -company_id
+    -companyId
     -name
     +getCompanyId()
     +setCompanyId()
@@ -12,13 +12,13 @@ class Company {
 }
 
 class User {
-    -user_id
+    -userId
     -username
     -email
     -password
-    -company_id
-    -is_active
-    -created_at
+    -companyId
+    -isActive
+    -createdAt
     +getUserId()
     +setUserId()
     +getUsername()
@@ -36,7 +36,7 @@ class User {
 }
 
 class Role {
-    -role_id
+    -roleId
     -name
     +getRoleId()
     +setRoleId()
@@ -45,8 +45,8 @@ class Role {
 }
 
 class UserRole {
-    -user_id
-    -role_id
+    -userId
+    -roleId
     +getUserId()
     +setUserId()
     +getRoleId()
@@ -59,9 +59,9 @@ Role -- UserRole
 
 ' --- Railway Infrastructure ---
 class Gauge {
-    -gauge_id
+    -gaugeId
     -name
-    -size_mm
+    -sizeMm
     +getGaugeId()
     +setGaugeId()
     +getName()
@@ -71,8 +71,8 @@ class Gauge {
 }
 
 class Line {
-    -line_id
-    -owner_id
+    -lineId
+    -ownerId
     +getLineId()
     +setLineId()
     +getOwnerId()
@@ -80,15 +80,15 @@ class Line {
 }
 
 class LineSegment {
-    -segment_id
-    -line_id
-    -length_km
-    -track_type_id
-    -electrif_type_id
-    -gauge_id
-    -max_weight_kg_m
-    -speed_limit_kmh
-    -single_track
+    -segmentId
+    -lineId
+    -lengthKm
+    -trackTypeId
+    -electrifTypeId
+    -gaugeId
+    -maxWeightKgM
+    -speedLimitKmh
+    -singleTrack
     -position
     +getSegmentId()
     +setSegmentId()
@@ -113,7 +113,7 @@ class LineSegment {
 }
 
 class TrackType {
-    -track_type_id
+    -trackTypeId
     -name
     +getTrackTypeId()
     +setTrackTypeId()
@@ -121,22 +121,13 @@ class TrackType {
     +setName()
 }
 
-class ElectrificationType {
-    -electrif_type_id
-    -name
-    +getElectrifTypeId()
-    +setElectrifTypeId()
-    +getName()
-    +setName()
-}
-
 class Facility {
-    -facility_id
+    -facilityId
     -name
-    -facility_type_id
+    -facilityTypeId
     -lat
     -lon
-    -is_intermodal
+    -isIntermodal
     +getFacilityId()
     +setFacilityId()
     +getName()
@@ -152,7 +143,7 @@ class Facility {
 }
 
 class FacilityType {
-    -facility_type_id
+    -facilityTypeId
     -name
     +getFacilityTypeId()
     +setFacilityTypeId()
@@ -161,8 +152,8 @@ class FacilityType {
 }
 
 class FacilityFeature {
-    -facility_id
-    -feature_id
+    -facilityId
+    -featureId
     +getFacilityId()
     +setFacilityId()
     +getFeatureId()
@@ -170,7 +161,7 @@ class FacilityFeature {
 }
 
 class FacilityFeatureType {
-    -feature_id
+    -featureId
     -name
     +getFeatureId()
     +setFeatureId()
@@ -179,11 +170,11 @@ class FacilityFeatureType {
 }
 
 class ParkingTrack {
-    -parking_track_id
-    -line_id
-    -facility_id
+    -parkingTrackId
+    -lineId
+    -facilityId
     -name
-    -capacity_wagons
+    -capacityWagons
     +getParkingTrackId()
     +setParkingTrackId()
     +getLineId()
@@ -197,9 +188,9 @@ class ParkingTrack {
 }
 
 class LineSegmentFacility {
-    -segment_facility_id
-    -line_segment_id
-    -facility_id
+    -segmentFacilityId
+    -lineSegmentId
+    -facilityId
     +getSegmentFacilityId()
     +setSegmentFacilityId()
     +getLineSegmentId()
@@ -212,7 +203,6 @@ Company -- Line
 Line *-- LineSegment
 Line -- ParkingTrack
 LineSegment -- TrackType
-LineSegment ..> ElectrificationType
 LineSegment -- Gauge
 LineSegment *-- LineSegmentFacility
 LineSegmentFacility -- Facility
@@ -223,22 +213,22 @@ Facility -- ParkingTrack
 
 ' --- Rolling Stock ---
 class Locomotive {
-    -locomotive_id
-    -operator_id
-    -locomotive_type
+    -locomotiveId
+    -operatorId
+    -locomotiveType
     -brand
     -model
     -year
-    -power_kw
-    -acceleration_ms2
-    -length_m
-    -width_m
-    -height_m
-    -max_weight_t
-    -total_weight_t
-    -num_bogies
-    -created_at
-    -updated_at
+    -powerKw
+    -accelerationMs2
+    -lengthM
+    -widthM
+    -heightM
+    -maxWeightT
+    -totalWeightT
+    -numBogies
+    -createdAt
+    -updatedAt
     +getLocomotiveId()
     +setLocomotiveId()
     +getOperatorId()
@@ -274,10 +264,10 @@ class Locomotive {
 }
 
 class LocomotiveType {
-    -locomotive_type_id
+    -locomotiveTypeId
     -name
-    -created_at
-    -updated_at
+    -createdAt
+    -updatedAt
     +getLocomotiveTypeId()
     +setLocomotiveTypeId()
     +getName()
@@ -289,8 +279,8 @@ class LocomotiveType {
 }
 
 class LocomotiveDiesel {
-    -locomotive_id
-    -fuel_capacity_l
+    -locomotiveId
+    -fuelCapacityL
     +getLocomotiveId()
     +setLocomotiveId()
     +getFuelCapacityL()
@@ -298,8 +288,8 @@ class LocomotiveDiesel {
 }
 
 class LocomotiveGauge {
-    -locomotive_id
-    -gauge_id
+    -locomotiveId
+    -gaugeId
     +getLocomotiveId()
     +setLocomotiveId()
     +getGaugeId()
@@ -307,17 +297,17 @@ class LocomotiveGauge {
 }
 
 class Wagon {
-    -wagon_id
-    -operator_id
-    -wagon_type
-    -tare_t
-    -payload_t
-    -volume_m3
-    -length_m
-    -width_m
-    -height_m
-    -created_at
-    -updated_at
+    -wagonId
+    -operatorId
+    -wagonType
+    -tareT
+    -payloadT
+    -volumeM3
+    -lengthM
+    -widthM
+    -heightM
+    -createdAt
+    -updatedAt
     +getWagonId()
     +setWagonId()
     +getOperatorId()
@@ -343,10 +333,10 @@ class Wagon {
 }
 
 class WagonType {
-    -wagon_type_id
+    -wagonTypeId
     -name
-    -created_at
-    -updated_at
+    -createdAt
+    -updatedAt
     +getWagonTypeId()
     +setWagonTypeId()
     +getName()
@@ -358,8 +348,8 @@ class WagonType {
 }
 
 class WagonGauge {
-    -wagon_id
-    -gauge_id
+    -wagonId
+    -gaugeId
     +getWagonId()
     +setWagonId()
     +getGaugeId()
@@ -367,10 +357,10 @@ class WagonGauge {
 }
 
 class ParkingQueue {
-    -parking_queue_id
-    -parking_track_id
-    -wagon_id
-    -position_no
+    -parkingQueueId
+    -parkingTrackId
+    -wagonId
+    -positionNo
     -status
     +getParkingQueueId()
     +setParkingQueueId()
@@ -398,11 +388,11 @@ ParkingQueue ..> Wagon
 
 ' --- Train Operations ---
 class Train {
-    -train_id
+    -trainId
     -code
     -departure
     -destination
-    -operator_id
+    -operatorId
     +getTrainId()
     +setTrainId()
     +getCode()
@@ -416,11 +406,11 @@ class Train {
 }
 
 class TrainService {
-    -service_id
-    -train_id
-    -departure_date
-    -arrival_date
-    -train_driver_id
+    -serviceId
+    -trainId
+    -departureDate
+    -arrivalDate
+    -trainDriverId
     -status
     +getServiceId()
     +setServiceId()
@@ -437,10 +427,10 @@ class TrainService {
 }
 
 class ServiceLocomotive {
-    -service_locomotive_id
-    -service_id
-    -locomotive_id
-    -position_no
+    -serviceLocomotiveId
+    -serviceId
+    -locomotiveId
+    -positionNo
     +getServiceLocomotiveId()
     +setServiceLocomotiveId()
     +getServiceId()
@@ -452,9 +442,9 @@ class ServiceLocomotive {
 }
 
 class TrainServiceComposition {
-    -train_service_id
-    -service_locomotive_id
-    -wagon_id
+    -trainServiceId
+    -serviceLocomotiveId
+    -wagonId
     +getTrainServiceId()
     +setTrainServiceId()
     +getServiceLocomotiveId()
@@ -464,17 +454,17 @@ class TrainServiceComposition {
 }
 
 class TrainStop {
-    -train_stop_id
-    -service_id
-    -facility_id
-    -parking_track
+    -trainStopId
+    -serviceId
+    -facilityId
+    -parkingTrack
     -position
-    -sched_arr
-    -sched_dep
-    -planned_stop_time
-    -act_arr
-    -act_dep
-    -act_stop_time
+    -schedArr
+    -schedDep
+    -plannedStopTime
+    -actArr
+    -actDep
+    -actStopTime
     +getTrainStopId()
     +setTrainStopId()
     +getServiceId()
@@ -511,13 +501,13 @@ TrainStop ..> ParkingTrack
 
 ' --- Items and Inventory ---
 class Item {
-    -item_id
-    -item_category_id
+    -itemId
+    -itemCategoryId
     -sku
     -name
     -uom
     -volume
-    -unit_weight
+    -unitWeight
     +getItemId()
     +setItemId()
     +getItemCategoryId()
@@ -535,7 +525,7 @@ class Item {
 }
 
 class ItemCategory {
-    -category_id
+    -categoryId
     -name
     +getCategoryId()
     +setCategoryId()
@@ -544,11 +534,11 @@ class ItemCategory {
 }
 
 class InventoryLot {
-    -lot_id
+    -lotId
     -sku
-    -box_code
-    -exp_date
-    -received_date
+    -boxCode
+    -expDate
+    -receivedDate
     +getLotId()
     +setLotId()
     +getSku()
@@ -562,9 +552,9 @@ class InventoryLot {
 }
 
 class InventoryBalance {
-    -balance_id
-    -bay_id
-    -lot_id
+    -balanceId
+    -bayId
+    -lotId
     -qty
     +getBalanceId()
     +setBalanceId()
@@ -577,13 +567,13 @@ class InventoryBalance {
 }
 
 class InventoryMove {
-    -move_id
-    -lot_id
-    -from_bay_id
-    -to_bay_id
+    -moveId
+    -lotId
+    -fromBayId
+    -toBayId
     -qty
     -reason
-    -created_at
+    -createdAt
     +getMoveId()
     +setMoveId()
     +getLotId()
@@ -607,8 +597,8 @@ InventoryLot *-- InventoryMove
 
 ' --- Warehouse ---
 class Warehouse {
-    -warehouse_id
-    -facility_id
+    -warehouseId
+    -facilityId
     -name
     +getWarehouseId()
     +setWarehouseId()
@@ -619,10 +609,10 @@ class Warehouse {
 }
 
 class WarehouseAisle {
-    -aisle_id
-    -warehouse_id
-    -aisle_no
-    -unique_code
+    -aisleId
+    -warehouseId
+    -aisleNo
+    -uniqueCode
     +getAisleId()
     +setAisleId()
     +getWarehouseId()
@@ -634,10 +624,10 @@ class WarehouseAisle {
 }
 
 class WarehouseBay {
-    -bay_id
-    -aisle_id
-    -bay_no
-    -capacity_box
+    -bayId
+    -aisleId
+    -bayNo
+    -capacityBox
     +getBayId()
     +setBayId()
     +getAisleId()
@@ -655,11 +645,11 @@ InventoryBalance ..> WarehouseBay
 
 ' --- Orders ---
 class Order {
-    -order_id
+    -orderId
     -status
     -priority
-    -due_date
-    -created_at
+    -dueDate
+    -createdAt
     +getOrderId()
     +setOrderId()
     +getStatus()
@@ -673,8 +663,8 @@ class Order {
 }
 
 class OrderLine {
-    -order_line_id
-    -order_id
+    -orderLineId
+    -orderId
     -sku
     -qty
     +getOrderLineId()
@@ -688,11 +678,11 @@ class OrderLine {
 }
 
 class ReturnOrder {
-    -return_id
-    -orig_order_id
+    -returnId
+    -origOrderId
     -reason
     -status
-    -received_at
+    -receivedAt
     +getReturnId()
     +setReturnId()
     +getOrigOrderId()
@@ -706,8 +696,8 @@ class ReturnOrder {
 }
 
 class ReturnLine {
-    -return_line_id
-    -return_id
+    -returnLineId
+    -returnId
     -sku
     -qty
     -condition
@@ -724,11 +714,11 @@ class ReturnLine {
 }
 
 class QuarantineHold {
-    -qhold_id
-    -return_id
+    -qholdId
+    -returnId
     -status
-    -created_at
-    -released_at
+    -createdAt
+    -releasedAt
     +getQholdId()
     +setQholdId()
     +getReturnId()
@@ -742,10 +732,10 @@ class QuarantineHold {
 }
 
 class QaInspection {
-    -qa_id
-    -return_line_id
+    -qaId
+    -returnLineId
     -status
-    -inspected_at
+    -inspectedAt
     +getQaId()
     +setQaId()
     +getReturnLineId()
@@ -765,9 +755,9 @@ ReturnLine ..> QaInspection
 
 ' --- Picking Operations ---
 class Cart {
-    -cart_id
+    -cartId
     -nome
-    -max_weight
+    -maxWeight
     +getCartId()
     +setCartId()
     +getNome()
@@ -777,11 +767,11 @@ class Cart {
 }
 
 class PickWave {
-    -wave_id
-    -cart_id
+    -waveId
+    -cartId
     -strategy
     -status
-    -created_at
+    -createdAt
     +getWaveId()
     +setWaveId()
     +getCartId()
@@ -795,12 +785,12 @@ class PickWave {
 }
 
 class PickTask {
-    -pick_id
-    -wave_id
-    -order_line_id
-    -balance_id
+    -pickId
+    -waveId
+    -orderLineId
+    -balanceId
     -qty
-    -pos_seq
+    -posSeq
     +getPickId()
     +setPickId()
     +getWaveId()

@@ -12,28 +12,28 @@ package app.model;
 
 public class FacilityType {
 
-    private Integer facility_type_id;
+    private Integer facilityTypeId;
     private String name;
 
     /**
      * Default constructor that creates a FacilityType with null values.
-     * Initializes both facility_type_id and name to null.
+     * Initializes both facilityTypeId and name to null.
      */
 
     public FacilityType() {
-        this.facility_type_id = null;
+        this.facilityTypeId = null;
         this.name = null;
     }
 
     /**
      * Parameterized constructor that creates a FacilityType with specified values.
      *
-     * @param facility_type_id the unique identifier for this facility type
+     * @param facilityTypeId the unique identifier for this facility type
      * @param name             the descriptive name of this facility type
      */
 
-    public FacilityType(Integer facility_type_id, String name) {
-        this.facility_type_id = facility_type_id;
+    public FacilityType(Integer facilityTypeId, String name) {
+        this.facilityTypeId = facilityTypeId;
         this.name = name;
     }
 
@@ -44,17 +44,17 @@ public class FacilityType {
      */
 
     public Integer getFacilityTypeId() {
-        return facility_type_id;
+        return facilityTypeId;
     }
 
     /**
      * Sets the unique identifier of this facility type.
      *
-     * @param facility_type_id the facility type identifier to set
+     * @param facilityTypeId the facility type identifier to set
      */
 
-    public void setFacilityTypeId(Integer facility_type_id) {
-        this.facility_type_id = facility_type_id;
+    public void setFacilityTypeId(Integer facilityTypeId) {
+        this.facilityTypeId = facilityTypeId;
     }
 
     /**
