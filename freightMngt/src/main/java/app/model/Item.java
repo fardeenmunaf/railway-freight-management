@@ -162,7 +162,7 @@ public class Item {
     /**
      * Gets the volume of this item.
      *
-     * @return the volume as a double
+     * @return the volume as a Double
      */
 
     public double getVolume() {
@@ -182,7 +182,7 @@ public class Item {
     /**
      * Gets the unit weight of this item.
      *
-     * @return the unit weight as a double
+     * @return the unit weight as a Double
      */
 
     public double getUnitWeight() {

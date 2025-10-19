@@ -15,7 +15,7 @@ public class ItemCategory {
     private String name;
 
     /**
-     * Default constructor for ItemCategory.
+     * Default constructor that creates an ItemCategory with null values.
      * Initializes all fields to null.
      */
 
@@ -25,38 +25,41 @@ public class ItemCategory {
     }
 
     /**
-     * Parameterized constructor for ItemCategory.
+     * Parameterized constructor that creates an ItemCategory with specified values.
      *
-     * @param categoryId the unique identifier for the category
+     * @param categoryId the unique identifier for this category
      * @param name the name of the category
      */
+
     public ItemCategory(Integer categoryId, String name) {
         this.categoryId = categoryId;
         this.name = name;
     }
 
     /**
-     * Gets the category identifier.
+     * Gets the unique identifier of this category.
      *
-     * @return the category ID
+     * @return the category identifier as an Integer
      */
+
     public Integer getCategoryId() {
         return categoryId;
     }
 
     /**
-     * Sets the category identifier.
+     * Sets the unique identifier of this category.
      *
-     * @param categoryId the category ID to set
+     * @param categoryId the category identifier to set
      */
+
     public void setCategoryId(Integer categoryId) {
         this.categoryId = categoryId;
     }
 
     /**
-     * Gets the category name.
+     * Gets the name of this category.
      *
-     * @return the category name
+     * @return the category name as a String
      */
 
     public String getName() {
@@ -64,7 +67,7 @@ public class ItemCategory {
     }
 
     /**
-     * Sets the category name.
+     * Sets the name of this category.
      *
      * @param name the category name to set
      */

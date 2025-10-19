@@ -152,9 +152,9 @@ public class User {
     }
 
     /**
-     * Gets whether this user account is active.
+     * Gets whether the user account is active.
      *
-     * @return true if the user is active, false otherwise
+     * @return true if the user is active, false otherwise, as a Boolean
      */
 
     public Boolean getIsActive() {
@@ -162,9 +162,9 @@ public class User {
     }
 
     /**
-     * Sets whether this user account is active.
+     * Sets whether the user account is active.
      *
-     * @param isActive true to activate the user, false to deactivate
+     * @param isActive the active status to set
      */
 
     public void setIsActive(Boolean isActive) {
