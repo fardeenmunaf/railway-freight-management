@@ -189,19 +189,19 @@ COMMIT;
 -- ============================================================
 
 -- LINE_SEGMENT depende de LINE e GAUGE
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (1, 1, 2618, 1, 1, 8000, 100, 0, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (10, 2, 29003, 1, 1, 8000, 90, 1, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (11, 2, 10000, 1, 1, 8000, 80, 1, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (15, 3, 5286, 1, 1, 8000, 110, 1, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (16, 3, 6000, 1, 1, 8000, 100, 1, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (14, 4, 10387, 1, 1, 8000, 100, 1, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (12, 4, 12000, 1, 1, 8000, 100, 1, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (13, 4, 8000, 1, 1, 6400, 100, 1, 3);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (20, 5, 6000, 1, 1, 8000, 100, 1, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (21, 5, 3000, 1, 1, 8000, 100, 1, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (22, 5, 15000, 1, 1, 8000, 100, 1, 3);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (25, 6, 20829, 1, 1, 8000, 100, 1, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, single_track, position) VALUES (26, 7, 4264, 1, 1, 8000, 100, 1, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (1, 1, 2618, 1, 1, 8000, 100, 4, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (10, 2, 29003, 1, 1, 8000, 90, 2, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (11, 2, 10000, 1, 1, 8000, 80, 2, 2);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (15, 3, 5286, 1, 1, 8000, 110, 2, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (16, 3, 6000, 1, 1, 8000, 100, 2, 2);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (14, 4, 10387, 1, 1, 8000, 100, 2, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (12, 4, 12000, 1, 1, 8000, 100, 2, 2);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (13, 4, 8000, 1, 1, 6400, 100, 2, 3);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (20, 5, 6000, 1, 1, 8000, 100, 2, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (21, 5, 3000, 1, 1, 8000, 100, 2, 2);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (22, 5, 15000, 1, 1, 8000, 100, 2, 3);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (25, 6, 20829, 1, 1, 8000, 100, 2, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (26, 7, 4264, 1, 1, 8000, 100, 2, 1);
 COMMIT;
 -- WAGON_GAUGE depende de WAGON_MODEL e GAUGE
 INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (1245, 1);

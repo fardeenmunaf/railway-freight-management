@@ -86,7 +86,7 @@ CREATE TABLE LINE_SEGMENT
     gauge_id        NUMBER              NOT NULL,
     max_weight_kg_m NUMBER              NOT NULL,
     speed_limit_kmh NUMBER              NOT NULL,
-    single_track    NUMBER(1) DEFAULT 1 NOT NULL CHECK (single_track IN (0, 1)),
+    track_number    NUMBER              NOT NULL,
     position        NUMBER              NOT NULL
 );
 
@@ -640,7 +640,7 @@ ALTER TABLE LINE_SEGMENT_FACILITY
     ADD CONSTRAINT fk_line_segment_facility_fac FOREIGN KEY (facility_id) REFERENCES FACILITY (facility_id);
 
 ALTER TABLE TRAIN
-    ADD CONSTRAINT fk_train_operator FOREIGN KEY (operator_id) REFERENCES "COMPANY" (company_id);
+    ADD CONSTRAINT fk_train_operator FOREIGN KEY (operator_id) REFERENCES "USER" (user_id);
 
 ALTER TABLE TRAIN_SERVICE
     ADD CONSTRAINT fk_train_service_driver FOREIGN KEY (train_driver_id) REFERENCES "USER" (user_id);
