@@ -159,15 +159,42 @@ public class AppInitializer implements Runnable {
             // Parse receivedAt as LocalDateTime (ISO format: 2025-07-05T15:42:00)
             LocalDateTime receivedAt = LocalDateTime.parse(receivedAtStr);
 
-            // Create InventoryLot (box) - lotId is the numeric part of boxId
+            // Create InventoryLot (box) - cada linha do CSV é um lote diferente
             InventoryLot lot = new InventoryLot(lotId, sku, qty, expiryDate, receivedAt);
             repositories.getInventoryLotRepository().addInventoryLot(lot);
 
-            // Create InventoryBalance with bay = null (not yet assigned to any bay)
-            InventoryBalance balance = new InventoryBalance(balanceIdCounter, null, lot, qty);
-            balanceController.createInventoryBalance(balance);
-            balanceIdCounter++;
+            // Check if balance already exists for this SKU
+            InventoryBalance existingBalance = findBalanceBySku(balanceController, sku);
+
+            if (existingBalance != null) {
+                // Update existing balance - add quantity from this lot
+                Integer newQty = existingBalance.getQty() + qty;
+                InventoryBalance updatedBalance = new InventoryBalance(existingBalance.getBalanceId(), existingBalance.getBay(), existingBalance.getLot(), newQty);
+                balanceController.updateInventoryBalance(existingBalance.getBalanceId(), updatedBalance);
+            } else {
+                // Create new balance for this SKU with bay = null (not yet assigned)
+                InventoryBalance balance = new InventoryBalance(balanceIdCounter, null, lot, qty);
+                balanceController.createInventoryBalance(balance);
+                balanceIdCounter++;
+            }
         }
+    }
+
+    /**
+     * Helper method to find an existing InventoryBalance by SKU.
+     *
+     * @param balanceController the inventory balance controller
+     * @param sku the SKU to search for
+     * @return the existing InventoryBalance, or null if not found
+     */
+    private InventoryBalance findBalanceBySku(InventoryBalanceController balanceController, Integer sku) {
+        List<InventoryBalance> allBalances = balanceController.getAllInventoryBalances();
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getLot() != null && sku.equals(balance.getLot().getSku())) {
+                return balance;
+            }
+        }
+        return null;
     }
 
 }

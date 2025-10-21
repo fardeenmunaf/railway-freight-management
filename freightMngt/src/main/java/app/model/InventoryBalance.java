@@ -91,7 +91,7 @@ public class InventoryBalance {
      * @return the inventory lot as an InventoryLot object
      */
 
-    public InventoryLot getLotId() {
+    public InventoryLot getLot() {
         return lot;
     }
 
@@ -101,7 +101,7 @@ public class InventoryBalance {
      * @param lot the inventory lot to set
      */
 
-    public void setLotId(InventoryLot lot) {
+    public void setLot(InventoryLot lot) {
         this.lot = lot;
     }
 
