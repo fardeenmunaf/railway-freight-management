@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.WagonType;
-import java.util.ArrayList;
+import app.repositories.WagonTypeRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class WagonTypeController {
-    private List<WagonType> wagonTypes;
+    private final WagonTypeRepository repository;
 
     /**
-     * Default constructor that initializes the wagon type list.
+     * Default constructor that initializes the controller with the wagon type repository.
      */
     public WagonTypeController() {
-        this.wagonTypes = new ArrayList<>();
+        this.repository = Repositories.getInstance().getWagonTypeRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class WagonTypeController {
      */
     public WagonType createWagonType(WagonType wagonType) {
         if (wagonType != null) {
-            wagonTypes.add(wagonType);
+            repository.addWagonType(wagonType);
         }
         return wagonType;
     }
@@ -42,7 +43,7 @@ public class WagonTypeController {
      * @return a list of all WagonType objects
      */
     public List<WagonType> getAllWagonTypes() {
-        return new ArrayList<>(wagonTypes);
+        return repository.getAllWagonTypes();
     }
 
     /**
@@ -52,9 +53,8 @@ public class WagonTypeController {
      * @return an Optional containing the WagonType if found, or empty if not found
      */
     public Optional<WagonType> getWagonTypeById(Integer wagonTypeId) {
-        return wagonTypes.stream()
-                .filter(wagonType -> wagonType.getWagonTypeId().equals(wagonTypeId))
-                .findFirst();
+        WagonType wagonType = repository.getWagonTypeById(wagonTypeId);
+        return Optional.ofNullable(wagonType);
     }
 
     /**
@@ -65,13 +65,7 @@ public class WagonTypeController {
      * @return true if the wagon type was updated successfully, false otherwise
      */
     public boolean updateWagonType(Integer wagonTypeId, WagonType updatedWagonType) {
-        Optional<WagonType> existingWagonType = getWagonTypeById(wagonTypeId);
-        if (existingWagonType.isPresent()) {
-            int index = wagonTypes.indexOf(existingWagonType.get());
-            wagonTypes.set(index, updatedWagonType);
-            return true;
-        }
-        return false;
+        return repository.updateWagonType(wagonTypeId, updatedWagonType);
     }
 
     /**
@@ -81,7 +75,23 @@ public class WagonTypeController {
      * @return true if the wagon type was deleted successfully, false otherwise
      */
     public boolean deleteWagonType(Integer wagonTypeId) {
-        return wagonTypes.removeIf(wagonType -> wagonType.getWagonTypeId().equals(wagonTypeId));
+        return repository.deleteWagonType(wagonTypeId);
+    }
+
+    /**
+     * Gets the next available wagon type ID.
+     *
+     * @return the next wagon type ID to be used
+     */
+    public Integer getNextWagonTypeId() {
+        return repository.getNextWagonTypeId();
+    }
+
+    /**
+     * Clears all wagon types from the system.
+     */
+    public void clearAllWagonTypes() {
+        repository.clear();
     }
 }
 

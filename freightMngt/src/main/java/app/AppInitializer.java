@@ -49,6 +49,7 @@ public class AppInitializer implements Runnable {
             repositories.getWarehouseBayRepository().addWarehouseBay(bay);
         }
     }
+
     private Warehouse getOrCreateWarehouse(String warehouseIdStr, Repositories repositories) {
         Integer warehouseId = Integer.parseInt(warehouseIdStr.substring(1));
         Warehouse warehouse = repositories.getWarehouseRepository().getWarehouseById(warehouseId);
@@ -60,6 +61,7 @@ public class AppInitializer implements Runnable {
         }
         return warehouse;
     }
+
     private WarehouseAisle getOrCreateAisle(Warehouse warehouse, Integer aisleNo, Repositories repositories) {
         WarehouseAisleRepository aisleRepo = repositories.getWarehouseAisleRepository();
         WarehouseAisle aisle = aisleRepo.getAisle(warehouse.getWarehouseId(), aisleNo);
@@ -142,7 +144,14 @@ public class AppInitializer implements Runnable {
             // Parse expiryDate (optional - can be null/empty)
             LocalDateTime expiryDate = null;
             if (expiryDateStr != null && !expiryDateStr.trim().isEmpty()) {
-                expiryDate = LocalDateTime.parse(expiryDateStr);
+                // Handle both date-only format (2026-01-05) and datetime format
+                if (expiryDateStr.length() == 10) {
+                    // Date only format - add default time (start of day)
+                    expiryDate = LocalDateTime.parse(expiryDateStr + "T00:00:00");
+                } else {
+                    // Full datetime format
+                    expiryDate = LocalDateTime.parse(expiryDateStr);
+                }
             }
 
             // Parse receivedAt as LocalDateTime (ISO format: 2025-07-05T15:42:00)

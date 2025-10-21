@@ -99,6 +99,16 @@ public class GaugeController {
     }
 
     /**
+     * Checks if a gauge with the given name exists in the repository.
+     *
+     * @param gaugeName the gauge name
+     * @return true if a gauge with this name exists, false otherwise
+     */
+    public boolean containsName(String gaugeName) {
+        return repository.containsName(gaugeName);
+    }
+
+    /**
      * Clears all gauges from the system.
      */
     public void clearAllGauges() {

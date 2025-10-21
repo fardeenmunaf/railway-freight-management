@@ -58,6 +58,17 @@ public class FacilityController {
     }
 
     /**
+     * Retrieves a facility by its name.
+     *
+     * @param name the name of the facility
+     * @return an Optional containing the Facility if found, or empty if not found
+     */
+    public Optional<Facility> getFacilityByName(String name) {
+        Facility facility = repository.getFacilityByName(name);
+        return Optional.ofNullable(facility);
+    }
+
+    /**
      * Updates an existing facility in the system.
      *
      * @param facilityId the unique identifier of the facility to update
@@ -85,6 +96,16 @@ public class FacilityController {
      */
     public Integer getNextFacilityId() {
         return repository.getNextFacilityId();
+    }
+
+    /**
+     * Checks if a facility with the given name exists in the repository.
+     *
+     * @param name the facility name
+     * @return true if a facility with this name exists, false otherwise
+     */
+    public boolean containsName(String name) {
+        return repository.containsName(name);
     }
 
     /**
