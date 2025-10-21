@@ -173,4 +173,16 @@ public class Facility {
     public void setIsIntermodal(Boolean isIntermodal) {
         this.isIntermodal = isIntermodal;
     }
+
+    @Override
+    public String toString() {
+        return "Facility{" +
+                "facilityId=" + facilityId +
+                ", name='" + name + '\'' +
+                ", facilityType=" + facilityType +
+                ", lat=" + lat +
+                ", lon=" + lon +
+                ", isIntermodal=" + isIntermodal +
+                '}';
+    }
 }
