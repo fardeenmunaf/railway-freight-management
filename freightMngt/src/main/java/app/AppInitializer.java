@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Bootstrap class to initialize the application with sample data
+ * AppInitializer class to initialize the application with sample data
  */
-public class Bootstrap implements Runnable {
+public class AppInitializer implements Runnable {
 
     private static final String BAYS_CSV = "src/main/java/app/sampleDataset/bays.csv";
     private static final String ITEMS_CSV = "src/main/java/app/sampleDataset/items.csv";
