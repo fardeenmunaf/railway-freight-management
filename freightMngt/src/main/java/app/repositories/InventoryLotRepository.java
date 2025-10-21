@@ -26,7 +26,7 @@ public class InventoryLotRepository {
         return new ArrayList<>(inventoryLots);
     }
 
-    public InventoryLot getInventoryLotById(String lotId) {
+    public InventoryLot getInventoryLotById(Integer lotId) {
         for (InventoryLot lot : inventoryLots) {
             if (lotId != null && lotId.equals(lot.getLotId())) {
                 return lot;
@@ -35,7 +35,7 @@ public class InventoryLotRepository {
         return null;
     }
 
-    public boolean updateInventoryLot(String lotId, InventoryLot updatedLot) {
+    public boolean updateInventoryLot(Integer lotId, InventoryLot updatedLot) {
         InventoryLot existingLot = getInventoryLotById(lotId);
         if (existingLot != null) {
             int index = inventoryLots.indexOf(existingLot);
@@ -45,28 +45,24 @@ public class InventoryLotRepository {
         return false;
     }
 
-    public boolean deleteInventoryLot(String lotId) {
+    public boolean deleteInventoryLot(Integer lotId) {
         return inventoryLots.removeIf(lot -> lotId != null && lotId.equals(lot.getLotId()));
     }
 
-    public String getNextLotId() {
+    public Integer getNextLotId() {
         int maxNumericId = 0;
         for (InventoryLot lot : inventoryLots) {
             if (lot.getLotId() != null) {
-                try {
-                    int numericId = Integer.parseInt(lot.getLotId());
-                    if (numericId > maxNumericId) {
-                        maxNumericId = numericId;
-                    }
-                } catch (NumberFormatException e) {
-                    // Skip non-numeric IDs
+                int numericId = lot.getLotId();
+                if (numericId > maxNumericId) {
+                    maxNumericId = numericId;
                 }
             }
         }
-        return String.valueOf(maxNumericId + 1);
+        return maxNumericId + 1;
     }
 
-    private boolean containsInventoryLot(String lotId) {
+    private boolean containsInventoryLot(Integer lotId) {
         return getInventoryLotById(lotId) != null;
     }
 

@@ -17,9 +17,9 @@ public class AppInitializer implements Runnable {
     private static final String BAYS_CSV = "src/main/java/app/sampleDataset/bays.csv";
     private static final String ITEMS_CSV = "src/main/java/app/sampleDataset/items.csv";
     private static final String ORDERS_CSV = "src/main/java/app/sampleDataset/orders.csv";
+    private static final String WAGONS_CSV = "src/main/java/app/sampleDataset/wagons.csv";
     private static final String ORDER_LINES_CSV = "src/main/java/app/sampleDataset/order_lines.csv";
     private static final String RETURNS_CSV = "src/main/java/app/sampleDataset/returns.csv";
-    private static final String WAGONS_CSV = "src/main/java/app/sampleDataset/wagons.csv";
 
     private int aisleIdCounter = 1;
 
@@ -29,6 +29,7 @@ public class AppInitializer implements Runnable {
         loadBays(repositories);
         loadItems(repositories);
         loadOrders(repositories);
+        loadWagons(repositories);
     }
 
     private void loadBays(Repositories repositories) {
@@ -118,6 +119,43 @@ public class AppInitializer implements Runnable {
             // Create order with default status "pending"
             Order order = new Order(orderId, "pending", priority, dueDate);
             repositories.getOrderRepository().addOrder(order);
+        }
+    }
+
+    private void loadWagons(Repositories repositories) {
+        List<Map<String, String>> data = CsvReader.readCsv(WAGONS_CSV, ",");
+        int balanceIdCounter = 1;
+        
+        for (Map<String, String> row : data) {
+            String boxId = row.get("boxId");
+            String skuString = row.get("sku");
+            Integer qty = Integer.parseInt(row.get("qty"));
+            String expiryDateStr = row.get("expiryDate");
+            String receivedAtStr = row.get("receivedAt");
+
+            // Extract numeric part from boxId (e.g., "BOX00001" -> 1)
+            Integer lotId = Integer.parseInt(boxId.substring(3));
+
+            // Parse sku as Integer (e.g., "SKU00001" -> 1)
+            Integer sku = Integer.parseInt(skuString.substring(3));
+
+            // Parse expiryDate (optional - can be null/empty)
+            LocalDateTime expiryDate = null;
+            if (expiryDateStr != null && !expiryDateStr.trim().isEmpty()) {
+                expiryDate = LocalDateTime.parse(expiryDateStr);
+            }
+
+            // Parse receivedAt as LocalDateTime (ISO format: 2025-07-05T15:42:00)
+            LocalDateTime receivedAt = LocalDateTime.parse(receivedAtStr);
+
+            // Create InventoryLot (box) - lotId is the numeric part of boxId
+            InventoryLot lot = new InventoryLot(lotId, sku, qty, expiryDate, receivedAt);
+            repositories.getInventoryLotRepository().addInventoryLot(lot);
+
+            // Create InventoryBalance with bay = null (not yet assigned to any bay)
+            InventoryBalance balance = new InventoryBalance(balanceIdCounter, null, lot, qty);
+            repositories.getInventoryBalanceRepository().addInventoryBalance(balance);
+            balanceIdCounter++;
         }
     }
 
