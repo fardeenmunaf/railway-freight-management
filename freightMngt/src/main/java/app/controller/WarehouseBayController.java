@@ -48,24 +48,24 @@ public class WarehouseBayController {
     /**
      * Retrieves a warehouse bay by its unique identifier.
      *
-     * @param warehouseBayId the unique identifier of the warehouse bay
+     * @param bayId the unique identifier of the warehouse bay
      * @return an Optional containing the WarehouseBay if found, or empty if not found
      */
-    public Optional<WarehouseBay> getWarehouseBayById(Integer warehouseBayId) {
+    public Optional<WarehouseBay> getWarehouseBayById(Integer bayId) {
         return warehouseBays.stream()
-                .filter(warehouseBay -> warehouseBay.getWarehouseBayId().equals(warehouseBayId))
+                .filter(warehouseBay -> warehouseBay.getBayId().equals(bayId))
                 .findFirst();
     }
 
     /**
      * Updates an existing warehouse bay in the system.
      *
-     * @param warehouseBayId the unique identifier of the warehouse bay to update
+     * @param bayId the unique identifier of the warehouse bay to update
      * @param updatedWarehouseBay the WarehouseBay object with updated information
      * @return true if the warehouse bay was updated successfully, false otherwise
      */
-    public boolean updateWarehouseBay(Integer warehouseBayId, WarehouseBay updatedWarehouseBay) {
-        Optional<WarehouseBay> existingWarehouseBay = getWarehouseBayById(warehouseBayId);
+    public boolean updateWarehouseBay(Integer bayId, WarehouseBay updatedWarehouseBay) {
+        Optional<WarehouseBay> existingWarehouseBay = getWarehouseBayById(bayId);
         if (existingWarehouseBay.isPresent()) {
             int index = warehouseBays.indexOf(existingWarehouseBay.get());
             warehouseBays.set(index, updatedWarehouseBay);
@@ -77,11 +77,10 @@ public class WarehouseBayController {
     /**
      * Deletes a warehouse bay from the system.
      *
-     * @param warehouseBayId the unique identifier of the warehouse bay to delete
+     * @param bayId the unique identifier of the warehouse bay to delete
      * @return true if the warehouse bay was deleted successfully, false otherwise
      */
-    public boolean deleteWarehouseBay(Integer warehouseBayId) {
-        return warehouseBays.removeIf(warehouseBay -> warehouseBay.getWarehouseBayId().equals(warehouseBayId));
+    public boolean deleteWarehouseBay(Integer bayId) {
+        return warehouseBays.removeIf(warehouseBay -> warehouseBay.getBayId().equals(bayId));
     }
 }
-
