@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.ServiceLocomotive;
-import java.util.ArrayList;
+import app.repositories.ServiceLocomotiveRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ServiceLocomotiveController {
-    private List<ServiceLocomotive> serviceLocomotives;
+    private final ServiceLocomotiveRepository repository;
 
     /**
-     * Default constructor that initializes the service locomotive list.
+     * Default constructor that initializes the controller with the service locomotive repository.
      */
     public ServiceLocomotiveController() {
-        this.serviceLocomotives = new ArrayList<>();
+        this.repository = Repositories.getInstance().getServiceLocomotiveRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class ServiceLocomotiveController {
      */
     public ServiceLocomotive createServiceLocomotive(ServiceLocomotive serviceLocomotive) {
         if (serviceLocomotive != null) {
-            serviceLocomotives.add(serviceLocomotive);
+            repository.addServiceLocomotive(serviceLocomotive);
         }
         return serviceLocomotive;
     }
@@ -42,46 +43,35 @@ public class ServiceLocomotiveController {
      * @return a list of all ServiceLocomotive objects
      */
     public List<ServiceLocomotive> getAllServiceLocomotives() {
-        return new ArrayList<>(serviceLocomotives);
+        return repository.getAllServiceLocomotives();
     }
 
     /**
-     * Retrieves a service locomotive by its unique identifier.
+     * Retrieves all service locomotives for a specific train service.
      *
-     * @param serviceLocomotiveId the unique identifier of the service locomotive
-     * @return an Optional containing the ServiceLocomotive if found, or empty if not found
+     * @param trainServiceId the train service identifier
+     * @return a list of all ServiceLocomotive objects for the specified train service
      */
-    public Optional<ServiceLocomotive> getServiceLocomotiveById(Integer serviceLocomotiveId) {
-        return serviceLocomotives.stream()
-                .filter(serviceLocomotive -> serviceLocomotive.getServiceLocomotiveId().equals(serviceLocomotiveId))
-                .findFirst();
-    }
-
-    /**
-     * Updates an existing service locomotive in the system.
-     *
-     * @param serviceLocomotiveId the unique identifier of the service locomotive to update
-     * @param updatedServiceLocomotive the ServiceLocomotive object with updated information
-     * @return true if the service locomotive was updated successfully, false otherwise
-     */
-    public boolean updateServiceLocomotive(Integer serviceLocomotiveId, ServiceLocomotive updatedServiceLocomotive) {
-        Optional<ServiceLocomotive> existingServiceLocomotive = getServiceLocomotiveById(serviceLocomotiveId);
-        if (existingServiceLocomotive.isPresent()) {
-            int index = serviceLocomotives.indexOf(existingServiceLocomotive.get());
-            serviceLocomotives.set(index, updatedServiceLocomotive);
-            return true;
-        }
-        return false;
+    public List<ServiceLocomotive> getServiceLocomotivesByTrainService(Integer trainServiceId) {
+        return repository.getServiceLocomotivesByServiceId(trainServiceId);
     }
 
     /**
      * Deletes a service locomotive from the system.
      *
-     * @param serviceLocomotiveId the unique identifier of the service locomotive to delete
+     * @param trainServiceId the train service identifier
+     * @param locomotiveId the locomotive identifier
      * @return true if the service locomotive was deleted successfully, false otherwise
      */
-    public boolean deleteServiceLocomotive(Integer serviceLocomotiveId) {
-        return serviceLocomotives.removeIf(serviceLocomotive -> serviceLocomotive.getServiceLocomotiveId().equals(serviceLocomotiveId));
+    public boolean deleteServiceLocomotive(Integer trainServiceId, Integer locomotiveId) {
+        return repository.deleteServiceLocomotive(trainServiceId, locomotiveId);
+    }
+
+    /**
+     * Clears all service locomotives from the system.
+     */
+    public void clearAllServiceLocomotives() {
+        repository.clear();
     }
 }
 

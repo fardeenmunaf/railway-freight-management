@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.TrackType;
-import java.util.ArrayList;
+import app.repositories.TrackTypeRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class TrackTypeController {
-    private List<TrackType> trackTypes;
+    private final TrackTypeRepository repository;
 
     /**
-     * Default constructor that initializes the track type list.
+     * Default constructor that initializes the controller with the track type repository.
      */
     public TrackTypeController() {
-        this.trackTypes = new ArrayList<>();
+        this.repository = Repositories.getInstance().getTrackTypeRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class TrackTypeController {
      */
     public TrackType createTrackType(TrackType trackType) {
         if (trackType != null) {
-            trackTypes.add(trackType);
+            repository.addTrackType(trackType);
         }
         return trackType;
     }
@@ -42,7 +43,7 @@ public class TrackTypeController {
      * @return a list of all TrackType objects
      */
     public List<TrackType> getAllTrackTypes() {
-        return new ArrayList<>(trackTypes);
+        return repository.getAllTrackTypes();
     }
 
     /**
@@ -52,9 +53,8 @@ public class TrackTypeController {
      * @return an Optional containing the TrackType if found, or empty if not found
      */
     public Optional<TrackType> getTrackTypeById(Integer trackTypeId) {
-        return trackTypes.stream()
-                .filter(trackType -> trackType.getTrackTypeId().equals(trackTypeId))
-                .findFirst();
+        TrackType trackType = repository.getTrackTypeById(trackTypeId);
+        return Optional.ofNullable(trackType);
     }
 
     /**
@@ -65,13 +65,7 @@ public class TrackTypeController {
      * @return true if the track type was updated successfully, false otherwise
      */
     public boolean updateTrackType(Integer trackTypeId, TrackType updatedTrackType) {
-        Optional<TrackType> existingTrackType = getTrackTypeById(trackTypeId);
-        if (existingTrackType.isPresent()) {
-            int index = trackTypes.indexOf(existingTrackType.get());
-            trackTypes.set(index, updatedTrackType);
-            return true;
-        }
-        return false;
+        return repository.updateTrackType(trackTypeId, updatedTrackType);
     }
 
     /**
@@ -81,6 +75,23 @@ public class TrackTypeController {
      * @return true if the track type was deleted successfully, false otherwise
      */
     public boolean deleteTrackType(Integer trackTypeId) {
-        return trackTypes.removeIf(trackType -> trackType.getTrackTypeId().equals(trackTypeId));
+        return repository.deleteTrackType(trackTypeId);
+    }
+
+    /**
+     * Gets the next available track type ID.
+     *
+     * @return the next track type ID to be used
+     */
+    public Integer getNextTrackTypeId() {
+        return repository.getNextTrackTypeId();
+    }
+
+    /**
+     * Clears all track types from the system.
+     */
+    public void clearAllTrackTypes() {
+        repository.clear();
     }
 }
+

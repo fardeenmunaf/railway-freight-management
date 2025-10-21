@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.TrainServiceComposition;
-import java.util.ArrayList;
+import app.repositories.TrainServiceCompositionRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class TrainServiceCompositionController {
-    private List<TrainServiceComposition> trainServiceCompositions;
+    private final TrainServiceCompositionRepository repository;
 
     /**
-     * Default constructor that initializes the train service composition list.
+     * Default constructor that initializes the controller with the train service composition repository.
      */
     public TrainServiceCompositionController() {
-        this.trainServiceCompositions = new ArrayList<>();
+        this.repository = Repositories.getInstance().getTrainServiceCompositionRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class TrainServiceCompositionController {
      */
     public TrainServiceComposition createTrainServiceComposition(TrainServiceComposition trainServiceComposition) {
         if (trainServiceComposition != null) {
-            trainServiceCompositions.add(trainServiceComposition);
+            repository.addTrainServiceComposition(trainServiceComposition);
         }
         return trainServiceComposition;
     }
@@ -42,45 +43,35 @@ public class TrainServiceCompositionController {
      * @return a list of all TrainServiceComposition objects
      */
     public List<TrainServiceComposition> getAllTrainServiceCompositions() {
-        return new ArrayList<>(trainServiceCompositions);
+        return repository.getAllTrainServiceCompositions();
     }
 
     /**
-     * Retrieves a train service composition by its unique identifier.
+     * Retrieves all train service compositions for a specific service.
      *
-     * @param trainServiceId the unique identifier of the train service composition
-     * @return an Optional containing the TrainServiceComposition if found, or empty if not found
+     * @param serviceId the service identifier
+     * @return a list of all TrainServiceComposition objects for the specified service
      */
-    public Optional<TrainServiceComposition> getTrainServiceCompositionById(Integer trainServiceId) {
-        return trainServiceCompositions.stream()
-                .filter(trainServiceComposition -> trainServiceComposition.getTrainService().getServiceId().equals(trainServiceId))
-                .findFirst();
-    }
-
-    /**
-     * Updates an existing train service composition in the system.
-     *
-     * @param trainServiceId the unique identifier of the train service composition to update
-     * @param updatedTrainServiceComposition the TrainServiceComposition object with updated information
-     * @return true if the train service composition was updated successfully, false otherwise
-     */
-    public boolean updateTrainServiceComposition(Integer trainServiceId, TrainServiceComposition updatedTrainServiceComposition) {
-        Optional<TrainServiceComposition> existingTrainServiceComposition = getTrainServiceCompositionById(trainServiceId);
-        if (existingTrainServiceComposition.isPresent()) {
-            int index = trainServiceCompositions.indexOf(existingTrainServiceComposition.get());
-            trainServiceCompositions.set(index, updatedTrainServiceComposition);
-            return true;
-        }
-        return false;
+    public List<TrainServiceComposition> getTrainServiceCompositionsByService(Integer serviceId) {
+        return repository.getTrainServiceCompositionsByServiceId(serviceId);
     }
 
     /**
      * Deletes a train service composition from the system.
      *
-     * @param trainServiceId the unique identifier of the train service composition to delete
+     * @param serviceId the service identifier
+     * @param locomotiveId the locomotive identifier (optional, can be null)
+     * @param wagonId the wagon identifier (optional, can be null)
      * @return true if the train service composition was deleted successfully, false otherwise
      */
-    public boolean deleteTrainServiceComposition(Integer trainServiceId) {
-        return trainServiceCompositions.removeIf(trainServiceComposition -> trainServiceComposition.getTrainService().getServiceId().equals(trainServiceId));
+    public boolean deleteTrainServiceComposition(Integer serviceId, Integer locomotiveId, Integer wagonId) {
+        return repository.deleteTrainServiceComposition(serviceId, locomotiveId, wagonId);
+    }
+
+    /**
+     * Clears all train service compositions from the system.
+     */
+    public void clearAllTrainServiceCompositions() {
+        repository.clear();
     }
 }

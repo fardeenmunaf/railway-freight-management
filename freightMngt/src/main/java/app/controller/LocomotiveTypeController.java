@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.LocomotiveType;
-import java.util.ArrayList;
+import app.repositories.LocomotiveTypeRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class LocomotiveTypeController {
-    private List<LocomotiveType> locomotiveTypes;
+    private final LocomotiveTypeRepository repository;
 
     /**
-     * Default constructor that initializes the locomotive type list.
+     * Default constructor that initializes the controller with the locomotive type repository.
      */
     public LocomotiveTypeController() {
-        this.locomotiveTypes = new ArrayList<>();
+        this.repository = Repositories.getInstance().getLocomotiveTypeRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class LocomotiveTypeController {
      */
     public LocomotiveType createLocomotiveType(LocomotiveType locomotiveType) {
         if (locomotiveType != null) {
-            locomotiveTypes.add(locomotiveType);
+            repository.addLocomotiveType(locomotiveType);
         }
         return locomotiveType;
     }
@@ -42,7 +43,7 @@ public class LocomotiveTypeController {
      * @return a list of all LocomotiveType objects
      */
     public List<LocomotiveType> getAllLocomotiveTypes() {
-        return new ArrayList<>(locomotiveTypes);
+        return repository.getAllLocomotiveTypes();
     }
 
     /**
@@ -52,9 +53,8 @@ public class LocomotiveTypeController {
      * @return an Optional containing the LocomotiveType if found, or empty if not found
      */
     public Optional<LocomotiveType> getLocomotiveTypeById(Integer locomotiveTypeId) {
-        return locomotiveTypes.stream()
-                .filter(locomotiveType -> locomotiveType.getLocomotiveTypeId().equals(locomotiveTypeId))
-                .findFirst();
+        LocomotiveType locomotiveType = repository.getLocomotiveTypeById(locomotiveTypeId);
+        return Optional.ofNullable(locomotiveType);
     }
 
     /**
@@ -65,13 +65,7 @@ public class LocomotiveTypeController {
      * @return true if the locomotive type was updated successfully, false otherwise
      */
     public boolean updateLocomotiveType(Integer locomotiveTypeId, LocomotiveType updatedLocomotiveType) {
-        Optional<LocomotiveType> existingLocomotiveType = getLocomotiveTypeById(locomotiveTypeId);
-        if (existingLocomotiveType.isPresent()) {
-            int index = locomotiveTypes.indexOf(existingLocomotiveType.get());
-            locomotiveTypes.set(index, updatedLocomotiveType);
-            return true;
-        }
-        return false;
+        return repository.updateLocomotiveType(locomotiveTypeId, updatedLocomotiveType);
     }
 
     /**
@@ -81,7 +75,22 @@ public class LocomotiveTypeController {
      * @return true if the locomotive type was deleted successfully, false otherwise
      */
     public boolean deleteLocomotiveType(Integer locomotiveTypeId) {
-        return locomotiveTypes.removeIf(locomotiveType -> locomotiveType.getLocomotiveTypeId().equals(locomotiveTypeId));
+        return repository.deleteLocomotiveType(locomotiveTypeId);
+    }
+
+    /**
+     * Gets the next available locomotive type ID.
+     *
+     * @return the next locomotive type ID to be used
+     */
+    public Integer getNextLocomotiveTypeId() {
+        return repository.getNextTypeId();
+    }
+
+    /**
+     * Clears all locomotive types from the system.
+     */
+    public void clearAllLocomotiveTypes() {
+        repository.clear();
     }
 }
-

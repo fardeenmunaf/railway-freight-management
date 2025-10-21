@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Locomotive;
-import java.util.ArrayList;
+import app.repositories.LocomotiveRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class LocomotiveController {
-    private List<Locomotive> locomotives;
+    private final LocomotiveRepository repository;
 
     /**
-     * Default constructor that initializes the locomotive list.
+     * Default constructor that initializes the controller with the locomotive repository.
      */
     public LocomotiveController() {
-        this.locomotives = new ArrayList<>();
+        this.repository = Repositories.getInstance().getLocomotiveRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class LocomotiveController {
      */
     public Locomotive createLocomotive(Locomotive locomotive) {
         if (locomotive != null) {
-            locomotives.add(locomotive);
+            repository.addLocomotive(locomotive);
         }
         return locomotive;
     }
@@ -42,7 +43,7 @@ public class LocomotiveController {
      * @return a list of all Locomotive objects
      */
     public List<Locomotive> getAllLocomotives() {
-        return new ArrayList<>(locomotives);
+        return repository.getAllLocomotives();
     }
 
     /**
@@ -52,9 +53,8 @@ public class LocomotiveController {
      * @return an Optional containing the Locomotive if found, or empty if not found
      */
     public Optional<Locomotive> getLocomotiveById(Integer locomotiveId) {
-        return locomotives.stream()
-                .filter(locomotive -> locomotive.getLocomotiveId().equals(locomotiveId))
-                .findFirst();
+        Locomotive locomotive = repository.getLocomotiveById(locomotiveId);
+        return Optional.ofNullable(locomotive);
     }
 
     /**
@@ -65,13 +65,7 @@ public class LocomotiveController {
      * @return true if the locomotive was updated successfully, false otherwise
      */
     public boolean updateLocomotive(Integer locomotiveId, Locomotive updatedLocomotive) {
-        Optional<Locomotive> existingLocomotive = getLocomotiveById(locomotiveId);
-        if (existingLocomotive.isPresent()) {
-            int index = locomotives.indexOf(existingLocomotive.get());
-            locomotives.set(index, updatedLocomotive);
-            return true;
-        }
-        return false;
+        return repository.updateLocomotive(locomotiveId, updatedLocomotive);
     }
 
     /**
@@ -81,7 +75,22 @@ public class LocomotiveController {
      * @return true if the locomotive was deleted successfully, false otherwise
      */
     public boolean deleteLocomotive(Integer locomotiveId) {
-        return locomotives.removeIf(locomotive -> locomotive.getLocomotiveId().equals(locomotiveId));
+        return repository.deleteLocomotive(locomotiveId);
+    }
+
+    /**
+     * Gets the next available locomotive ID.
+     *
+     * @return the next locomotive ID to be used
+     */
+    public Integer getNextLocomotiveId() {
+        return repository.getNextLocomotiveId();
+    }
+
+    /**
+     * Clears all locomotives from the system.
+     */
+    public void clearAllLocomotives() {
+        repository.clear();
     }
 }
-

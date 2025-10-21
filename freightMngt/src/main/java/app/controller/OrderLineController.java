@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.OrderLine;
-import java.util.ArrayList;
+import app.repositories.OrderLineRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class OrderLineController {
-    private List<OrderLine> orderLines;
+    private final OrderLineRepository repository;
 
     /**
-     * Default constructor that initializes the order line list.
+     * Default constructor that initializes the controller with the order line repository.
      */
     public OrderLineController() {
-        this.orderLines = new ArrayList<>();
+        this.repository = Repositories.getInstance().getOrderLineRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class OrderLineController {
      */
     public OrderLine createOrderLine(OrderLine orderLine) {
         if (orderLine != null) {
-            orderLines.add(orderLine);
+            repository.addOrderLine(orderLine);
         }
         return orderLine;
     }
@@ -42,7 +43,7 @@ public class OrderLineController {
      * @return a list of all OrderLine objects
      */
     public List<OrderLine> getAllOrderLines() {
-        return new ArrayList<>(orderLines);
+        return repository.getAllOrderLines();
     }
 
     /**
@@ -52,9 +53,8 @@ public class OrderLineController {
      * @return an Optional containing the OrderLine if found, or empty if not found
      */
     public Optional<OrderLine> getOrderLineById(Integer orderLineId) {
-        return orderLines.stream()
-                .filter(orderLine -> orderLine.getOrderLineId().equals(orderLineId))
-                .findFirst();
+        OrderLine orderLine = repository.getOrderLineById(orderLineId);
+        return Optional.ofNullable(orderLine);
     }
 
     /**
@@ -65,13 +65,7 @@ public class OrderLineController {
      * @return true if the order line was updated successfully, false otherwise
      */
     public boolean updateOrderLine(Integer orderLineId, OrderLine updatedOrderLine) {
-        Optional<OrderLine> existingOrderLine = getOrderLineById(orderLineId);
-        if (existingOrderLine.isPresent()) {
-            int index = orderLines.indexOf(existingOrderLine.get());
-            orderLines.set(index, updatedOrderLine);
-            return true;
-        }
-        return false;
+        return repository.updateOrderLine(orderLineId, updatedOrderLine);
     }
 
     /**
@@ -81,7 +75,22 @@ public class OrderLineController {
      * @return true if the order line was deleted successfully, false otherwise
      */
     public boolean deleteOrderLine(Integer orderLineId) {
-        return orderLines.removeIf(orderLine -> orderLine.getOrderLineId().equals(orderLineId));
+        return repository.deleteOrderLine(orderLineId);
+    }
+
+    /**
+     * Gets the next available order line ID.
+     *
+     * @return the next order line ID to be used
+     */
+    public Integer getNextOrderLineId() {
+        return repository.getNextOrderLineId();
+    }
+
+    /**
+     * Clears all order lines from the system.
+     */
+    public void clearAllOrderLines() {
+        repository.clear();
     }
 }
-

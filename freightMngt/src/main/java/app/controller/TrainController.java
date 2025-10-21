@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Train;
-import java.util.ArrayList;
+import app.repositories.TrainRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class TrainController {
-    private List<Train> trains;
+    private final TrainRepository repository;
 
     /**
-     * Default constructor that initializes the train list.
+     * Default constructor that initializes the controller with the train repository.
      */
     public TrainController() {
-        this.trains = new ArrayList<>();
+        this.repository = Repositories.getInstance().getTrainRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class TrainController {
      */
     public Train createTrain(Train train) {
         if (train != null) {
-            trains.add(train);
+            repository.addTrain(train);
         }
         return train;
     }
@@ -42,7 +43,7 @@ public class TrainController {
      * @return a list of all Train objects
      */
     public List<Train> getAllTrains() {
-        return new ArrayList<>(trains);
+        return repository.getAllTrains();
     }
 
     /**
@@ -52,9 +53,8 @@ public class TrainController {
      * @return an Optional containing the Train if found, or empty if not found
      */
     public Optional<Train> getTrainById(Integer trainId) {
-        return trains.stream()
-                .filter(train -> train.getTrainId().equals(trainId))
-                .findFirst();
+        Train train = repository.getTrainById(trainId);
+        return Optional.ofNullable(train);
     }
 
     /**
@@ -65,13 +65,7 @@ public class TrainController {
      * @return true if the train was updated successfully, false otherwise
      */
     public boolean updateTrain(Integer trainId, Train updatedTrain) {
-        Optional<Train> existingTrain = getTrainById(trainId);
-        if (existingTrain.isPresent()) {
-            int index = trains.indexOf(existingTrain.get());
-            trains.set(index, updatedTrain);
-            return true;
-        }
-        return false;
+        return repository.updateTrain(trainId, updatedTrain);
     }
 
     /**
@@ -81,7 +75,23 @@ public class TrainController {
      * @return true if the train was deleted successfully, false otherwise
      */
     public boolean deleteTrain(Integer trainId) {
-        return trains.removeIf(train -> train.getTrainId().equals(trainId));
+        return repository.deleteTrain(trainId);
+    }
+
+    /**
+     * Gets the next available train ID.
+     *
+     * @return the next train ID to be used
+     */
+    public Integer getNextTrainId() {
+        return repository.getNextTrainId();
+    }
+
+    /**
+     * Clears all trains from the system.
+     */
+    public void clearAllTrains() {
+        repository.clear();
     }
 }
 

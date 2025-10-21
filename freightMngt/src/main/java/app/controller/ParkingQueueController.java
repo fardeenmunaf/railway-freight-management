@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.ParkingQueue;
-import java.util.ArrayList;
+import app.repositories.ParkingQueueRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ParkingQueueController {
-    private List<ParkingQueue> parkingQueues;
+    private final ParkingQueueRepository repository;
 
     /**
-     * Default constructor that initializes the parking queue list.
+     * Default constructor that initializes the controller with the parking queue repository.
      */
     public ParkingQueueController() {
-        this.parkingQueues = new ArrayList<>();
+        this.repository = Repositories.getInstance().getParkingQueueRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class ParkingQueueController {
      */
     public ParkingQueue createParkingQueue(ParkingQueue parkingQueue) {
         if (parkingQueue != null) {
-            parkingQueues.add(parkingQueue);
+            repository.addParkingQueue(parkingQueue);
         }
         return parkingQueue;
     }
@@ -42,7 +43,7 @@ public class ParkingQueueController {
      * @return a list of all ParkingQueue objects
      */
     public List<ParkingQueue> getAllParkingQueues() {
-        return new ArrayList<>(parkingQueues);
+        return repository.getAllParkingQueues();
     }
 
     /**
@@ -52,9 +53,8 @@ public class ParkingQueueController {
      * @return an Optional containing the ParkingQueue if found, or empty if not found
      */
     public Optional<ParkingQueue> getParkingQueueById(Integer parkingQueueId) {
-        return parkingQueues.stream()
-                .filter(parkingQueue -> parkingQueue.getParkingQueueId().equals(parkingQueueId))
-                .findFirst();
+        ParkingQueue parkingQueue = repository.getParkingQueueById(parkingQueueId);
+        return Optional.ofNullable(parkingQueue);
     }
 
     /**
@@ -65,13 +65,7 @@ public class ParkingQueueController {
      * @return true if the parking queue was updated successfully, false otherwise
      */
     public boolean updateParkingQueue(Integer parkingQueueId, ParkingQueue updatedParkingQueue) {
-        Optional<ParkingQueue> existingParkingQueue = getParkingQueueById(parkingQueueId);
-        if (existingParkingQueue.isPresent()) {
-            int index = parkingQueues.indexOf(existingParkingQueue.get());
-            parkingQueues.set(index, updatedParkingQueue);
-            return true;
-        }
-        return false;
+        return repository.updateParkingQueue(parkingQueueId, updatedParkingQueue);
     }
 
     /**
@@ -81,7 +75,22 @@ public class ParkingQueueController {
      * @return true if the parking queue was deleted successfully, false otherwise
      */
     public boolean deleteParkingQueue(Integer parkingQueueId) {
-        return parkingQueues.removeIf(parkingQueue -> parkingQueue.getParkingQueueId().equals(parkingQueueId));
+        return repository.deleteParkingQueue(parkingQueueId);
+    }
+
+    /**
+     * Gets the next available parking queue ID.
+     *
+     * @return the next parking queue ID to be used
+     */
+    public Integer getNextParkingQueueId() {
+        return repository.getNextQueueId();
+    }
+
+    /**
+     * Clears all parking queues from the system.
+     */
+    public void clearAllParkingQueues() {
+        repository.clear();
     }
 }
-

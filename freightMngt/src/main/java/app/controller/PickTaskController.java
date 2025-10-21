@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.PickTask;
-import java.util.ArrayList;
+import app.repositories.PickTaskRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class PickTaskController {
-    private List<PickTask> pickTasks;
+    private final PickTaskRepository repository;
 
     /**
-     * Default constructor that initializes the pick task list.
+     * Default constructor that initializes the controller with the pick task repository.
      */
     public PickTaskController() {
-        this.pickTasks = new ArrayList<>();
+        this.repository = Repositories.getInstance().getPickTaskRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class PickTaskController {
      */
     public PickTask createPickTask(PickTask pickTask) {
         if (pickTask != null) {
-            pickTasks.add(pickTask);
+            repository.addPickTask(pickTask);
         }
         return pickTask;
     }
@@ -42,7 +43,7 @@ public class PickTaskController {
      * @return a list of all PickTask objects
      */
     public List<PickTask> getAllPickTasks() {
-        return new ArrayList<>(pickTasks);
+        return repository.getAllPickTasks();
     }
 
     /**
@@ -52,9 +53,8 @@ public class PickTaskController {
      * @return an Optional containing the PickTask if found, or empty if not found
      */
     public Optional<PickTask> getPickTaskById(Integer pickTaskId) {
-        return pickTasks.stream()
-                .filter(pickTask -> pickTask.getPickTaskId().equals(pickTaskId))
-                .findFirst();
+        PickTask pickTask = repository.getPickTaskById(pickTaskId);
+        return Optional.ofNullable(pickTask);
     }
 
     /**
@@ -65,13 +65,7 @@ public class PickTaskController {
      * @return true if the pick task was updated successfully, false otherwise
      */
     public boolean updatePickTask(Integer pickTaskId, PickTask updatedPickTask) {
-        Optional<PickTask> existingPickTask = getPickTaskById(pickTaskId);
-        if (existingPickTask.isPresent()) {
-            int index = pickTasks.indexOf(existingPickTask.get());
-            pickTasks.set(index, updatedPickTask);
-            return true;
-        }
-        return false;
+        return repository.updatePickTask(pickTaskId, updatedPickTask);
     }
 
     /**
@@ -81,7 +75,22 @@ public class PickTaskController {
      * @return true if the pick task was deleted successfully, false otherwise
      */
     public boolean deletePickTask(Integer pickTaskId) {
-        return pickTasks.removeIf(pickTask -> pickTask.getPickTaskId().equals(pickTaskId));
+        return repository.deletePickTask(pickTaskId);
+    }
+
+    /**
+     * Gets the next available pick task ID.
+     *
+     * @return the next pick task ID to be used
+     */
+    public Integer getNextPickTaskId() {
+        return repository.getNextTaskId();
+    }
+
+    /**
+     * Clears all pick tasks from the system.
+     */
+    public void clearAllPickTasks() {
+        repository.clear();
     }
 }
-

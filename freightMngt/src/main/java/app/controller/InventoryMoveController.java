@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.InventoryMove;
-import java.util.ArrayList;
+import app.repositories.InventoryMoveRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class InventoryMoveController {
-    private List<InventoryMove> inventoryMoves;
+    private final InventoryMoveRepository repository;
 
     /**
-     * Default constructor that initializes the inventory move list.
+     * Default constructor that initializes the controller with the inventory move repository.
      */
     public InventoryMoveController() {
-        this.inventoryMoves = new ArrayList<>();
+        this.repository = Repositories.getInstance().getInventoryMoveRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class InventoryMoveController {
      */
     public InventoryMove createInventoryMove(InventoryMove inventoryMove) {
         if (inventoryMove != null) {
-            inventoryMoves.add(inventoryMove);
+            repository.addInventoryMove(inventoryMove);
         }
         return inventoryMove;
     }
@@ -42,45 +43,54 @@ public class InventoryMoveController {
      * @return a list of all InventoryMove objects
      */
     public List<InventoryMove> getAllInventoryMoves() {
-        return new ArrayList<>(inventoryMoves);
+        return repository.getAllInventoryMoves();
     }
 
     /**
      * Retrieves an inventory move by its unique identifier.
      *
-     * @param moveId the unique identifier of the inventory move
+     * @param inventoryMoveId the unique identifier of the inventory move
      * @return an Optional containing the InventoryMove if found, or empty if not found
      */
-    public Optional<InventoryMove> getInventoryMoveById(Integer moveId) {
-        return inventoryMoves.stream()
-                .filter(inventoryMove -> inventoryMove.getMoveId().equals(moveId))
-                .findFirst();
+    public Optional<InventoryMove> getInventoryMoveById(Integer inventoryMoveId) {
+        InventoryMove inventoryMove = repository.getInventoryMoveById(inventoryMoveId);
+        return Optional.ofNullable(inventoryMove);
     }
 
     /**
      * Updates an existing inventory move in the system.
      *
-     * @param moveId the unique identifier of the inventory move to update
+     * @param inventoryMoveId the unique identifier of the inventory move to update
      * @param updatedInventoryMove the InventoryMove object with updated information
      * @return true if the inventory move was updated successfully, false otherwise
      */
-    public boolean updateInventoryMove(Integer moveId, InventoryMove updatedInventoryMove) {
-        Optional<InventoryMove> existingInventoryMove = getInventoryMoveById(moveId);
-        if (existingInventoryMove.isPresent()) {
-            int index = inventoryMoves.indexOf(existingInventoryMove.get());
-            inventoryMoves.set(index, updatedInventoryMove);
-            return true;
-        }
-        return false;
+    public boolean updateInventoryMove(Integer inventoryMoveId, InventoryMove updatedInventoryMove) {
+        return repository.updateInventoryMove(inventoryMoveId, updatedInventoryMove);
     }
 
     /**
      * Deletes an inventory move from the system.
      *
-     * @param moveId the unique identifier of the inventory move to delete
+     * @param inventoryMoveId the unique identifier of the inventory move to delete
      * @return true if the inventory move was deleted successfully, false otherwise
      */
-    public boolean deleteInventoryMove(Integer moveId) {
-        return inventoryMoves.removeIf(inventoryMove -> inventoryMove.getMoveId().equals(moveId));
+    public boolean deleteInventoryMove(Integer inventoryMoveId) {
+        return repository.deleteInventoryMove(inventoryMoveId);
+    }
+
+    /**
+     * Gets the next available inventory move ID.
+     *
+     * @return the next inventory move ID to be used
+     */
+    public Integer getNextInventoryMoveId() {
+        return repository.getNextMoveId();
+    }
+
+    /**
+     * Clears all inventory moves from the system.
+     */
+    public void clearAllInventoryMoves() {
+        repository.clear();
     }
 }

@@ -1,7 +1,10 @@
+
 package app.controller;
 
 import app.model.TrainService;
-import java.util.ArrayList;
+import app.repositories.TrainServiceRepository;
+import app.repositories.Repositories;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +17,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class TrainServiceController {
-    private List<TrainService> trainServices;
+    private final TrainServiceRepository repository;
 
     /**
-     * Default constructor that initializes the train service list.
+     * Default constructor that initializes the controller with the train service repository.
      */
     public TrainServiceController() {
-        this.trainServices = new ArrayList<>();
+        this.repository = Repositories.getInstance().getTrainServiceRepository();
     }
 
     /**
@@ -31,7 +34,7 @@ public class TrainServiceController {
      */
     public TrainService createTrainService(TrainService trainService) {
         if (trainService != null) {
-            trainServices.add(trainService);
+            repository.addTrainService(trainService);
         }
         return trainService;
     }
@@ -42,45 +45,54 @@ public class TrainServiceController {
      * @return a list of all TrainService objects
      */
     public List<TrainService> getAllTrainServices() {
-        return new ArrayList<>(trainServices);
+        return repository.getAllTrainServices();
     }
 
     /**
      * Retrieves a train service by its unique identifier.
      *
-     * @param serviceId the unique identifier of the train service
+     * @param trainServiceId the unique identifier of the train service
      * @return an Optional containing the TrainService if found, or empty if not found
      */
-    public Optional<TrainService> getTrainServiceById(Integer serviceId) {
-        return trainServices.stream()
-                .filter(trainService -> trainService.getServiceId().equals(serviceId))
-                .findFirst();
+    public Optional<TrainService> getTrainServiceById(Integer trainServiceId) {
+        TrainService trainService = repository.getTrainServiceById(trainServiceId);
+        return Optional.ofNullable(trainService);
     }
 
     /**
      * Updates an existing train service in the system.
      *
-     * @param serviceId the unique identifier of the train service to update
+     * @param trainServiceId      the unique identifier of the train service to update
      * @param updatedTrainService the TrainService object with updated information
      * @return true if the train service was updated successfully, false otherwise
      */
-    public boolean updateTrainService(Integer serviceId, TrainService updatedTrainService) {
-        Optional<TrainService> existingTrainService = getTrainServiceById(serviceId);
-        if (existingTrainService.isPresent()) {
-            int index = trainServices.indexOf(existingTrainService.get());
-            trainServices.set(index, updatedTrainService);
-            return true;
-        }
-        return false;
+    public boolean updateTrainService(Integer trainServiceId, TrainService updatedTrainService) {
+        return repository.updateTrainService(trainServiceId, updatedTrainService);
     }
 
     /**
      * Deletes a train service from the system.
      *
-     * @param serviceId the unique identifier of the train service to delete
+     * @param trainServiceId the unique identifier of the train service to delete
      * @return true if the train service was deleted successfully, false otherwise
      */
-    public boolean deleteTrainService(Integer serviceId) {
-        return trainServices.removeIf(trainService -> trainService.getServiceId().equals(serviceId));
+    public boolean deleteTrainService(Integer trainServiceId) {
+        return repository.deleteTrainService(trainServiceId);
+    }
+
+    /**
+     * Gets the next available train service ID.
+     *
+     * @return the next train service ID to be used
+     */
+    public Integer getNextTrainServiceId() {
+        return repository.getNextServiceId();
+    }
+
+    /**
+     * Clears all train services from the system.
+     */
+    public void clearAllTrainServices() {
+        repository.clear();
     }
 }
