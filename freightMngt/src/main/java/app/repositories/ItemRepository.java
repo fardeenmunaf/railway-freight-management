@@ -69,6 +69,33 @@ public class ItemRepository {
     }
 
     /**
+     * Updates an existing item in the repository.
+     *
+     * @param itemId the item identifier
+     * @param updatedItem the updated item
+     * @return true if the item was updated successfully, false otherwise
+     */
+    public boolean updateItem(Integer itemId, Item updatedItem) {
+        Item existingItem = getItemById(itemId);
+        if (existingItem != null) {
+            int index = items.indexOf(existingItem);
+            items.set(index, updatedItem);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Deletes an item from the repository.
+     *
+     * @param itemId the item identifier
+     * @return true if the item was deleted successfully, false otherwise
+     */
+    public boolean deleteItem(Integer itemId) {
+        return items.removeIf(item -> itemId.equals(item.getItemId()));
+    }
+
+    /**
      * Gets the next available item ID.
      * Finds the maximum item ID currently in use and returns the next sequential ID.
      *

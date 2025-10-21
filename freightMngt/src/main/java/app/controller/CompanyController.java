@@ -1,7 +1,7 @@
 package app.controller;
 
 import app.model.Company;
-import java.util.ArrayList;
+import app.repositories.CompanyRepository;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +14,22 @@ import java.util.Optional;
  * @version 1.0
  */
 public class CompanyController {
-    private List<Company> companies;
+    private final CompanyRepository repository;
 
     /**
-     * Default constructor that initializes the company list.
+     * Default constructor that initializes the controller with a new repository.
      */
     public CompanyController() {
-        this.companies = new ArrayList<>();
+        this.repository = new CompanyRepository();
+    }
+
+    /**
+     * Constructor that accepts a repository instance.
+     *
+     * @param repository the CompanyRepository to use
+     */
+    public CompanyController(CompanyRepository repository) {
+        this.repository = repository;
     }
 
     /**
@@ -31,7 +40,7 @@ public class CompanyController {
      */
     public Company createCompany(Company company) {
         if (company != null) {
-            companies.add(company);
+            repository.addCompany(company);
         }
         return company;
     }
@@ -42,7 +51,7 @@ public class CompanyController {
      * @return a list of all Company objects
      */
     public List<Company> getAllCompanies() {
-        return new ArrayList<>(companies);
+        return repository.getAllCompanies();
     }
 
     /**
@@ -52,9 +61,19 @@ public class CompanyController {
      * @return an Optional containing the Company if found, or empty if not found
      */
     public Optional<Company> getCompanyById(Integer companyId) {
-        return companies.stream()
-                .filter(company -> company.getCompanyId().equals(companyId))
-                .findFirst();
+        Company company = repository.getCompanyById(companyId);
+        return Optional.ofNullable(company);
+    }
+
+    /**
+     * Retrieves a company by its name.
+     *
+     * @param name the name of the company
+     * @return an Optional containing the Company if found, or empty if not found
+     */
+    public Optional<Company> getCompanyByName(String name) {
+        Company company = repository.getCompanyByName(name);
+        return Optional.ofNullable(company);
     }
 
     /**
@@ -65,13 +84,7 @@ public class CompanyController {
      * @return true if the company was updated successfully, false otherwise
      */
     public boolean updateCompany(Integer companyId, Company updatedCompany) {
-        Optional<Company> existingCompany = getCompanyById(companyId);
-        if (existingCompany.isPresent()) {
-            int index = companies.indexOf(existingCompany.get());
-            companies.set(index, updatedCompany);
-            return true;
-        }
-        return false;
+        return repository.updateCompany(companyId, updatedCompany);
     }
 
     /**
@@ -81,7 +94,25 @@ public class CompanyController {
      * @return true if the company was deleted successfully, false otherwise
      */
     public boolean deleteCompany(Integer companyId) {
-        return companies.removeIf(company -> company.getCompanyId().equals(companyId));
+        return repository.deleteCompany(companyId);
+    }
+
+    /**
+     * Gets the next available company ID.
+     *
+     * @return the next available company ID
+     */
+    public Integer getNextCompanyId() {
+        return repository.getNextCompanyId();
+    }
+
+    /**
+     * Checks if a company with the given name exists.
+     *
+     * @param name the company name
+     * @return true if a company with this name exists, false otherwise
+     */
+    public boolean containsName(String name) {
+        return repository.containsName(name);
     }
 }
-

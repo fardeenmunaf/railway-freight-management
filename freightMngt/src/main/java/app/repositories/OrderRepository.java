@@ -86,6 +86,33 @@ public class OrderRepository {
     }
 
     /**
+     * Updates an existing order in the repository.
+     *
+     * @param orderId the order identifier
+     * @param updatedOrder the updated order
+     * @return true if the order was updated successfully, false otherwise
+     */
+    public boolean updateOrder(Integer orderId, Order updatedOrder) {
+        Order existingOrder = getOrderById(orderId);
+        if (existingOrder != null) {
+            int index = orders.indexOf(existingOrder);
+            orders.set(index, updatedOrder);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Deletes an order from the repository.
+     *
+     * @param orderId the order identifier
+     * @return true if the order was deleted successfully, false otherwise
+     */
+    public boolean deleteOrder(Integer orderId) {
+        return orders.removeIf(order -> orderId.equals(order.getOrderId()));
+    }
+
+    /**
      * Gets the next available order ID.
      * Finds the maximum order ID currently in use and returns the next sequential ID.
      *
@@ -118,4 +145,3 @@ public class OrderRepository {
         orders.clear();
     }
 }
-

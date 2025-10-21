@@ -1,7 +1,7 @@
 package app.controller;
 
 import app.model.ItemCategory;
-import java.util.ArrayList;
+import app.repositories.ItemCategoryRepository;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +14,22 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ItemCategoryController {
-    private List<ItemCategory> itemCategories;
+    private final ItemCategoryRepository repository;
 
     /**
-     * Default constructor that initializes the item category list.
+     * Default constructor that initializes the controller with a new repository.
      */
     public ItemCategoryController() {
-        this.itemCategories = new ArrayList<>();
+        this.repository = new ItemCategoryRepository();
+    }
+
+    /**
+     * Constructor that accepts a repository instance.
+     *
+     * @param repository the ItemCategoryRepository to use
+     */
+    public ItemCategoryController(ItemCategoryRepository repository) {
+        this.repository = repository;
     }
 
     /**
@@ -31,7 +40,7 @@ public class ItemCategoryController {
      */
     public ItemCategory createItemCategory(ItemCategory itemCategory) {
         if (itemCategory != null) {
-            itemCategories.add(itemCategory);
+            repository.addItemCategory(itemCategory);
         }
         return itemCategory;
     }
@@ -42,7 +51,7 @@ public class ItemCategoryController {
      * @return a list of all ItemCategory objects
      */
     public List<ItemCategory> getAllItemCategories() {
-        return new ArrayList<>(itemCategories);
+        return repository.getAllCategories();
     }
 
     /**
@@ -52,9 +61,19 @@ public class ItemCategoryController {
      * @return an Optional containing the ItemCategory if found, or empty if not found
      */
     public Optional<ItemCategory> getItemCategoryById(Integer itemCategoryId) {
-        return itemCategories.stream()
-                .filter(itemCategory -> itemCategory.getCategoryId().equals(itemCategoryId))
-                .findFirst();
+        ItemCategory category = repository.getCategoryById(itemCategoryId);
+        return Optional.ofNullable(category);
+    }
+
+    /**
+     * Retrieves an item category by its name.
+     *
+     * @param name the name of the item category
+     * @return an Optional containing the ItemCategory if found, or empty if not found
+     */
+    public Optional<ItemCategory> getItemCategoryByName(String name) {
+        ItemCategory category = repository.getCategoryByName(name);
+        return Optional.ofNullable(category);
     }
 
     /**
@@ -65,13 +84,7 @@ public class ItemCategoryController {
      * @return true if the item category was updated successfully, false otherwise
      */
     public boolean updateItemCategory(Integer itemCategoryId, ItemCategory updatedItemCategory) {
-        Optional<ItemCategory> existingItemCategory = getItemCategoryById(itemCategoryId);
-        if (existingItemCategory.isPresent()) {
-            int index = itemCategories.indexOf(existingItemCategory.get());
-            itemCategories.set(index, updatedItemCategory);
-            return true;
-        }
-        return false;
+        return repository.updateItemCategory(itemCategoryId, updatedItemCategory);
     }
 
     /**
@@ -81,6 +94,25 @@ public class ItemCategoryController {
      * @return true if the item category was deleted successfully, false otherwise
      */
     public boolean deleteItemCategory(Integer itemCategoryId) {
-        return itemCategories.removeIf(itemCategory -> itemCategory.getCategoryId().equals(itemCategoryId));
+        return repository.deleteItemCategory(itemCategoryId);
+    }
+
+    /**
+     * Gets the next available category ID.
+     *
+     * @return the next available category ID
+     */
+    public Integer getNextCategoryId() {
+        return repository.getNextCategoryId();
+    }
+
+    /**
+     * Checks if a category with the given name exists.
+     *
+     * @param name the category name
+     * @return true if a category with this name exists, false otherwise
+     */
+    public boolean containsName(String name) {
+        return repository.containsName(name);
     }
 }

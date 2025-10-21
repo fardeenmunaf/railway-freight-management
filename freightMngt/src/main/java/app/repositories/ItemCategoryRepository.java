@@ -1,6 +1,7 @@
 package app.repositories;
 
 import app.model.ItemCategory;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,6 +67,33 @@ public class ItemCategoryRepository {
             }
         }
         return null;
+    }
+
+    /**
+     * Updates an existing item category in the repository.
+     *
+     * @param categoryId the category identifier
+     * @param updatedCategory the updated item category
+     * @return true if the category was updated successfully, false otherwise
+     */
+    public boolean updateItemCategory(Integer categoryId, ItemCategory updatedCategory) {
+        ItemCategory existingCategory = getCategoryById(categoryId);
+        if (existingCategory != null) {
+            int index = categories.indexOf(existingCategory);
+            categories.set(index, updatedCategory);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Deletes an item category from the repository.
+     *
+     * @param categoryId the category identifier
+     * @return true if the category was deleted successfully, false otherwise
+     */
+    public boolean deleteItemCategory(Integer categoryId) {
+        return categories.removeIf(category -> categoryId.equals(category.getCategoryId()));
     }
 
     /**

@@ -85,6 +85,55 @@ public class WarehouseAisleRepository {
     }
 
     /**
+     * Updates an existing warehouse aisle in the repository.
+     *
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @param updatedAisle the updated warehouse aisle
+     * @return true if the aisle was updated successfully, false otherwise
+     */
+    public boolean updateWarehouseAisle(Integer warehouseId, Integer aisleNo, WarehouseAisle updatedAisle) {
+        WarehouseAisle existingAisle = getAisle(warehouseId, aisleNo);
+        if (existingAisle != null) {
+            int index = aisles.indexOf(existingAisle);
+            aisles.set(index, updatedAisle);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Deletes a warehouse aisle from the repository.
+     *
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @return true if the aisle was deleted successfully, false otherwise
+     */
+    public boolean deleteWarehouseAisle(Integer warehouseId, Integer aisleNo) {
+        return aisles.removeIf(aisle ->
+            aisle.getWarehouse() != null &&
+            warehouseId.equals(aisle.getWarehouse().getWarehouseId()) &&
+            aisleNo.equals(aisle.getAisleNo())
+        );
+    }
+
+    /**
+     * Retrieves all aisles for a specific warehouse.
+     *
+     * @param warehouseId the warehouse identifier
+     * @return a list of all aisles in the specified warehouse
+     */
+    public List<WarehouseAisle> getAislesByWarehouse(Integer warehouseId) {
+        List<WarehouseAisle> result = new ArrayList<>();
+        for (WarehouseAisle aisle : aisles) {
+            if (aisle.getWarehouse() != null && warehouseId.equals(aisle.getWarehouse().getWarehouseId())) {
+                result.add(aisle);
+            }
+        }
+        return result;
+    }
+
+    /**
      * Checks if a warehouse aisle exists in the repository.
      *
      * @param warehouseId the warehouse identifier
@@ -105,4 +154,3 @@ public class WarehouseAisleRepository {
         aisles.clear();
     }
 }
-

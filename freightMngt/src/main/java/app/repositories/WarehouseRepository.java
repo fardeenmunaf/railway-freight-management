@@ -73,6 +73,49 @@ public class WarehouseRepository {
     }
 
     /**
+     * Updates an existing warehouse in the repository.
+     *
+     * @param warehouseId the warehouse identifier
+     * @param updatedWarehouse the updated warehouse
+     * @return true if the warehouse was updated successfully, false otherwise
+     */
+    public boolean updateWarehouse(Integer warehouseId, Warehouse updatedWarehouse) {
+        Warehouse existingWarehouse = getWarehouseById(warehouseId);
+        if (existingWarehouse != null) {
+            int index = warehouses.indexOf(existingWarehouse);
+            warehouses.set(index, updatedWarehouse);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Deletes a warehouse from the repository.
+     *
+     * @param warehouseId the warehouse identifier
+     * @return true if the warehouse was deleted successfully, false otherwise
+     */
+    public boolean deleteWarehouse(Integer warehouseId) {
+        return warehouses.removeIf(warehouse -> warehouseId.equals(warehouse.getWarehouseId()));
+    }
+
+    /**
+     * Gets the next available warehouse ID.
+     * Finds the maximum warehouse ID currently in use and returns the next sequential ID.
+     *
+     * @return the next available warehouse ID (max current ID + 1)
+     */
+    public Integer getNextWarehouseId() {
+        int maxId = 0;
+        for (Warehouse warehouse : warehouses) {
+            if (warehouse.getWarehouseId() != null && warehouse.getWarehouseId() > maxId) {
+                maxId = warehouse.getWarehouseId();
+            }
+        }
+        return maxId + 1;
+    }
+
+    /**
      * Checks if a warehouse exists in the repository.
      *
      * @param warehouseId the warehouse identifier
@@ -84,6 +127,16 @@ public class WarehouseRepository {
     }
 
     /**
+     * Checks if a warehouse with the given name exists in the repository.
+     *
+     * @param name the warehouse name
+     * @return true if a warehouse with this name exists, false otherwise
+     */
+    public boolean containsName(String name) {
+        return getWarehouseByName(name) != null;
+    }
+
+    /**
      * Clears all warehouses from the repository.
      */
 
@@ -91,4 +144,3 @@ public class WarehouseRepository {
         warehouses.clear();
     }
 }
-
