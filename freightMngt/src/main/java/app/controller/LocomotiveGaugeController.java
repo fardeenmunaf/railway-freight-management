@@ -48,24 +48,24 @@ public class LocomotiveGaugeController {
     /**
      * Retrieves a locomotive gauge by its unique identifier.
      *
-     * @param locomotiveGaugeId the unique identifier of the locomotive gauge
+     * @param locomotiveId the unique identifier of the locomotive gauge
      * @return an Optional containing the LocomotiveGauge if found, or empty if not found
      */
-    public Optional<LocomotiveGauge> getLocomotiveGaugeById(Integer locomotiveGaugeId) {
+    public Optional<LocomotiveGauge> getLocomotiveGaugeById(Integer locomotiveId) {
         return locomotiveGauges.stream()
-                .filter(locomotiveGauge -> locomotiveGauge.getLocomotiveGaugeId().equals(locomotiveGaugeId))
+                .filter(locomotiveGauge -> locomotiveGauge.getLocomotive().getLocomotiveId().equals(locomotiveId))
                 .findFirst();
     }
 
     /**
      * Updates an existing locomotive gauge in the system.
      *
-     * @param locomotiveGaugeId the unique identifier of the locomotive gauge to update
+     * @param locomotiveId the unique identifier of the locomotive gauge to update
      * @param updatedLocomotiveGauge the LocomotiveGauge object with updated information
      * @return true if the locomotive gauge was updated successfully, false otherwise
      */
-    public boolean updateLocomotiveGauge(Integer locomotiveGaugeId, LocomotiveGauge updatedLocomotiveGauge) {
-        Optional<LocomotiveGauge> existingLocomotiveGauge = getLocomotiveGaugeById(locomotiveGaugeId);
+    public boolean updateLocomotiveGauge(Integer locomotiveId, LocomotiveGauge updatedLocomotiveGauge) {
+        Optional<LocomotiveGauge> existingLocomotiveGauge = getLocomotiveGaugeById(locomotiveId);
         if (existingLocomotiveGauge.isPresent()) {
             int index = locomotiveGauges.indexOf(existingLocomotiveGauge.get());
             locomotiveGauges.set(index, updatedLocomotiveGauge);
@@ -77,11 +77,10 @@ public class LocomotiveGaugeController {
     /**
      * Deletes a locomotive gauge from the system.
      *
-     * @param locomotiveGaugeId the unique identifier of the locomotive gauge to delete
+     * @param locomotiveId the unique identifier of the locomotive gauge to delete
      * @return true if the locomotive gauge was deleted successfully, false otherwise
      */
-    public boolean deleteLocomotiveGauge(Integer locomotiveGaugeId) {
-        return locomotiveGauges.removeIf(locomotiveGauge -> locomotiveGauge.getLocomotiveGaugeId().equals(locomotiveGaugeId));
+    public boolean deleteLocomotiveGauge(Integer locomotiveId) {
+        return locomotiveGauges.removeIf(locomotiveGauge -> locomotiveGauge.getLocomotive().getLocomotiveId().equals(locomotiveId));
     }
 }
-

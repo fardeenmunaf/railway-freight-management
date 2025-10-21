@@ -1,3 +1,27 @@
+package app.controller;
+
+import app.model.TrackType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Controller class for managing TrackType entities.
+ * Provides CRUD operations (Create, Read, Update, Delete) for TrackType objects.
+ * This controller manages track type data in the freight management system.
+ *
+ * @author G113 2DK
+ * @version 1.0
+ */
+public class TrackTypeController {
+    private List<TrackType> trackTypes;
+
+    /**
+     * Default constructor that initializes the track type list.
+     */
+    public TrackTypeController() {
+        this.trackTypes = new ArrayList<>();
+    }
 
     /**
      * Creates and adds a new track type to the system.
@@ -60,28 +84,3 @@
         return trackTypes.removeIf(trackType -> trackType.getTrackTypeId().equals(trackTypeId));
     }
 }
-package app.controller;
-
-import app.model.TrackType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-/**
- * Controller class for managing TrackType entities.
- * Provides CRUD operations (Create, Read, Update, Delete) for TrackType objects.
- * This controller manages track type data in the freight management system.
- *
- * @author G113 2DK
- * @version 1.0
- */
-public class TrackTypeController {
-    private List<TrackType> trackTypes;
-
-    /**
-     * Default constructor that initializes the track type list.
-     */
-    public TrackTypeController() {
-        this.trackTypes = new ArrayList<>();
-    }
-

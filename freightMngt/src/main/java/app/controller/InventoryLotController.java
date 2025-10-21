@@ -48,24 +48,24 @@ public class InventoryLotController {
     /**
      * Retrieves an inventory lot by its unique identifier.
      *
-     * @param inventoryLotId the unique identifier of the inventory lot
+     * @param lotId the unique identifier of the inventory lot
      * @return an Optional containing the InventoryLot if found, or empty if not found
      */
-    public Optional<InventoryLot> getInventoryLotById(Integer inventoryLotId) {
+    public Optional<InventoryLot> getInventoryLotById(String lotId) {
         return inventoryLots.stream()
-                .filter(inventoryLot -> inventoryLot.getInventoryLotId().equals(inventoryLotId))
+                .filter(inventoryLot -> inventoryLot.getLotId().equals(lotId))
                 .findFirst();
     }
 
     /**
      * Updates an existing inventory lot in the system.
      *
-     * @param inventoryLotId the unique identifier of the inventory lot to update
+     * @param lotId the unique identifier of the inventory lot to update
      * @param updatedInventoryLot the InventoryLot object with updated information
      * @return true if the inventory lot was updated successfully, false otherwise
      */
-    public boolean updateInventoryLot(Integer inventoryLotId, InventoryLot updatedInventoryLot) {
-        Optional<InventoryLot> existingInventoryLot = getInventoryLotById(inventoryLotId);
+    public boolean updateInventoryLot(String lotId, InventoryLot updatedInventoryLot) {
+        Optional<InventoryLot> existingInventoryLot = getInventoryLotById(lotId);
         if (existingInventoryLot.isPresent()) {
             int index = inventoryLots.indexOf(existingInventoryLot.get());
             inventoryLots.set(index, updatedInventoryLot);
@@ -77,11 +77,10 @@ public class InventoryLotController {
     /**
      * Deletes an inventory lot from the system.
      *
-     * @param inventoryLotId the unique identifier of the inventory lot to delete
+     * @param lotId the unique identifier of the inventory lot to delete
      * @return true if the inventory lot was deleted successfully, false otherwise
      */
-    public boolean deleteInventoryLot(Integer inventoryLotId) {
-        return inventoryLots.removeIf(inventoryLot -> inventoryLot.getInventoryLotId().equals(inventoryLotId));
+    public boolean deleteInventoryLot(String lotId) {
+        return inventoryLots.removeIf(inventoryLot -> inventoryLot.getLotId().equals(lotId));
     }
 }
-

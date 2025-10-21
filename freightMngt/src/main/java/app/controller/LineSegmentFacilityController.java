@@ -48,24 +48,24 @@ public class LineSegmentFacilityController {
     /**
      * Retrieves a line segment facility by its unique identifier.
      *
-     * @param lineSegmentFacilityId the unique identifier of the line segment facility
+     * @param segmentFacilityId the unique identifier of the line segment facility
      * @return an Optional containing the LineSegmentFacility if found, or empty if not found
      */
-    public Optional<LineSegmentFacility> getLineSegmentFacilityById(Integer lineSegmentFacilityId) {
+    public Optional<LineSegmentFacility> getLineSegmentFacilityById(Integer segmentFacilityId) {
         return lineSegmentFacilities.stream()
-                .filter(lineSegmentFacility -> lineSegmentFacility.getLineSegmentFacilityId().equals(lineSegmentFacilityId))
+                .filter(lineSegmentFacility -> lineSegmentFacility.getSegmentFacilityId().equals(segmentFacilityId))
                 .findFirst();
     }
 
     /**
      * Updates an existing line segment facility in the system.
      *
-     * @param lineSegmentFacilityId the unique identifier of the line segment facility to update
+     * @param segmentFacilityId the unique identifier of the line segment facility to update
      * @param updatedLineSegmentFacility the LineSegmentFacility object with updated information
      * @return true if the line segment facility was updated successfully, false otherwise
      */
-    public boolean updateLineSegmentFacility(Integer lineSegmentFacilityId, LineSegmentFacility updatedLineSegmentFacility) {
-        Optional<LineSegmentFacility> existingLineSegmentFacility = getLineSegmentFacilityById(lineSegmentFacilityId);
+    public boolean updateLineSegmentFacility(Integer segmentFacilityId, LineSegmentFacility updatedLineSegmentFacility) {
+        Optional<LineSegmentFacility> existingLineSegmentFacility = getLineSegmentFacilityById(segmentFacilityId);
         if (existingLineSegmentFacility.isPresent()) {
             int index = lineSegmentFacilities.indexOf(existingLineSegmentFacility.get());
             lineSegmentFacilities.set(index, updatedLineSegmentFacility);
@@ -77,11 +77,10 @@ public class LineSegmentFacilityController {
     /**
      * Deletes a line segment facility from the system.
      *
-     * @param lineSegmentFacilityId the unique identifier of the line segment facility to delete
+     * @param segmentFacilityId the unique identifier of the line segment facility to delete
      * @return true if the line segment facility was deleted successfully, false otherwise
      */
-    public boolean deleteLineSegmentFacility(Integer lineSegmentFacilityId) {
-        return lineSegmentFacilities.removeIf(lineSegmentFacility -> lineSegmentFacility.getLineSegmentFacilityId().equals(lineSegmentFacilityId));
+    public boolean deleteLineSegmentFacility(Integer segmentFacilityId) {
+        return lineSegmentFacilities.removeIf(lineSegmentFacility -> lineSegmentFacility.getSegmentFacilityId().equals(segmentFacilityId));
     }
 }
-

@@ -48,24 +48,24 @@ public class TrainServiceController {
     /**
      * Retrieves a train service by its unique identifier.
      *
-     * @param trainServiceId the unique identifier of the train service
+     * @param serviceId the unique identifier of the train service
      * @return an Optional containing the TrainService if found, or empty if not found
      */
-    public Optional<TrainService> getTrainServiceById(Integer trainServiceId) {
+    public Optional<TrainService> getTrainServiceById(Integer serviceId) {
         return trainServices.stream()
-                .filter(trainService -> trainService.getTrainServiceId().equals(trainServiceId))
+                .filter(trainService -> trainService.getServiceId().equals(serviceId))
                 .findFirst();
     }
 
     /**
      * Updates an existing train service in the system.
      *
-     * @param trainServiceId the unique identifier of the train service to update
+     * @param serviceId the unique identifier of the train service to update
      * @param updatedTrainService the TrainService object with updated information
      * @return true if the train service was updated successfully, false otherwise
      */
-    public boolean updateTrainService(Integer trainServiceId, TrainService updatedTrainService) {
-        Optional<TrainService> existingTrainService = getTrainServiceById(trainServiceId);
+    public boolean updateTrainService(Integer serviceId, TrainService updatedTrainService) {
+        Optional<TrainService> existingTrainService = getTrainServiceById(serviceId);
         if (existingTrainService.isPresent()) {
             int index = trainServices.indexOf(existingTrainService.get());
             trainServices.set(index, updatedTrainService);
@@ -77,11 +77,10 @@ public class TrainServiceController {
     /**
      * Deletes a train service from the system.
      *
-     * @param trainServiceId the unique identifier of the train service to delete
+     * @param serviceId the unique identifier of the train service to delete
      * @return true if the train service was deleted successfully, false otherwise
      */
-    public boolean deleteTrainService(Integer trainServiceId) {
-        return trainServices.removeIf(trainService -> trainService.getTrainServiceId().equals(trainServiceId));
+    public boolean deleteTrainService(Integer serviceId) {
+        return trainServices.removeIf(trainService -> trainService.getServiceId().equals(serviceId));
     }
 }
-

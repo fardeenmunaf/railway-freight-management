@@ -48,24 +48,24 @@ public class ReturnOrderController {
     /**
      * Retrieves a return order by its unique identifier.
      *
-     * @param returnOrderId the unique identifier of the return order
+     * @param returnId the unique identifier of the return order
      * @return an Optional containing the ReturnOrder if found, or empty if not found
      */
-    public Optional<ReturnOrder> getReturnOrderById(Integer returnOrderId) {
+    public Optional<ReturnOrder> getReturnOrderById(Integer returnId) {
         return returnOrders.stream()
-                .filter(returnOrder -> returnOrder.getReturnOrderId().equals(returnOrderId))
+                .filter(returnOrder -> returnOrder.getReturnId().equals(returnId))
                 .findFirst();
     }
 
     /**
      * Updates an existing return order in the system.
      *
-     * @param returnOrderId the unique identifier of the return order to update
+     * @param returnId the unique identifier of the return order to update
      * @param updatedReturnOrder the ReturnOrder object with updated information
      * @return true if the return order was updated successfully, false otherwise
      */
-    public boolean updateReturnOrder(Integer returnOrderId, ReturnOrder updatedReturnOrder) {
-        Optional<ReturnOrder> existingReturnOrder = getReturnOrderById(returnOrderId);
+    public boolean updateReturnOrder(Integer returnId, ReturnOrder updatedReturnOrder) {
+        Optional<ReturnOrder> existingReturnOrder = getReturnOrderById(returnId);
         if (existingReturnOrder.isPresent()) {
             int index = returnOrders.indexOf(existingReturnOrder.get());
             returnOrders.set(index, updatedReturnOrder);
@@ -77,11 +77,10 @@ public class ReturnOrderController {
     /**
      * Deletes a return order from the system.
      *
-     * @param returnOrderId the unique identifier of the return order to delete
+     * @param returnId the unique identifier of the return order to delete
      * @return true if the return order was deleted successfully, false otherwise
      */
-    public boolean deleteReturnOrder(Integer returnOrderId) {
-        return returnOrders.removeIf(returnOrder -> returnOrder.getReturnOrderId().equals(returnOrderId));
+    public boolean deleteReturnOrder(Integer returnId) {
+        return returnOrders.removeIf(returnOrder -> returnOrder.getReturnId().equals(returnId));
     }
 }
-

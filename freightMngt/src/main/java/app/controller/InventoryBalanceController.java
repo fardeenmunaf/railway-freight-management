@@ -48,24 +48,24 @@ public class InventoryBalanceController {
     /**
      * Retrieves an inventory balance by its unique identifier.
      *
-     * @param inventoryBalanceId the unique identifier of the inventory balance
+     * @param balanceId the unique identifier of the inventory balance
      * @return an Optional containing the InventoryBalance if found, or empty if not found
      */
-    public Optional<InventoryBalance> getInventoryBalanceById(Integer inventoryBalanceId) {
+    public Optional<InventoryBalance> getInventoryBalanceById(Integer balanceId) {
         return inventoryBalances.stream()
-                .filter(inventoryBalance -> inventoryBalance.getInventoryBalanceId().equals(inventoryBalanceId))
+                .filter(inventoryBalance -> inventoryBalance.getBalanceId().equals(balanceId))
                 .findFirst();
     }
 
     /**
      * Updates an existing inventory balance in the system.
      *
-     * @param inventoryBalanceId the unique identifier of the inventory balance to update
+     * @param balanceId the unique identifier of the inventory balance to update
      * @param updatedInventoryBalance the InventoryBalance object with updated information
      * @return true if the inventory balance was updated successfully, false otherwise
      */
-    public boolean updateInventoryBalance(Integer inventoryBalanceId, InventoryBalance updatedInventoryBalance) {
-        Optional<InventoryBalance> existingInventoryBalance = getInventoryBalanceById(inventoryBalanceId);
+    public boolean updateInventoryBalance(Integer balanceId, InventoryBalance updatedInventoryBalance) {
+        Optional<InventoryBalance> existingInventoryBalance = getInventoryBalanceById(balanceId);
         if (existingInventoryBalance.isPresent()) {
             int index = inventoryBalances.indexOf(existingInventoryBalance.get());
             inventoryBalances.set(index, updatedInventoryBalance);
@@ -77,11 +77,10 @@ public class InventoryBalanceController {
     /**
      * Deletes an inventory balance from the system.
      *
-     * @param inventoryBalanceId the unique identifier of the inventory balance to delete
+     * @param balanceId the unique identifier of the inventory balance to delete
      * @return true if the inventory balance was deleted successfully, false otherwise
      */
-    public boolean deleteInventoryBalance(Integer inventoryBalanceId) {
-        return inventoryBalances.removeIf(inventoryBalance -> inventoryBalance.getInventoryBalanceId().equals(inventoryBalanceId));
+    public boolean deleteInventoryBalance(Integer balanceId) {
+        return inventoryBalances.removeIf(inventoryBalance -> inventoryBalance.getBalanceId().equals(balanceId));
     }
 }
-

@@ -53,7 +53,7 @@ public class ItemCategoryController {
      */
     public Optional<ItemCategory> getItemCategoryById(Integer itemCategoryId) {
         return itemCategories.stream()
-                .filter(itemCategory -> itemCategory.getItemCategoryId().equals(itemCategoryId))
+                .filter(itemCategory -> itemCategory.getCategoryId().equals(itemCategoryId))
                 .findFirst();
     }
 
@@ -81,7 +81,6 @@ public class ItemCategoryController {
      * @return true if the item category was deleted successfully, false otherwise
      */
     public boolean deleteItemCategory(Integer itemCategoryId) {
-        return itemCategories.removeIf(itemCategory -> itemCategory.getItemCategoryId().equals(itemCategoryId));
+        return itemCategories.removeIf(itemCategory -> itemCategory.getCategoryId().equals(itemCategoryId));
     }
 }
-

@@ -48,24 +48,24 @@ public class LineSegmentController {
     /**
      * Retrieves a line segment by its unique identifier.
      *
-     * @param lineSegmentId the unique identifier of the line segment
+     * @param segmentId the unique identifier of the line segment
      * @return an Optional containing the LineSegment if found, or empty if not found
      */
-    public Optional<LineSegment> getLineSegmentById(Integer lineSegmentId) {
+    public Optional<LineSegment> getLineSegmentById(Integer segmentId) {
         return lineSegments.stream()
-                .filter(lineSegment -> lineSegment.getLineSegmentId().equals(lineSegmentId))
+                .filter(lineSegment -> lineSegment.getSegmentId().equals(segmentId))
                 .findFirst();
     }
 
     /**
      * Updates an existing line segment in the system.
      *
-     * @param lineSegmentId the unique identifier of the line segment to update
+     * @param segmentId the unique identifier of the line segment to update
      * @param updatedLineSegment the LineSegment object with updated information
      * @return true if the line segment was updated successfully, false otherwise
      */
-    public boolean updateLineSegment(Integer lineSegmentId, LineSegment updatedLineSegment) {
-        Optional<LineSegment> existingLineSegment = getLineSegmentById(lineSegmentId);
+    public boolean updateLineSegment(Integer segmentId, LineSegment updatedLineSegment) {
+        Optional<LineSegment> existingLineSegment = getLineSegmentById(segmentId);
         if (existingLineSegment.isPresent()) {
             int index = lineSegments.indexOf(existingLineSegment.get());
             lineSegments.set(index, updatedLineSegment);
@@ -77,11 +77,10 @@ public class LineSegmentController {
     /**
      * Deletes a line segment from the system.
      *
-     * @param lineSegmentId the unique identifier of the line segment to delete
+     * @param segmentId the unique identifier of the line segment to delete
      * @return true if the line segment was deleted successfully, false otherwise
      */
-    public boolean deleteLineSegment(Integer lineSegmentId) {
-        return lineSegments.removeIf(lineSegment -> lineSegment.getLineSegmentId().equals(lineSegmentId));
+    public boolean deleteLineSegment(Integer segmentId) {
+        return lineSegments.removeIf(lineSegment -> lineSegment.getSegmentId().equals(segmentId));
     }
 }
-
