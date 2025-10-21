@@ -17,6 +17,8 @@ public class Bootstrap implements Runnable {
     private static final String ITEMS_CSV = "src/main/java/app/sampleDataset/items.csv";
     private static final String ORDERS_CSV = "src/main/java/app/sampleDataset/orders.csv";
     private static final String ORDER_LINES_CSV = "src/main/java/app/sampleDataset/order_lines.csv";
+    private static final String RETURNS_CSV = "src/main/java/app/sampleDataset/returns.csv";
+    private static final String WAGONS_CSV = "src/main/java/app/sampleDataset/wagons.csv";
 
     private int aisleIdCounter = 1;
 
@@ -24,6 +26,7 @@ public class Bootstrap implements Runnable {
     public void run() {
         Repositories repositories = Repositories.getInstance();
         loadBays(repositories);
+        loadItems(repositories);
     }
 
     private void loadBays(Repositories repositories) {
@@ -65,4 +68,37 @@ public class Bootstrap implements Runnable {
         }
         return aisle;
     }
+
+    private void loadItems(Repositories repositories) {
+        List<Map<String, String>> data = CsvReader.readCsv(ITEMS_CSV, ",");
+        int itemIdCounter = 1;
+        for (Map<String, String> row : data) {
+            String sku = row.get("sku");
+            String name = row.get("name");
+            String categoryName = row.get("category");
+            String unit = row.get("unit");
+            Double volume = Double.parseDouble(row.get("volume"));
+            Double unitWeight = Double.parseDouble(row.get("unitWeight"));
+
+            // Get or create item category
+            ItemCategory category = getOrCreateCategory(categoryName, repositories);
+
+            // Create and add item
+            Item item = new Item(itemIdCounter, category, sku, name, unit, volume, unitWeight);
+            repositories.getItemRepository().addItem(item);
+            itemIdCounter++;
+        }
+    }
+
+    private ItemCategory getOrCreateCategory(String categoryName, Repositories repositories) {
+        ItemCategory category = repositories.getItemCategoryRepository().getCategoryByName(categoryName);
+        if (category == null) {
+            Integer categoryId = repositories.getItemCategoryRepository().getNextCategoryId();
+            category = new ItemCategory(categoryId, categoryName);
+            repositories.getItemCategoryRepository().addItemCategory(category);
+        }
+        return category;
+    }
+
+
 }

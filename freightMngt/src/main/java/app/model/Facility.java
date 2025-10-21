@@ -1,6 +1,5 @@
 package app.model;
 
-import javax.swing.text.StyledEditorKit;
 
 /**
  * Represents a facility in the freight management system.

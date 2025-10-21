@@ -65,6 +65,13 @@ public class WarehouseAisleRepository {
         return null;
     }
 
+    /**
+     * Gets the next available aisle number for a specific warehouse.
+     * Finds the maximum aisle number currently in use for the warehouse and returns the next sequential number.
+     *
+     * @param warehouseId the warehouse identifier
+     * @return the next available aisle number (max current aisle number + 1)
+     */
     public Integer getNextAisleNo(Integer warehouseId) {
         int maxAisleNo = 0;
         for (WarehouseAisle aisle : aisles) {
