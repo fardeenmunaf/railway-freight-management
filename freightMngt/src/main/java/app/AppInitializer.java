@@ -29,7 +29,9 @@ public class AppInitializer implements Runnable {
         loadBays(repositories);
         loadItems(repositories);
         loadOrders(repositories);
+        loadOrderLines(repositories);
         loadWagons(repositories);
+        loadReturns(repositories);
     }
 
     private void loadBays(Repositories repositories) {
@@ -105,7 +107,7 @@ public class AppInitializer implements Runnable {
         return category;
     }
 
-    private void loadOrders (Repositories repositories) {
+    private void loadOrders(Repositories repositories) {
         List<Map<String, String>> data = CsvReader.readCsv(ORDERS_CSV, ",");
         for (Map<String, String> row : data) {
             String orderIdStr = row.get("orderId");
@@ -124,10 +126,37 @@ public class AppInitializer implements Runnable {
         }
     }
 
+    private void loadOrderLines(Repositories repositories) {
+        List<Map<String, String>> data = CsvReader.readCsv(ORDER_LINES_CSV, ",");
+        int orderLineIdCounter = 1;
+
+        for (Map<String, String> row : data) {
+            String orderIdStr = row.get("orderId");
+            String skuString = row.get("sku");
+            Double qty = Double.parseDouble(row.get("qty"));
+
+            // Extract numeric part from orderId (e.g., "ORD00001" -> 1)
+            Integer orderId = Integer.parseInt(orderIdStr.substring(3));
+
+            // Get the order from repository
+            Order order = repositories.getOrderRepository().getOrderById(orderId);
+
+            // Get the item by SKU
+            Item item = repositories.getItemRepository().getItemBySku(skuString);
+
+            if (order != null && item != null) {
+                // Create OrderLine
+                OrderLine orderLine = new OrderLine(orderLineIdCounter, order, item, qty);
+                repositories.getOrderLineRepository().addOrderLine(orderLine);
+                orderLineIdCounter++;
+            }
+        }
+    }
+
     private void loadWagons(Repositories repositories) {
         List<Map<String, String>> data = CsvReader.readCsv(WAGONS_CSV, ",");
         int balanceIdCounter = 1;
-        
+
         for (Map<String, String> row : data) {
             String boxId = row.get("boxId");
             String skuString = row.get("sku");
@@ -168,4 +197,62 @@ public class AppInitializer implements Runnable {
         }
     }
 
+    private void loadReturns(Repositories repositories) {
+        List<Map<String, String>> data = CsvReader.readCsv(RETURNS_CSV, ",");
+        int returnLineIdCounter = 1;
+
+        for (Map<String, String> row : data) {
+            String returnIdStr = row.get("returnId");
+            String skuString = row.get("sku");
+            Integer qty = Integer.parseInt(row.get("qty"));
+            String reason = row.get("reason");
+            String timestampStr = row.get("timestamp");
+            String expiryDateStr = row.get("expiryDate");
+
+            // Extract numeric part from returnId (e.g., "RET00001" -> 1)
+            Integer returnId = Integer.parseInt(returnIdStr.substring(3));
+
+            // Parse timestamp as LocalDateTime (ISO format: 2025-09-13T12:00:00)
+            LocalDateTime timestamp = LocalDateTime.parse(timestampStr);
+
+            // Parse expiryDate (optional - can be null/empty)
+            LocalDateTime expiryDate = null;
+            if (expiryDateStr != null && !expiryDateStr.trim().isEmpty()) {
+                // Handle both date-only format (2025-07-30) and datetime format
+                if (expiryDateStr.length() == 10) {
+                    // Date only format - add default time (start of day)
+                    expiryDate = LocalDateTime.parse(expiryDateStr + "T00:00:00");
+                } else {
+                    // Full datetime format
+                    expiryDate = LocalDateTime.parse(expiryDateStr);
+                }
+            }
+
+            // Create ReturnOrder with status "received"
+            ReturnOrder returnOrder = new ReturnOrder(returnId, null, reason, "received", timestamp);
+            repositories.getReturnOrderRepository().addReturnOrder(returnOrder);
+
+            // Create ReturnLine with condition based on reason
+            String condition = getConditionFromReason(reason);
+            ReturnLine returnLine = new ReturnLine(returnLineIdCounter, returnOrder, skuString, qty, condition);
+            repositories.getReturnLineRepository().addReturnLine(returnLine);
+            returnLineIdCounter++;
+        }
+    }
+
+    private String getConditionFromReason(String reason) {
+        // Map reason to condition
+        switch (reason) {
+            case "damaged":
+                return "damaged";
+            case "expired":
+                return "expired";
+            case "customer-remorse":
+                return "good";
+            case "cycle-count":
+                return "good";
+            default:
+                return "unknown";
+        }
+    }
 }
