@@ -3,15 +3,20 @@ package app.repositories;
 
 public class Repositories {
 
-
     private static Repositories instance;
+
+    private final WarehouseRepository warehouseRepository;
+    private final WarehouseAisleRepository warehouseAisleRepository;
+    private final WarehouseBayRepository warehouseBayRepository;
 
     /**
      * The Singleton's constructor should always be private to prevent direct construction calls with the new operator.
      */
 
     private Repositories() {
-
+        warehouseRepository = new WarehouseRepository();
+        warehouseAisleRepository = new WarehouseAisleRepository();
+        warehouseBayRepository = new WarehouseBayRepository();
     }
 
     /**
@@ -24,5 +29,17 @@ public class Repositories {
             instance = new Repositories();
         }
         return instance;
+    }
+
+    public WarehouseRepository getWarehouseRepository() {
+        return warehouseRepository;
+    }
+
+    public WarehouseAisleRepository getWarehouseAisleRepository() {
+        return warehouseAisleRepository;
+    }
+
+    public WarehouseBayRepository getWarehouseBayRepository() {
+        return warehouseBayRepository;
     }
 }
