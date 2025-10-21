@@ -82,9 +82,10 @@ public class InventoryBalanceRepository {
 
     /**
      * Gets the next available inventory balance ID.
-     * Finds the maximum balance ID currently in use and returns the next sequential ID.
+     * Returns positive IDs starting from 1 for assigned balances.
+     * Ignores negative IDs which are used for unassigned balances.
      *
-     * @return the next available inventory balance ID (max current ID + 1)
+     * @return the next available inventory balance ID (max current positive ID + 1, or 1 if none exist)
      */
     public Integer getNextBalanceId() {
         int maxId = 0;

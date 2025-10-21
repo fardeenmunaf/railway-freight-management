@@ -1,6 +1,9 @@
 package app;
 
+import app.controller.InventoryBalanceController;
+import app.model.InventoryBalance;
 import app.repositories.*;
+import app.service.WagonsUnloading;
 import app.view.MainMenu;
 
 public class Main {
@@ -24,6 +27,51 @@ public class Main {
         System.out.println(warehouseAisleRepository.getAllAisles().stream().limit(3).toList());
         System.out.println(warehouseBayRepository.getAllWarehouseBays().stream().limit(3).toList());
         System.out.println("Dataset initialized successfully.");
-        MainMenu.display();
+
+        System.out.println("\n=== TESTING WAGONS UNLOADING ===");
+
+        WagonsUnloading wagonsUnloading = new WagonsUnloading();
+        InventoryBalanceController balanceController = new InventoryBalanceController();
+
+        System.out.println("\n--- BEFORE UNLOADING ---");
+        java.util.List<InventoryBalance> allBalances = balanceController.getAllInventoryBalances();
+        int unassignedCount = 0;
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() == null) {
+                unassignedCount++;
+                Integer sku = balance.getLots().isEmpty() ? null : balance.getLots().get(0).getSku();
+                System.out.println("Balance ID: " + balance.getBalanceId() +
+                    " | SKU: " + sku +
+                    " | Qty: " + balance.getQty() +
+                    " | Lots: " + balance.getLots().size() +
+                    " | Bay: null");
+            }
+        }
+        System.out.println("Total unassigned balances: " + unassignedCount);
+
+        System.out.println("\n--- EXECUTING UNLOADING ---");
+        wagonsUnloading.unloadAllWagons();
+
+        System.out.println("\n--- AFTER UNLOADING ---");
+        allBalances = balanceController.getAllInventoryBalances();
+        int assignedCount = 0;
+        int stillUnassigned = 0;
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() != null) {
+                assignedCount++;
+                Integer sku = balance.getLots().isEmpty() ? null : balance.getLots().get(0).getSku();
+                System.out.println("Balance ID: " + balance.getBalanceId() +
+                    " | SKU: " + sku +
+                    " | Qty: " + balance.getQty() +
+                    " | Lots: " + balance.getLots().size() +
+                    " | Bay: " + balance.getBay().getBayId());
+            } else {
+                stillUnassigned++;
+            }
+        }
+        System.out.println("\nTotal assigned balances: " + assignedCount);
+        System.out.println("Total still unassigned: " + stillUnassigned);
+
+        //MainMenu.display();
     }
 }

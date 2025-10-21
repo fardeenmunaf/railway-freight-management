@@ -7,6 +7,7 @@ import app.repositories.WarehouseAisleRepository;
 import app.utils.CsvReader;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -128,8 +129,8 @@ public class AppInitializer implements Runnable {
     private void loadWagons(Repositories repositories) {
         List<Map<String, String>> data = CsvReader.readCsv(WAGONS_CSV, ",");
         InventoryBalanceController balanceController = new InventoryBalanceController();
-        int balanceIdCounter = 1;
-        
+        int balanceIdCounter = -1;
+
         for (Map<String, String> row : data) {
             String boxId = row.get("boxId");
             String skuString = row.get("sku");
@@ -137,45 +138,34 @@ public class AppInitializer implements Runnable {
             String expiryDateStr = row.get("expiryDate");
             String receivedAtStr = row.get("receivedAt");
 
-            // Extract numeric part from boxId (e.g., "BOX00001" -> 1)
             Integer lotId = Integer.parseInt(boxId.substring(3));
-
-            // Parse sku as Integer (e.g., "SKU00001" -> 1)
             Integer sku = Integer.parseInt(skuString.substring(3));
 
-            // Parse expiryDate (optional - can be null/empty)
             LocalDateTime expiryDate = null;
             if (expiryDateStr != null && !expiryDateStr.trim().isEmpty()) {
-                // Handle both date-only format (2026-01-05) and datetime format
                 if (expiryDateStr.length() == 10) {
-                    // Date only format - add default time (start of day)
                     expiryDate = LocalDateTime.parse(expiryDateStr + "T00:00:00");
                 } else {
-                    // Full datetime format
                     expiryDate = LocalDateTime.parse(expiryDateStr);
                 }
             }
 
-            // Parse receivedAt as LocalDateTime (ISO format: 2025-07-05T15:42:00)
             LocalDateTime receivedAt = LocalDateTime.parse(receivedAtStr);
 
-            // Create InventoryLot (box) - cada linha do CSV é um lote diferente
             InventoryLot lot = new InventoryLot(lotId, sku, qty, expiryDate, receivedAt);
             repositories.getInventoryLotRepository().addInventoryLot(lot);
 
-            // Check if balance already exists for this SKU
             InventoryBalance existingBalance = findBalanceBySku(balanceController, sku);
 
             if (existingBalance != null) {
-                // Update existing balance - add quantity from this lot
-                Integer newQty = existingBalance.getQty() + qty;
-                InventoryBalance updatedBalance = new InventoryBalance(existingBalance.getBalanceId(), existingBalance.getBay(), existingBalance.getLot(), newQty);
-                balanceController.updateInventoryBalance(existingBalance.getBalanceId(), updatedBalance);
+                existingBalance.addLot(lot);
+                balanceController.updateInventoryBalance(existingBalance.getBalanceId(), existingBalance);
             } else {
-                // Create new balance for this SKU with bay = null (not yet assigned)
-                InventoryBalance balance = new InventoryBalance(balanceIdCounter, null, lot, qty);
+                List<InventoryLot> lotsList = new ArrayList<>();
+                lotsList.add(lot);
+                InventoryBalance balance = new InventoryBalance(balanceIdCounter, null, lotsList, qty);
                 balanceController.createInventoryBalance(balance);
-                balanceIdCounter++;
+                balanceIdCounter--;
             }
         }
     }
@@ -190,7 +180,7 @@ public class AppInitializer implements Runnable {
     private InventoryBalance findBalanceBySku(InventoryBalanceController balanceController, Integer sku) {
         List<InventoryBalance> allBalances = balanceController.getAllInventoryBalances();
         for (InventoryBalance balance : allBalances) {
-            if (balance.getLot() != null && sku.equals(balance.getLot().getSku())) {
+            if (!balance.getLots().isEmpty() && sku.equals(balance.getLots().get(0).getSku())) {
                 return balance;
             }
         }

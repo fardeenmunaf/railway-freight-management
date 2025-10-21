@@ -106,8 +106,10 @@ public class WagonsUnloading {
 
         for (InventoryBalance balance : allBalances) {
             if (balance.getBay() != null && balance.getBay().getBayId().equals(bay.getBayId())) {
-                existingSku = balance.getLot().getSku();
-                break;
+                if (!balance.getLots().isEmpty()) {
+                    existingSku = balance.getLots().get(0).getSku();
+                    break;
+                }
             }
         }
 
@@ -155,10 +157,10 @@ public class WagonsUnloading {
         Integer newBalanceId = balanceController.getNextBalanceId();
 
         InventoryBalance newBalance = new InventoryBalance(
-            newBalanceId,
-            bay,
-            balance.getLot(),
-            qty
+                newBalanceId,
+                bay,
+                balance.getLots(),
+                qty
         );
 
         balanceController.createInventoryBalance(newBalance);
@@ -176,7 +178,15 @@ public class WagonsUnloading {
      */
     public void processBalance(InventoryBalance balance) {
         Integer remainingQty = balance.getQty();
-        Integer sku = balance.getLot().getSku();
+        Integer sku = null;
+
+        if (!balance.getLots().isEmpty()) {
+            sku = balance.getLots().get(0).getSku();
+        }
+
+        if (sku == null) {
+            return;
+        }
 
         while (remainingQty > 0) {
             WarehouseBay suitableBay = findSuitableBay(sku);
