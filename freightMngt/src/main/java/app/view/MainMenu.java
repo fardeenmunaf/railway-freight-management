@@ -38,8 +38,8 @@ public class MainMenu {
                             // TODO: Call appropriate train management method
                             break;
                         case 2:
-                            System.out.println("Manage Users selected.");
-                            // TODO: Call appropriate user management method
+                            System.out.println("Manage wagons selected.");
+                            // TODO: Call appropriate wagon management method
                             break;
                         case 3:
                             System.out.println("Manage Train Services selected.");
