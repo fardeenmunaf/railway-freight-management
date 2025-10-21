@@ -255,4 +255,9 @@ public class AppInitializer implements Runnable {
                 return "unknown";
         }
     }
+
+    private void loadMockedData() {
+        // This method is used to create all repositories with mocked data for testing purposes.
+
+    }
 }
