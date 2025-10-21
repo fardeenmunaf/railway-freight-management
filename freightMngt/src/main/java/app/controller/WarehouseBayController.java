@@ -47,44 +47,52 @@ public class WarehouseBayController {
     }
 
     /**
-     * Retrieves a warehouse bay by its unique identifier.
+     * Retrieves a warehouse bay by warehouse ID, aisle number, and bay number.
      *
-     * @param bayId the unique identifier of the warehouse bay
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @param bayNo the bay number
      * @return an Optional containing the WarehouseBay if found, or empty if not found
      */
-    public Optional<WarehouseBay> getWarehouseBayById(Integer bayId) {
-        WarehouseBay warehouseBay = repository.getWarehouseBayById(bayId);
+    public Optional<WarehouseBay> getWarehouseBay(Integer warehouseId, Integer aisleNo, Integer bayNo) {
+        WarehouseBay warehouseBay = repository.getWarehouseBay(warehouseId, aisleNo, bayNo);
         return Optional.ofNullable(warehouseBay);
     }
 
     /**
      * Updates an existing warehouse bay in the system.
      *
-     * @param bayId the unique identifier of the warehouse bay to update
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @param bayNo the bay number
      * @param updatedWarehouseBay the WarehouseBay object with updated information
      * @return true if the warehouse bay was updated successfully, false otherwise
      */
-    public boolean updateWarehouseBay(Integer bayId, WarehouseBay updatedWarehouseBay) {
-        return repository.updateWarehouseBay(bayId, updatedWarehouseBay);
+    public boolean updateWarehouseBay(Integer warehouseId, Integer aisleNo, Integer bayNo, WarehouseBay updatedWarehouseBay) {
+        return repository.updateWarehouseBay(warehouseId, aisleNo, bayNo, updatedWarehouseBay);
     }
 
     /**
      * Deletes a warehouse bay from the system.
      *
-     * @param bayId the unique identifier of the warehouse bay to delete
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @param bayNo the bay number
      * @return true if the warehouse bay was deleted successfully, false otherwise
      */
-    public boolean deleteWarehouseBay(Integer bayId) {
-        return repository.deleteWarehouseBay(bayId);
+    public boolean deleteWarehouseBay(Integer warehouseId, Integer aisleNo, Integer bayNo) {
+        return repository.deleteWarehouseBay(warehouseId, aisleNo, bayNo);
     }
 
     /**
-     * Gets the next available warehouse bay ID.
+     * Gets the next available warehouse bay number for a specific aisle.
      *
-     * @return the next warehouse bay ID to be used
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @return the next warehouse bay number to be used
      */
-    public Integer getNextWarehouseBayId() {
-        return repository.getNextWarehouseBayId();
+    public Integer getNextBayNo(Integer warehouseId, Integer aisleNo) {
+        return repository.getNextBayNo(warehouseId, aisleNo);
     }
 
     /**

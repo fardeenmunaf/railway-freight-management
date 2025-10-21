@@ -43,7 +43,7 @@ public class ItemCategoryController {
      * @return a list of all ItemCategory objects
      */
     public List<ItemCategory> getAllItemCategories() {
-        return repository.getAllItemCategories();
+        return repository.getAllCategories();
     }
 
     /**
@@ -53,7 +53,7 @@ public class ItemCategoryController {
      * @return an Optional containing the ItemCategory if found, or empty if not found
      */
     public Optional<ItemCategory> getItemCategoryById(Integer categoryId) {
-        ItemCategory itemCategory = repository.getItemCategoryById(categoryId);
+        ItemCategory itemCategory = repository.getCategoryById(categoryId);
         return Optional.ofNullable(itemCategory);
     }
 
@@ -84,7 +84,7 @@ public class ItemCategoryController {
      * @return the next item category ID to be used
      */
     public Integer getNextItemCategoryId() {
-        return repository.getNextItemCategoryId();
+        return repository.getNextCategoryId();
     }
 
     /**
