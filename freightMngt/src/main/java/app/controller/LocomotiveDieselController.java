@@ -53,7 +53,7 @@ public class LocomotiveDieselController {
      */
     public Optional<LocomotiveDiesel> getLocomotiveDieselById(Integer locomotiveDieselId) {
         return locomotiveDiesels.stream()
-                .filter(locomotiveDiesel -> locomotiveDiesel.getLocomotiveDieselId().equals(locomotiveDieselId))
+                .filter(locomotiveDiesel -> locomotiveDiesel.getLocomotiveId().equals(locomotiveDieselId))
                 .findFirst();
     }
 
@@ -81,7 +81,6 @@ public class LocomotiveDieselController {
      * @return true if the diesel locomotive was deleted successfully, false otherwise
      */
     public boolean deleteLocomotiveDiesel(Integer locomotiveDieselId) {
-        return locomotiveDiesels.removeIf(locomotiveDiesel -> locomotiveDiesel.getLocomotiveDieselId().equals(locomotiveDieselId));
+        return locomotiveDiesels.removeIf(locomotiveDiesel -> locomotiveDiesel.getLocomotiveId().equals(locomotiveDieselId));
     }
 }
-

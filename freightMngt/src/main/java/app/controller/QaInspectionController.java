@@ -48,24 +48,24 @@ public class QaInspectionController {
     /**
      * Retrieves a QA inspection by its unique identifier.
      *
-     * @param qaInspectionId the unique identifier of the QA inspection
+     * @param qaId the unique identifier of the QA inspection
      * @return an Optional containing the QaInspection if found, or empty if not found
      */
-    public Optional<QaInspection> getQaInspectionById(Integer qaInspectionId) {
+    public Optional<QaInspection> getQaInspectionById(Integer qaId) {
         return qaInspections.stream()
-                .filter(qaInspection -> qaInspection.getQaInspectionId().equals(qaInspectionId))
+                .filter(qaInspection -> qaInspection.getQaId().equals(qaId))
                 .findFirst();
     }
 
     /**
      * Updates an existing QA inspection in the system.
      *
-     * @param qaInspectionId the unique identifier of the QA inspection to update
+     * @param qaId the unique identifier of the QA inspection to update
      * @param updatedQaInspection the QaInspection object with updated information
      * @return true if the QA inspection was updated successfully, false otherwise
      */
-    public boolean updateQaInspection(Integer qaInspectionId, QaInspection updatedQaInspection) {
-        Optional<QaInspection> existingQaInspection = getQaInspectionById(qaInspectionId);
+    public boolean updateQaInspection(Integer qaId, QaInspection updatedQaInspection) {
+        Optional<QaInspection> existingQaInspection = getQaInspectionById(qaId);
         if (existingQaInspection.isPresent()) {
             int index = qaInspections.indexOf(existingQaInspection.get());
             qaInspections.set(index, updatedQaInspection);
@@ -77,11 +77,10 @@ public class QaInspectionController {
     /**
      * Deletes a QA inspection from the system.
      *
-     * @param qaInspectionId the unique identifier of the QA inspection to delete
+     * @param qaId the unique identifier of the QA inspection to delete
      * @return true if the QA inspection was deleted successfully, false otherwise
      */
-    public boolean deleteQaInspection(Integer qaInspectionId) {
-        return qaInspections.removeIf(qaInspection -> qaInspection.getQaInspectionId().equals(qaInspectionId));
+    public boolean deleteQaInspection(Integer qaId) {
+        return qaInspections.removeIf(qaInspection -> qaInspection.getQaId().equals(qaId));
     }
 }
-

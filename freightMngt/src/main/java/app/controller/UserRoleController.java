@@ -48,12 +48,12 @@ public class UserRoleController {
     /**
      * Retrieves a user role by its unique identifier.
      *
-     * @param userRoleId the unique identifier of the user role
+     * @param userId the unique identifier of the user role
      * @return an Optional containing the UserRole if found, or empty if not found
      */
-    public Optional<UserRole> getUserRoleById(Integer userRoleId) {
+    public Optional<UserRole> getUserRoleById(Integer userId) {
         return userRoles.stream()
-                .filter(userRole -> userRole.getUserRoleId().equals(userRoleId))
+                .filter(userRole -> userRole.getUser().getUserId().equals(userId))
                 .findFirst();
     }
 
@@ -77,11 +77,10 @@ public class UserRoleController {
     /**
      * Deletes a user role from the system.
      *
-     * @param userRoleId the unique identifier of the user role to delete
+     * @param userId the unique identifier of the user role to delete
      * @return true if the user role was deleted successfully, false otherwise
      */
-    public boolean deleteUserRole(Integer userRoleId) {
-        return userRoles.removeIf(userRole -> userRole.getUserRoleId().equals(userRoleId));
+    public boolean deleteUserRole(Integer userId) {
+        return userRoles.removeIf(userRole -> userRole.getUser().getUserId().equals(userId));
     }
 }
-

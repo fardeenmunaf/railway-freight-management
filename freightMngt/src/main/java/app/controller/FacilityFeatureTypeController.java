@@ -1,3 +1,10 @@
+package app.controller;
+
+import app.model.FacilityFeatureType;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 /**
  * Controller class for managing FacilityFeatureType entities.
  * Provides CRUD operations (Create, Read, Update, Delete) for FacilityFeatureType objects.
@@ -41,24 +48,24 @@ public class FacilityFeatureTypeController {
     /**
      * Retrieves a facility feature type by its unique identifier.
      *
-     * @param facilityFeatureTypeId the unique identifier of the facility feature type
+     * @param featureId the unique identifier of the facility feature type
      * @return an Optional containing the FacilityFeatureType if found, or empty if not found
      */
-    public Optional<FacilityFeatureType> getFacilityFeatureTypeById(Integer facilityFeatureTypeId) {
+    public Optional<FacilityFeatureType> getFacilityFeatureTypeById(Integer featureId) {
         return facilityFeatureTypes.stream()
-                .filter(facilityFeatureType -> facilityFeatureType.getFacilityFeatureTypeId().equals(facilityFeatureTypeId))
+                .filter(facilityFeatureType -> facilityFeatureType.getFeatureId().equals(featureId))
                 .findFirst();
     }
 
     /**
      * Updates an existing facility feature type in the system.
      *
-     * @param facilityFeatureTypeId the unique identifier of the facility feature type to update
+     * @param featureId the unique identifier of the facility feature type to update
      * @param updatedFacilityFeatureType the FacilityFeatureType object with updated information
      * @return true if the facility feature type was updated successfully, false otherwise
      */
-    public boolean updateFacilityFeatureType(Integer facilityFeatureTypeId, FacilityFeatureType updatedFacilityFeatureType) {
-        Optional<FacilityFeatureType> existingFacilityFeatureType = getFacilityFeatureTypeById(facilityFeatureTypeId);
+    public boolean updateFacilityFeatureType(Integer featureId, FacilityFeatureType updatedFacilityFeatureType) {
+        Optional<FacilityFeatureType> existingFacilityFeatureType = getFacilityFeatureTypeById(featureId);
         if (existingFacilityFeatureType.isPresent()) {
             int index = facilityFeatureTypes.indexOf(existingFacilityFeatureType.get());
             facilityFeatureTypes.set(index, updatedFacilityFeatureType);
@@ -70,18 +77,10 @@ public class FacilityFeatureTypeController {
     /**
      * Deletes a facility feature type from the system.
      *
-     * @param facilityFeatureTypeId the unique identifier of the facility feature type to delete
+     * @param featureId the unique identifier of the facility feature type to delete
      * @return true if the facility feature type was deleted successfully, false otherwise
      */
-    public boolean deleteFacilityFeatureType(Integer facilityFeatureTypeId) {
-        return facilityFeatureTypes.removeIf(facilityFeatureType -> facilityFeatureType.getFacilityFeatureTypeId().equals(facilityFeatureTypeId));
+    public boolean deleteFacilityFeatureType(Integer featureId) {
+        return facilityFeatureTypes.removeIf(facilityFeatureType -> facilityFeatureType.getFeatureId().equals(featureId));
     }
 }
-package app.controller;
-
-import app.model.FacilityFeatureType;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-

@@ -48,24 +48,24 @@ public class TrainServiceCompositionController {
     /**
      * Retrieves a train service composition by its unique identifier.
      *
-     * @param trainServiceCompositionId the unique identifier of the train service composition
+     * @param trainServiceId the unique identifier of the train service composition
      * @return an Optional containing the TrainServiceComposition if found, or empty if not found
      */
-    public Optional<TrainServiceComposition> getTrainServiceCompositionById(Integer trainServiceCompositionId) {
+    public Optional<TrainServiceComposition> getTrainServiceCompositionById(Integer trainServiceId) {
         return trainServiceCompositions.stream()
-                .filter(trainServiceComposition -> trainServiceComposition.getTrainServiceCompositionId().equals(trainServiceCompositionId))
+                .filter(trainServiceComposition -> trainServiceComposition.getTrainService().getServiceId().equals(trainServiceId))
                 .findFirst();
     }
 
     /**
      * Updates an existing train service composition in the system.
      *
-     * @param trainServiceCompositionId the unique identifier of the train service composition to update
+     * @param trainServiceId the unique identifier of the train service composition to update
      * @param updatedTrainServiceComposition the TrainServiceComposition object with updated information
      * @return true if the train service composition was updated successfully, false otherwise
      */
-    public boolean updateTrainServiceComposition(Integer trainServiceCompositionId, TrainServiceComposition updatedTrainServiceComposition) {
-        Optional<TrainServiceComposition> existingTrainServiceComposition = getTrainServiceCompositionById(trainServiceCompositionId);
+    public boolean updateTrainServiceComposition(Integer trainServiceId, TrainServiceComposition updatedTrainServiceComposition) {
+        Optional<TrainServiceComposition> existingTrainServiceComposition = getTrainServiceCompositionById(trainServiceId);
         if (existingTrainServiceComposition.isPresent()) {
             int index = trainServiceCompositions.indexOf(existingTrainServiceComposition.get());
             trainServiceCompositions.set(index, updatedTrainServiceComposition);
@@ -77,11 +77,10 @@ public class TrainServiceCompositionController {
     /**
      * Deletes a train service composition from the system.
      *
-     * @param trainServiceCompositionId the unique identifier of the train service composition to delete
+     * @param trainServiceId the unique identifier of the train service composition to delete
      * @return true if the train service composition was deleted successfully, false otherwise
      */
-    public boolean deleteTrainServiceComposition(Integer trainServiceCompositionId) {
-        return trainServiceCompositions.removeIf(trainServiceComposition -> trainServiceComposition.getTrainServiceCompositionId().equals(trainServiceCompositionId));
+    public boolean deleteTrainServiceComposition(Integer trainServiceId) {
+        return trainServiceCompositions.removeIf(trainServiceComposition -> trainServiceComposition.getTrainService().getServiceId().equals(trainServiceId));
     }
 }
-

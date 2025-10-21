@@ -53,7 +53,7 @@ public class LocomotiveEletricController {
      */
     public Optional<LocomotiveEletric> getLocomotiveEletricById(Integer locomotiveEletricId) {
         return locomotiveEletrics.stream()
-                .filter(locomotiveEletric -> locomotiveEletric.getLocomotiveEletricId().equals(locomotiveEletricId))
+                .filter(locomotiveEletric -> locomotiveEletric.getLocomotiveId().equals(locomotiveEletricId))
                 .findFirst();
     }
 
@@ -81,7 +81,6 @@ public class LocomotiveEletricController {
      * @return true if the electric locomotive was deleted successfully, false otherwise
      */
     public boolean deleteLocomotiveEletric(Integer locomotiveEletricId) {
-        return locomotiveEletrics.removeIf(locomotiveEletric -> locomotiveEletric.getLocomotiveEletricId().equals(locomotiveEletricId));
+        return locomotiveEletrics.removeIf(locomotiveEletric -> locomotiveEletric.getLocomotiveId().equals(locomotiveEletricId));
     }
 }
-

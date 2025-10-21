@@ -48,24 +48,24 @@ public class QuarantineHoldController {
     /**
      * Retrieves a quarantine hold by its unique identifier.
      *
-     * @param quarantineHoldId the unique identifier of the quarantine hold
+     * @param qholdId the unique identifier of the quarantine hold
      * @return an Optional containing the QuarantineHold if found, or empty if not found
      */
-    public Optional<QuarantineHold> getQuarantineHoldById(Integer quarantineHoldId) {
+    public Optional<QuarantineHold> getQuarantineHoldById(Integer qholdId) {
         return quarantineHolds.stream()
-                .filter(quarantineHold -> quarantineHold.getQuarantineHoldId().equals(quarantineHoldId))
+                .filter(quarantineHold -> quarantineHold.getQholdId().equals(qholdId))
                 .findFirst();
     }
 
     /**
      * Updates an existing quarantine hold in the system.
      *
-     * @param quarantineHoldId the unique identifier of the quarantine hold to update
+     * @param qholdId the unique identifier of the quarantine hold to update
      * @param updatedQuarantineHold the QuarantineHold object with updated information
      * @return true if the quarantine hold was updated successfully, false otherwise
      */
-    public boolean updateQuarantineHold(Integer quarantineHoldId, QuarantineHold updatedQuarantineHold) {
-        Optional<QuarantineHold> existingQuarantineHold = getQuarantineHoldById(quarantineHoldId);
+    public boolean updateQuarantineHold(Integer qholdId, QuarantineHold updatedQuarantineHold) {
+        Optional<QuarantineHold> existingQuarantineHold = getQuarantineHoldById(qholdId);
         if (existingQuarantineHold.isPresent()) {
             int index = quarantineHolds.indexOf(existingQuarantineHold.get());
             quarantineHolds.set(index, updatedQuarantineHold);
@@ -77,11 +77,10 @@ public class QuarantineHoldController {
     /**
      * Deletes a quarantine hold from the system.
      *
-     * @param quarantineHoldId the unique identifier of the quarantine hold to delete
+     * @param qholdId the unique identifier of the quarantine hold to delete
      * @return true if the quarantine hold was deleted successfully, false otherwise
      */
-    public boolean deleteQuarantineHold(Integer quarantineHoldId) {
-        return quarantineHolds.removeIf(quarantineHold -> quarantineHold.getQuarantineHoldId().equals(quarantineHoldId));
+    public boolean deleteQuarantineHold(Integer qholdId) {
+        return quarantineHolds.removeIf(quarantineHold -> quarantineHold.getQholdId().equals(qholdId));
     }
 }
-

@@ -48,24 +48,24 @@ public class WarehouseAisleController {
     /**
      * Retrieves a warehouse aisle by its unique identifier.
      *
-     * @param warehouseAisleId the unique identifier of the warehouse aisle
+     * @param aisleId the unique identifier of the warehouse aisle
      * @return an Optional containing the WarehouseAisle if found, or empty if not found
      */
-    public Optional<WarehouseAisle> getWarehouseAisleById(Integer warehouseAisleId) {
+    public Optional<WarehouseAisle> getWarehouseAisleById(Integer aisleId) {
         return warehouseAisles.stream()
-                .filter(warehouseAisle -> warehouseAisle.getWarehouseAisleId().equals(warehouseAisleId))
+                .filter(warehouseAisle -> warehouseAisle.getAisleId().equals(aisleId))
                 .findFirst();
     }
 
     /**
      * Updates an existing warehouse aisle in the system.
      *
-     * @param warehouseAisleId the unique identifier of the warehouse aisle to update
+     * @param aisleId the unique identifier of the warehouse aisle to update
      * @param updatedWarehouseAisle the WarehouseAisle object with updated information
      * @return true if the warehouse aisle was updated successfully, false otherwise
      */
-    public boolean updateWarehouseAisle(Integer warehouseAisleId, WarehouseAisle updatedWarehouseAisle) {
-        Optional<WarehouseAisle> existingWarehouseAisle = getWarehouseAisleById(warehouseAisleId);
+    public boolean updateWarehouseAisle(Integer aisleId, WarehouseAisle updatedWarehouseAisle) {
+        Optional<WarehouseAisle> existingWarehouseAisle = getWarehouseAisleById(aisleId);
         if (existingWarehouseAisle.isPresent()) {
             int index = warehouseAisles.indexOf(existingWarehouseAisle.get());
             warehouseAisles.set(index, updatedWarehouseAisle);
@@ -77,11 +77,10 @@ public class WarehouseAisleController {
     /**
      * Deletes a warehouse aisle from the system.
      *
-     * @param warehouseAisleId the unique identifier of the warehouse aisle to delete
+     * @param aisleId the unique identifier of the warehouse aisle to delete
      * @return true if the warehouse aisle was deleted successfully, false otherwise
      */
-    public boolean deleteWarehouseAisle(Integer warehouseAisleId) {
-        return warehouseAisles.removeIf(warehouseAisle -> warehouseAisle.getWarehouseAisleId().equals(warehouseAisleId));
+    public boolean deleteWarehouseAisle(Integer aisleId) {
+        return warehouseAisles.removeIf(warehouseAisle -> warehouseAisle.getAisleId().equals(aisleId));
     }
 }
-
