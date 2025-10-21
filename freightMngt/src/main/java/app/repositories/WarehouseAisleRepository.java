@@ -65,6 +65,18 @@ public class WarehouseAisleRepository {
         return null;
     }
 
+    public Integer getNextAisleNo(Integer warehouseId) {
+        int maxAisleNo = 0;
+        for (WarehouseAisle aisle : aisles) {
+            if (aisle.getWarehouse() != null && warehouseId.equals(aisle.getWarehouse().getWarehouseId())) {
+                if (aisle.getAisleNo() != null && aisle.getAisleNo() > maxAisleNo) {
+                    maxAisleNo = aisle.getAisleNo();
+                }
+            }
+        }
+        return maxAisleNo + 1;
+    }
+
     /**
      * Checks if a warehouse aisle exists in the repository.
      *

@@ -18,30 +18,6 @@ public class WarehouseBayRepository {
     private final List<WarehouseBay> warehouseBays = new ArrayList<>();
 
     /**
-     * Creates and adds a new warehouse bay to the repository.
-     * The bay is associated with a specific warehouse and aisle.
-     *
-     * @param warehouseId the warehouse identifier
-     * @param aisle the aisle within the warehouse
-     * @param bayNo the bay number within the aisle
-     * @param capacityBox the storage capacity of the bay in number of boxes
-     * @return the created WarehouseBay object, or null if creation failed
-     */
-
-
-    /**
-     * TODO: CHANGE ID TYPE TO STRING AND READ CSV PROPERLY, CHANGING THE AISLENO TO AISLE AS AN OBJECT
-     */
-    public WarehouseBay createWarehouseBay(String warehouseId, WarehouseAisle aisle, Integer bayNo, Integer capacityBox) {
-        if (warehouseId != null && aisle != null && bayNo != null && capacityBox != null) {
-            WarehouseBay bay = new WarehouseBay(warehouseId, aisle, bayNo, capacityBox);
-            addWarehouseBay(bay);
-            return bay;
-        }
-        return null;
-    }
-
-    /**
      * Adds a new warehouse bay to the repository if it doesn't already exist.
      * The bay is checked for duplicates based on warehouse ID, aisle number, and bay number.
      *

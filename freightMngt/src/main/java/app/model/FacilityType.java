@@ -8,6 +8,12 @@ package app.model;
  *
  * @author G113 2DK
  * @version 1.0
+ *
+ * Facility type ID legend:
+ * 1 - Warehouse
+ * 2 - Station
+ * 3 - Terminal
+ * 4 - Depot
  */
 
 public class FacilityType {
