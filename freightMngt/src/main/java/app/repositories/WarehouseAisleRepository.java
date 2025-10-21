@@ -1,0 +1,156 @@
+package app.repositories;
+
+import app.model.WarehouseAisle;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Repository for managing warehouse aisles in the freight management system.
+ * This class provides methods to add, retrieve, and manage warehouse aisle entities.
+ * It maintains a collection of all warehouse aisles and allows searching by warehouse ID and aisle number.
+ *
+ * @author G113 2DK
+ * @version 1.0
+ */
+public class WarehouseAisleRepository {
+
+    private final List<WarehouseAisle> aisles = new ArrayList<>();
+
+    /**
+     * Adds a new warehouse aisle to the repository if it doesn't already exist.
+     *
+     * @param aisle the warehouse aisle to add
+     */
+
+    public void addWarehouseAisle(WarehouseAisle aisle) {
+        if (aisle != null && aisle.getWarehouse() != null) {
+            Integer warehouseId = aisle.getWarehouse().getWarehouseId();
+            Integer aisleNo = aisle.getAisleNo();
+
+            if (warehouseId != null && aisleNo != null) {
+                if (!containsAisle(warehouseId, aisleNo)) {
+                    aisles.add(aisle);
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieves all warehouse aisles in the repository.
+     *
+     * @return a new list containing all warehouse aisles
+     */
+
+    public List<WarehouseAisle> getAllAisles() {
+        return new ArrayList<>(aisles);
+    }
+
+    /**
+     * Retrieves a specific warehouse aisle by warehouse ID and aisle number.
+     *
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number within the warehouse
+     * @return the matching warehouse aisle, or null if not found
+     */
+
+    public WarehouseAisle getAisle(Integer warehouseId, Integer aisleNo) {
+        for (WarehouseAisle aisle : aisles) {
+            if (aisle.getWarehouse() != null) {
+                if (warehouseId.equals(aisle.getWarehouse().getWarehouseId()) &&
+                    aisleNo.equals(aisle.getAisleNo())) {
+                    return aisle;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Gets the next available aisle number for a specific warehouse.
+     * Finds the maximum aisle number currently in use for the warehouse and returns the next sequential number.
+     *
+     * @param warehouseId the warehouse identifier
+     * @return the next available aisle number (max current aisle number + 1)
+     */
+    public Integer getNextAisleNo(Integer warehouseId) {
+        int maxAisleNo = 0;
+        for (WarehouseAisle aisle : aisles) {
+            if (aisle.getWarehouse() != null && warehouseId.equals(aisle.getWarehouse().getWarehouseId())) {
+                if (aisle.getAisleNo() != null && aisle.getAisleNo() > maxAisleNo) {
+                    maxAisleNo = aisle.getAisleNo();
+                }
+            }
+        }
+        return maxAisleNo + 1;
+    }
+
+    /**
+     * Updates an existing warehouse aisle in the repository.
+     *
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @param updatedAisle the updated warehouse aisle
+     * @return true if the aisle was updated successfully, false otherwise
+     */
+    public boolean updateWarehouseAisle(Integer warehouseId, Integer aisleNo, WarehouseAisle updatedAisle) {
+        WarehouseAisle existingAisle = getAisle(warehouseId, aisleNo);
+        if (existingAisle != null) {
+            int index = aisles.indexOf(existingAisle);
+            aisles.set(index, updatedAisle);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Deletes a warehouse aisle from the repository.
+     *
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number
+     * @return true if the aisle was deleted successfully, false otherwise
+     */
+    public boolean deleteWarehouseAisle(Integer warehouseId, Integer aisleNo) {
+        return aisles.removeIf(aisle ->
+            aisle.getWarehouse() != null &&
+            warehouseId.equals(aisle.getWarehouse().getWarehouseId()) &&
+            aisleNo.equals(aisle.getAisleNo())
+        );
+    }
+
+    /**
+     * Retrieves all aisles for a specific warehouse.
+     *
+     * @param warehouseId the warehouse identifier
+     * @return a list of all aisles in the specified warehouse
+     */
+    public List<WarehouseAisle> getAislesByWarehouse(Integer warehouseId) {
+        List<WarehouseAisle> result = new ArrayList<>();
+        for (WarehouseAisle aisle : aisles) {
+            if (aisle.getWarehouse() != null && warehouseId.equals(aisle.getWarehouse().getWarehouseId())) {
+                result.add(aisle);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Checks if a warehouse aisle exists in the repository.
+     *
+     * @param warehouseId the warehouse identifier
+     * @param aisleNo the aisle number within the warehouse
+     * @return true if the aisle exists, false otherwise
+     */
+
+    private boolean containsAisle(Integer warehouseId, Integer aisleNo) {
+        return getAisle(warehouseId, aisleNo) != null;
+    }
+
+
+    /**
+     * Clears all warehouse aisles from the repository.
+     */
+
+    public void clear() {
+        aisles.clear();
+    }
+}

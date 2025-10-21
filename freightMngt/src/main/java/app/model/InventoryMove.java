@@ -198,4 +198,17 @@ public class InventoryMove {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+    @Override
+    public String toString() {
+        return "InventoryMove{" +
+                "moveId=" + moveId +
+                ", lot=" + lot +
+                ", fromBay=" + fromBay +
+                ", toBay=" + toBay +
+                ", qty=" + qty +
+                ", reason='" + reason + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }
