@@ -148,4 +148,15 @@ public class ReturnLine {
     public void setCondition(String condition) {
         this.condition = condition;
     }
+
+    @Override
+    public String toString() {
+        return "ReturnLine{" +
+                "returnLineId=" + returnLineId +
+                ", returnOrder=" + returnOrder +
+                ", sku='" + sku + '\'' +
+                ", qty=" + qty +
+                ", condition='" + condition + '\'' +
+                '}';
+    }
 }

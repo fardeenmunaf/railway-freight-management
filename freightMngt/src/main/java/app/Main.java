@@ -13,6 +13,8 @@ public class Main {
         WarehouseRepository warehouseRepository = repositories.getWarehouseRepository();
         WarehouseAisleRepository warehouseAisleRepository = repositories.getWarehouseAisleRepository();
         WarehouseBayRepository warehouseBayRepository = repositories.getWarehouseBayRepository();
+        OrderLineRepository orderLineRepository = repositories.getOrderLineRepository();
+        ReturnOrderRepository returnOrderRepository = repositories.getReturnOrderRepository();
 
         System.out.println("Initializing dataset...");
         appInitializer.run();
@@ -23,7 +25,9 @@ public class Main {
         System.out.println(warehouseRepository.getAllWarehouses().stream().limit(3).toList());
         System.out.println(warehouseAisleRepository.getAllAisles().stream().limit(3).toList());
         System.out.println(warehouseBayRepository.getAllWarehouseBays().stream().limit(3).toList());
-        System.out.println("Dataset initialized successfully.");
+        System.out.println(orderLineRepository.getAllOrderLines().stream().limit(3).toList());
+        System.out.println(returnOrderRepository.getAllReturnOrders().stream().limit(3).toList());
+        System.out.println("Dataset initialized successfully.\n\n");
         MainMenu.display();
     }
 }

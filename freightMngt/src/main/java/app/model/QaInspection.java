@@ -126,4 +126,14 @@ public class QaInspection {
     public void setInspectedAt(LocalDateTime inspectedAt) {
         this.inspectedAt = inspectedAt;
     }
+
+    @Override
+    public String toString() {
+        return "QaInspection{" +
+                "qaId=" + qaId +
+                ", returnLineId=" + returnLineId +
+                ", status='" + status + '\'' +
+                ", inspectedAt=" + inspectedAt +
+                '}';
+    }
 }
