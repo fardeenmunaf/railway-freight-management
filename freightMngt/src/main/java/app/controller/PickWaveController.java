@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.PickWave;
-import java.util.ArrayList;
+import app.repositories.PickWaveRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class PickWaveController {
-    private List<PickWave> pickWaves;
+    private final PickWaveRepository repository;
 
     /**
-     * Default constructor that initializes the pick wave list.
+     * Default constructor that initializes the controller with the pick wave repository.
      */
     public PickWaveController() {
-        this.pickWaves = new ArrayList<>();
+        this.repository = Repositories.getInstance().getPickWaveRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class PickWaveController {
      */
     public PickWave createPickWave(PickWave pickWave) {
         if (pickWave != null) {
-            pickWaves.add(pickWave);
+            repository.addPickWave(pickWave);
         }
         return pickWave;
     }
@@ -42,7 +43,7 @@ public class PickWaveController {
      * @return a list of all PickWave objects
      */
     public List<PickWave> getAllPickWaves() {
-        return new ArrayList<>(pickWaves);
+        return repository.getAllPickWaves();
     }
 
     /**
@@ -52,9 +53,8 @@ public class PickWaveController {
      * @return an Optional containing the PickWave if found, or empty if not found
      */
     public Optional<PickWave> getPickWaveById(Integer pickWaveId) {
-        return pickWaves.stream()
-                .filter(pickWave -> pickWave.getPickWaveId().equals(pickWaveId))
-                .findFirst();
+        PickWave pickWave = repository.getPickWaveById(pickWaveId);
+        return Optional.ofNullable(pickWave);
     }
 
     /**
@@ -65,13 +65,7 @@ public class PickWaveController {
      * @return true if the pick wave was updated successfully, false otherwise
      */
     public boolean updatePickWave(Integer pickWaveId, PickWave updatedPickWave) {
-        Optional<PickWave> existingPickWave = getPickWaveById(pickWaveId);
-        if (existingPickWave.isPresent()) {
-            int index = pickWaves.indexOf(existingPickWave.get());
-            pickWaves.set(index, updatedPickWave);
-            return true;
-        }
-        return false;
+        return repository.updatePickWave(pickWaveId, updatedPickWave);
     }
 
     /**
@@ -81,7 +75,22 @@ public class PickWaveController {
      * @return true if the pick wave was deleted successfully, false otherwise
      */
     public boolean deletePickWave(Integer pickWaveId) {
-        return pickWaves.removeIf(pickWave -> pickWave.getPickWaveId().equals(pickWaveId));
+        return repository.deletePickWave(pickWaveId);
+    }
+
+    /**
+     * Gets the next available pick wave ID.
+     *
+     * @return the next pick wave ID to be used
+     */
+    public Integer getNextPickWaveId() {
+        return repository.getNextWaveId();
+    }
+
+    /**
+     * Clears all pick waves from the system.
+     */
+    public void clearAllPickWaves() {
+        repository.clear();
     }
 }
-

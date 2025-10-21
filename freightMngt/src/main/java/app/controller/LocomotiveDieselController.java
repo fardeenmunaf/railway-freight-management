@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.LocomotiveDiesel;
-import java.util.ArrayList;
+import app.repositories.LocomotiveDieselRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class LocomotiveDieselController {
-    private List<LocomotiveDiesel> locomotiveDiesels;
+    private final LocomotiveDieselRepository repository;
 
     /**
-     * Default constructor that initializes the locomotive diesel list.
+     * Default constructor that initializes the controller with the diesel locomotive repository.
      */
     public LocomotiveDieselController() {
-        this.locomotiveDiesels = new ArrayList<>();
+        this.repository = Repositories.getInstance().getLocomotiveDieselRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class LocomotiveDieselController {
      */
     public LocomotiveDiesel createLocomotiveDiesel(LocomotiveDiesel locomotiveDiesel) {
         if (locomotiveDiesel != null) {
-            locomotiveDiesels.add(locomotiveDiesel);
+            repository.addLocomotiveDiesel(locomotiveDiesel);
         }
         return locomotiveDiesel;
     }
@@ -42,45 +43,54 @@ public class LocomotiveDieselController {
      * @return a list of all LocomotiveDiesel objects
      */
     public List<LocomotiveDiesel> getAllLocomotiveDiesels() {
-        return new ArrayList<>(locomotiveDiesels);
+        return repository.getAllLocomotiveDiesels();
     }
 
     /**
      * Retrieves a diesel locomotive by its unique identifier.
      *
-     * @param locomotiveDieselId the unique identifier of the diesel locomotive
+     * @param locomotiveId the unique identifier of the diesel locomotive
      * @return an Optional containing the LocomotiveDiesel if found, or empty if not found
      */
-    public Optional<LocomotiveDiesel> getLocomotiveDieselById(Integer locomotiveDieselId) {
-        return locomotiveDiesels.stream()
-                .filter(locomotiveDiesel -> locomotiveDiesel.getLocomotiveId().equals(locomotiveDieselId))
-                .findFirst();
+    public Optional<LocomotiveDiesel> getLocomotiveDieselById(Integer locomotiveId) {
+        LocomotiveDiesel locomotiveDiesel = repository.getLocomotiveDieselById(locomotiveId);
+        return Optional.ofNullable(locomotiveDiesel);
     }
 
     /**
      * Updates an existing diesel locomotive in the system.
      *
-     * @param locomotiveDieselId the unique identifier of the diesel locomotive to update
+     * @param locomotiveId the unique identifier of the diesel locomotive to update
      * @param updatedLocomotiveDiesel the LocomotiveDiesel object with updated information
      * @return true if the diesel locomotive was updated successfully, false otherwise
      */
-    public boolean updateLocomotiveDiesel(Integer locomotiveDieselId, LocomotiveDiesel updatedLocomotiveDiesel) {
-        Optional<LocomotiveDiesel> existingLocomotiveDiesel = getLocomotiveDieselById(locomotiveDieselId);
-        if (existingLocomotiveDiesel.isPresent()) {
-            int index = locomotiveDiesels.indexOf(existingLocomotiveDiesel.get());
-            locomotiveDiesels.set(index, updatedLocomotiveDiesel);
-            return true;
-        }
-        return false;
+    public boolean updateLocomotiveDiesel(Integer locomotiveId, LocomotiveDiesel updatedLocomotiveDiesel) {
+        return repository.updateLocomotiveDiesel(locomotiveId, updatedLocomotiveDiesel);
     }
 
     /**
      * Deletes a diesel locomotive from the system.
      *
-     * @param locomotiveDieselId the unique identifier of the diesel locomotive to delete
+     * @param locomotiveId the unique identifier of the diesel locomotive to delete
      * @return true if the diesel locomotive was deleted successfully, false otherwise
      */
-    public boolean deleteLocomotiveDiesel(Integer locomotiveDieselId) {
-        return locomotiveDiesels.removeIf(locomotiveDiesel -> locomotiveDiesel.getLocomotiveId().equals(locomotiveDieselId));
+    public boolean deleteLocomotiveDiesel(Integer locomotiveId) {
+        return repository.deleteLocomotiveDiesel(locomotiveId);
+    }
+
+    /**
+     * Gets the next available diesel locomotive ID.
+     *
+     * @return the next diesel locomotive ID to be used
+     */
+    public Integer getNextLocomotiveDieselId() {
+        return repository.getNextLocomotiveDieselId();
+    }
+
+    /**
+     * Clears all diesel locomotives from the system.
+     */
+    public void clearAllLocomotiveDiesels() {
+        repository.clear();
     }
 }
