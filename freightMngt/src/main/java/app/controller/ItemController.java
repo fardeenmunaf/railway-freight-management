@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Item;
-import java.util.ArrayList;
+import app.repositories.ItemRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ItemController {
-    private List<Item> items;
+    private final ItemRepository repository;
 
     /**
-     * Default constructor that initializes the item list.
+     * Default constructor that initializes the controller with the item repository.
      */
     public ItemController() {
-        this.items = new ArrayList<>();
+        this.repository = Repositories.getInstance().getItemRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class ItemController {
      */
     public Item createItem(Item item) {
         if (item != null) {
-            items.add(item);
+            repository.addItem(item);
         }
         return item;
     }
@@ -42,7 +43,7 @@ public class ItemController {
      * @return a list of all Item objects
      */
     public List<Item> getAllItems() {
-        return new ArrayList<>(items);
+        return repository.getAllItems();
     }
 
     /**
@@ -52,9 +53,19 @@ public class ItemController {
      * @return an Optional containing the Item if found, or empty if not found
      */
     public Optional<Item> getItemById(Integer itemId) {
-        return items.stream()
-                .filter(item -> item.getItemId().equals(itemId))
-                .findFirst();
+        Item item = repository.getItemById(itemId);
+        return Optional.ofNullable(item);
+    }
+
+    /**
+     * Retrieves an item by its SKU.
+     *
+     * @param sku the stock keeping unit code
+     * @return an Optional containing the Item if found, or empty if not found
+     */
+    public Optional<Item> getItemBySku(String sku) {
+        Item item = repository.getItemBySku(sku);
+        return Optional.ofNullable(item);
     }
 
     /**
@@ -65,13 +76,7 @@ public class ItemController {
      * @return true if the item was updated successfully, false otherwise
      */
     public boolean updateItem(Integer itemId, Item updatedItem) {
-        Optional<Item> existingItem = getItemById(itemId);
-        if (existingItem.isPresent()) {
-            int index = items.indexOf(existingItem.get());
-            items.set(index, updatedItem);
-            return true;
-        }
-        return false;
+        return repository.updateItem(itemId, updatedItem);
     }
 
     /**
@@ -81,7 +86,22 @@ public class ItemController {
      * @return true if the item was deleted successfully, false otherwise
      */
     public boolean deleteItem(Integer itemId) {
-        return items.removeIf(item -> item.getItemId().equals(itemId));
+        return repository.deleteItem(itemId);
+    }
+
+    /**
+     * Gets the next available item ID.
+     *
+     * @return the next item ID to be used
+     */
+    public Integer getNextItemId() {
+        return repository.getNextItemId();
+    }
+
+    /**
+     * Clears all items from the system.
+     */
+    public void clearAllItems() {
+        repository.clear();
     }
 }
-

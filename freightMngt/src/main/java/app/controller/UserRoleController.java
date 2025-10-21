@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.UserRole;
-import java.util.ArrayList;
+import app.repositories.UserRoleRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class UserRoleController {
-    private List<UserRole> userRoles;
+    private final UserRoleRepository repository;
 
     /**
-     * Default constructor that initializes the user role list.
+     * Default constructor that initializes the controller with the user role repository.
      */
     public UserRoleController() {
-        this.userRoles = new ArrayList<>();
+        this.repository = Repositories.getInstance().getUserRoleRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class UserRoleController {
      */
     public UserRole createUserRole(UserRole userRole) {
         if (userRole != null) {
-            userRoles.add(userRole);
+            repository.addUserRole(userRole);
         }
         return userRole;
     }
@@ -42,45 +43,34 @@ public class UserRoleController {
      * @return a list of all UserRole objects
      */
     public List<UserRole> getAllUserRoles() {
-        return new ArrayList<>(userRoles);
+        return repository.getAllUserRoles();
     }
 
     /**
-     * Retrieves a user role by its unique identifier.
+     * Retrieves all roles for a specific user.
      *
-     * @param userId the unique identifier of the user role
-     * @return an Optional containing the UserRole if found, or empty if not found
+     * @param userId the user identifier
+     * @return a list of all UserRole objects for the specified user
      */
-    public Optional<UserRole> getUserRoleById(Integer userId) {
-        return userRoles.stream()
-                .filter(userRole -> userRole.getUser().getUserId().equals(userId))
-                .findFirst();
-    }
-
-    /**
-     * Updates an existing user role in the system.
-     *
-     * @param userRoleId the unique identifier of the user role to update
-     * @param updatedUserRole the UserRole object with updated information
-     * @return true if the user role was updated successfully, false otherwise
-     */
-    public boolean updateUserRole(Integer userRoleId, UserRole updatedUserRole) {
-        Optional<UserRole> existingUserRole = getUserRoleById(userRoleId);
-        if (existingUserRole.isPresent()) {
-            int index = userRoles.indexOf(existingUserRole.get());
-            userRoles.set(index, updatedUserRole);
-            return true;
-        }
-        return false;
+    public List<UserRole> getUserRolesByUser(Integer userId) {
+        return repository.getUserRolesByUserId(userId);
     }
 
     /**
      * Deletes a user role from the system.
      *
-     * @param userId the unique identifier of the user role to delete
+     * @param userId the user identifier
+     * @param roleId the role identifier
      * @return true if the user role was deleted successfully, false otherwise
      */
-    public boolean deleteUserRole(Integer userId) {
-        return userRoles.removeIf(userRole -> userRole.getUser().getUserId().equals(userId));
+    public boolean deleteUserRole(Integer userId, Integer roleId) {
+        return repository.deleteUserRole(userId, roleId);
+    }
+
+    /**
+     * Clears all user roles from the system.
+     */
+    public void clearAllUserRoles() {
+        repository.clear();
     }
 }

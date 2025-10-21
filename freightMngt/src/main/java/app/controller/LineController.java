@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Line;
-import java.util.ArrayList;
+import app.repositories.LineRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class LineController {
-    private List<Line> lines;
+    private final LineRepository lineRepository;
 
     /**
-     * Default constructor that initializes the line list.
+     * Default constructor that initializes the controller with the line repository.
      */
     public LineController() {
-        this.lines = new ArrayList<>();
+        this.lineRepository = Repositories.getInstance().getLineRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class LineController {
      */
     public Line createLine(Line line) {
         if (line != null) {
-            lines.add(line);
+            lineRepository.addLine(line);
         }
         return line;
     }
@@ -42,7 +43,7 @@ public class LineController {
      * @return a list of all Line objects
      */
     public List<Line> getAllLines() {
-        return new ArrayList<>(lines);
+        return lineRepository.getAllLines();
     }
 
     /**
@@ -52,9 +53,8 @@ public class LineController {
      * @return an Optional containing the Line if found, or empty if not found
      */
     public Optional<Line> getLineById(Integer lineId) {
-        return lines.stream()
-                .filter(line -> line.getLineId().equals(lineId))
-                .findFirst();
+        Line line = lineRepository.getLineById(lineId);
+        return Optional.ofNullable(line);
     }
 
     /**
@@ -65,13 +65,7 @@ public class LineController {
      * @return true if the line was updated successfully, false otherwise
      */
     public boolean updateLine(Integer lineId, Line updatedLine) {
-        Optional<Line> existingLine = getLineById(lineId);
-        if (existingLine.isPresent()) {
-            int index = lines.indexOf(existingLine.get());
-            lines.set(index, updatedLine);
-            return true;
-        }
-        return false;
+        return lineRepository.updateLine(lineId, updatedLine);
     }
 
     /**
@@ -81,6 +75,22 @@ public class LineController {
      * @return true if the line was deleted successfully, false otherwise
      */
     public boolean deleteLine(Integer lineId) {
-        return lines.removeIf(line -> line.getLineId().equals(lineId));
+        return lineRepository.deleteLine(lineId);
+    }
+
+    /**
+     * Gets the next available line ID.
+     *
+     * @return the next line ID to be used
+     */
+    public Integer getNextLineId() {
+        return lineRepository.getNextLineId();
+    }
+
+    /**
+     * Clears all lines from the system.
+     */
+    public void clearAllLines() {
+        lineRepository.clear();
     }
 }

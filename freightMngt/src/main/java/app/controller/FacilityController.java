@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Facility;
-import java.util.ArrayList;
+import app.repositories.FacilityRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class FacilityController {
-    private List<Facility> facilities;
+    private final FacilityRepository repository;
 
     /**
-     * Default constructor that initializes the facility list.
+     * Default constructor that initializes the controller with the facility repository.
      */
     public FacilityController() {
-        this.facilities = new ArrayList<>();
+        this.repository = Repositories.getInstance().getFacilityRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class FacilityController {
      */
     public Facility createFacility(Facility facility) {
         if (facility != null) {
-            facilities.add(facility);
+            repository.addFacility(facility);
         }
         return facility;
     }
@@ -42,7 +43,7 @@ public class FacilityController {
      * @return a list of all Facility objects
      */
     public List<Facility> getAllFacilities() {
-        return new ArrayList<>(facilities);
+        return repository.getAllFacilities();
     }
 
     /**
@@ -52,9 +53,19 @@ public class FacilityController {
      * @return an Optional containing the Facility if found, or empty if not found
      */
     public Optional<Facility> getFacilityById(Integer facilityId) {
-        return facilities.stream()
-                .filter(facility -> facility.getFacilityId().equals(facilityId))
-                .findFirst();
+        Facility facility = repository.getFacilityById(facilityId);
+        return Optional.ofNullable(facility);
+    }
+
+    /**
+     * Retrieves a facility by its name.
+     *
+     * @param name the name of the facility
+     * @return an Optional containing the Facility if found, or empty if not found
+     */
+    public Optional<Facility> getFacilityByName(String name) {
+        Facility facility = repository.getFacilityByName(name);
+        return Optional.ofNullable(facility);
     }
 
     /**
@@ -65,13 +76,7 @@ public class FacilityController {
      * @return true if the facility was updated successfully, false otherwise
      */
     public boolean updateFacility(Integer facilityId, Facility updatedFacility) {
-        Optional<Facility> existingFacility = getFacilityById(facilityId);
-        if (existingFacility.isPresent()) {
-            int index = facilities.indexOf(existingFacility.get());
-            facilities.set(index, updatedFacility);
-            return true;
-        }
-        return false;
+        return repository.updateFacility(facilityId, updatedFacility);
     }
 
     /**
@@ -81,7 +86,32 @@ public class FacilityController {
      * @return true if the facility was deleted successfully, false otherwise
      */
     public boolean deleteFacility(Integer facilityId) {
-        return facilities.removeIf(facility -> facility.getFacilityId().equals(facilityId));
+        return repository.deleteFacility(facilityId);
+    }
+
+    /**
+     * Gets the next available facility ID.
+     *
+     * @return the next facility ID to be used
+     */
+    public Integer getNextFacilityId() {
+        return repository.getNextFacilityId();
+    }
+
+    /**
+     * Checks if a facility with the given name exists in the repository.
+     *
+     * @param name the facility name
+     * @return true if a facility with this name exists, false otherwise
+     */
+    public boolean containsName(String name) {
+        return repository.containsName(name);
+    }
+
+    /**
+     * Clears all facilities from the system.
+     */
+    public void clearAllFacilities() {
+        repository.clear();
     }
 }
-

@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.ItemCategory;
-import java.util.ArrayList;
+import app.repositories.ItemCategoryRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ItemCategoryController {
-    private List<ItemCategory> itemCategories;
+    private final ItemCategoryRepository repository;
 
     /**
-     * Default constructor that initializes the item category list.
+     * Default constructor that initializes the controller with the item category repository.
      */
     public ItemCategoryController() {
-        this.itemCategories = new ArrayList<>();
+        this.repository = Repositories.getInstance().getItemCategoryRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class ItemCategoryController {
      */
     public ItemCategory createItemCategory(ItemCategory itemCategory) {
         if (itemCategory != null) {
-            itemCategories.add(itemCategory);
+            repository.addItemCategory(itemCategory);
         }
         return itemCategory;
     }
@@ -42,45 +43,54 @@ public class ItemCategoryController {
      * @return a list of all ItemCategory objects
      */
     public List<ItemCategory> getAllItemCategories() {
-        return new ArrayList<>(itemCategories);
+        return repository.getAllCategories();
     }
 
     /**
      * Retrieves an item category by its unique identifier.
      *
-     * @param itemCategoryId the unique identifier of the item category
+     * @param categoryId the unique identifier of the item category
      * @return an Optional containing the ItemCategory if found, or empty if not found
      */
-    public Optional<ItemCategory> getItemCategoryById(Integer itemCategoryId) {
-        return itemCategories.stream()
-                .filter(itemCategory -> itemCategory.getCategoryId().equals(itemCategoryId))
-                .findFirst();
+    public Optional<ItemCategory> getItemCategoryById(Integer categoryId) {
+        ItemCategory itemCategory = repository.getCategoryById(categoryId);
+        return Optional.ofNullable(itemCategory);
     }
 
     /**
      * Updates an existing item category in the system.
      *
-     * @param itemCategoryId the unique identifier of the item category to update
+     * @param categoryId the unique identifier of the item category to update
      * @param updatedItemCategory the ItemCategory object with updated information
      * @return true if the item category was updated successfully, false otherwise
      */
-    public boolean updateItemCategory(Integer itemCategoryId, ItemCategory updatedItemCategory) {
-        Optional<ItemCategory> existingItemCategory = getItemCategoryById(itemCategoryId);
-        if (existingItemCategory.isPresent()) {
-            int index = itemCategories.indexOf(existingItemCategory.get());
-            itemCategories.set(index, updatedItemCategory);
-            return true;
-        }
-        return false;
+    public boolean updateItemCategory(Integer categoryId, ItemCategory updatedItemCategory) {
+        return repository.updateItemCategory(categoryId, updatedItemCategory);
     }
 
     /**
      * Deletes an item category from the system.
      *
-     * @param itemCategoryId the unique identifier of the item category to delete
+     * @param categoryId the unique identifier of the item category to delete
      * @return true if the item category was deleted successfully, false otherwise
      */
-    public boolean deleteItemCategory(Integer itemCategoryId) {
-        return itemCategories.removeIf(itemCategory -> itemCategory.getCategoryId().equals(itemCategoryId));
+    public boolean deleteItemCategory(Integer categoryId) {
+        return repository.deleteItemCategory(categoryId);
+    }
+
+    /**
+     * Gets the next available item category ID.
+     *
+     * @return the next item category ID to be used
+     */
+    public Integer getNextItemCategoryId() {
+        return repository.getNextCategoryId();
+    }
+
+    /**
+     * Clears all item categories from the system.
+     */
+    public void clearAllItemCategories() {
+        repository.clear();
     }
 }

@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Gauge;
-import java.util.ArrayList;
+import app.repositories.GaugeRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class GaugeController {
-    private List<Gauge> gauges;
+    private final GaugeRepository repository;
 
     /**
-     * Default constructor that initializes the gauge list.
+     * Default constructor that initializes the controller with the gauge repository.
      */
     public GaugeController() {
-        this.gauges = new ArrayList<>();
+        this.repository = Repositories.getInstance().getGaugeRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class GaugeController {
      */
     public Gauge createGauge(Gauge gauge) {
         if (gauge != null) {
-            gauges.add(gauge);
+            repository.addGauge(gauge);
         }
         return gauge;
     }
@@ -42,7 +43,7 @@ public class GaugeController {
      * @return a list of all Gauge objects
      */
     public List<Gauge> getAllGauges() {
-        return new ArrayList<>(gauges);
+        return repository.getAllGauges();
     }
 
     /**
@@ -52,9 +53,19 @@ public class GaugeController {
      * @return an Optional containing the Gauge if found, or empty if not found
      */
     public Optional<Gauge> getGaugeById(Integer gaugeId) {
-        return gauges.stream()
-                .filter(gauge -> gauge.getGaugeId().equals(gaugeId))
-                .findFirst();
+        Gauge gauge = repository.getGaugeById(gaugeId);
+        return Optional.ofNullable(gauge);
+    }
+
+    /**
+     * Retrieves a gauge by its name.
+     *
+     * @param gaugeName the name of the gauge
+     * @return an Optional containing the Gauge if found, or empty if not found
+     */
+    public Optional<Gauge> getGaugeByName(String gaugeName) {
+        Gauge gauge = repository.getGaugeByName(gaugeName);
+        return Optional.ofNullable(gauge);
     }
 
     /**
@@ -65,13 +76,7 @@ public class GaugeController {
      * @return true if the gauge was updated successfully, false otherwise
      */
     public boolean updateGauge(Integer gaugeId, Gauge updatedGauge) {
-        Optional<Gauge> existingGauge = getGaugeById(gaugeId);
-        if (existingGauge.isPresent()) {
-            int index = gauges.indexOf(existingGauge.get());
-            gauges.set(index, updatedGauge);
-            return true;
-        }
-        return false;
+        return repository.updateGauge(gaugeId, updatedGauge);
     }
 
     /**
@@ -81,7 +86,32 @@ public class GaugeController {
      * @return true if the gauge was deleted successfully, false otherwise
      */
     public boolean deleteGauge(Integer gaugeId) {
-        return gauges.removeIf(gauge -> gauge.getGaugeId().equals(gaugeId));
+        return repository.deleteGauge(gaugeId);
+    }
+
+    /**
+     * Gets the next available gauge ID.
+     *
+     * @return the next gauge ID to be used
+     */
+    public Integer getNextGaugeId() {
+        return repository.getNextGaugeId();
+    }
+
+    /**
+     * Checks if a gauge with the given name exists in the repository.
+     *
+     * @param gaugeName the gauge name
+     * @return true if a gauge with this name exists, false otherwise
+     */
+    public boolean containsName(String gaugeName) {
+        return repository.containsName(gaugeName);
+    }
+
+    /**
+     * Clears all gauges from the system.
+     */
+    public void clearAllGauges() {
+        repository.clear();
     }
 }
-

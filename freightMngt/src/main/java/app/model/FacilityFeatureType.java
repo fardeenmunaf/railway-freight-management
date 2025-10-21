@@ -76,4 +76,12 @@ public class FacilityFeatureType {
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public String toString() {
+        return "FacilityFeatureType{" +
+                "featureId=" + featureId +
+                ", name='" + name + '\'' +
+                '}';
+    }
 }

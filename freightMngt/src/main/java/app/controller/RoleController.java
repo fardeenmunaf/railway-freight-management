@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Role;
-import java.util.ArrayList;
+import app.repositories.RoleRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class RoleController {
-    private List<Role> roles;
+    private final RoleRepository repository;
 
     /**
-     * Default constructor that initializes the role list.
+     * Default constructor that initializes the controller with the role repository.
      */
     public RoleController() {
-        this.roles = new ArrayList<>();
+        this.repository = Repositories.getInstance().getRoleRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class RoleController {
      */
     public Role createRole(Role role) {
         if (role != null) {
-            roles.add(role);
+            repository.addRole(role);
         }
         return role;
     }
@@ -42,7 +43,7 @@ public class RoleController {
      * @return a list of all Role objects
      */
     public List<Role> getAllRoles() {
-        return new ArrayList<>(roles);
+        return repository.getAllRoles();
     }
 
     /**
@@ -52,9 +53,19 @@ public class RoleController {
      * @return an Optional containing the Role if found, or empty if not found
      */
     public Optional<Role> getRoleById(Integer roleId) {
-        return roles.stream()
-                .filter(role -> role.getRoleId().equals(roleId))
-                .findFirst();
+        Role role = repository.getRoleById(roleId);
+        return Optional.ofNullable(role);
+    }
+
+    /**
+     * Retrieves a role by its name.
+     *
+     * @param name the name of the role
+     * @return an Optional containing the Role if found, or empty if not found
+     */
+    public Optional<Role> getRoleByName(String name) {
+        Role role = repository.getRoleByName(name);
+        return Optional.ofNullable(role);
     }
 
     /**
@@ -65,13 +76,7 @@ public class RoleController {
      * @return true if the role was updated successfully, false otherwise
      */
     public boolean updateRole(Integer roleId, Role updatedRole) {
-        Optional<Role> existingRole = getRoleById(roleId);
-        if (existingRole.isPresent()) {
-            int index = roles.indexOf(existingRole.get());
-            roles.set(index, updatedRole);
-            return true;
-        }
-        return false;
+        return repository.updateRole(roleId, updatedRole);
     }
 
     /**
@@ -81,7 +86,33 @@ public class RoleController {
      * @return true if the role was deleted successfully, false otherwise
      */
     public boolean deleteRole(Integer roleId) {
-        return roles.removeIf(role -> role.getRoleId().equals(roleId));
+        return repository.deleteRole(roleId);
+    }
+
+    /**
+     * Gets the next available role ID.
+     *
+     * @return the next role ID to be used
+     */
+    public Integer getNextRoleId() {
+        return repository.getNextRoleId();
+    }
+
+    /**
+     * Checks if a role with the given name exists in the repository.
+     *
+     * @param name the role name
+     * @return true if a role with this name exists, false otherwise
+     */
+    public boolean containsName(String name) {
+        return repository.containsRoleName(name);
+    }
+
+    /**
+     * Clears all roles from the system.
+     */
+    public void clearAllRoles() {
+        repository.clear();
     }
 }
 

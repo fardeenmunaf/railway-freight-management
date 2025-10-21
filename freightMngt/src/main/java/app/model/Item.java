@@ -198,4 +198,17 @@ public class Item {
     public void setUnitWeight(double unitWeight) {
         this.unitWeight = unitWeight;
     }
+
+    @Override
+    public String toString() {
+        return "Item{" +
+                "itemId=" + itemId +
+                ", itemCategory=" + itemCategory +
+                ", sku='" + sku + '\'' +
+                ", name='" + name + '\'' +
+                ", uom='" + uom + '\'' +
+                ", volume=" + volume +
+                ", unitWeight=" + unitWeight +
+                '}';
+    }
 }
