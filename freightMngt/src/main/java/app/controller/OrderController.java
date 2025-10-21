@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.Order;
 import app.repositories.OrderRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class OrderController {
     private final OrderRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the order repository.
      */
     public OrderController() {
-        this.repository = new OrderRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the OrderRepository to use
-     */
-    public OrderController(OrderRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getOrderRepository();
     }
 
     /**
@@ -66,26 +58,6 @@ public class OrderController {
     }
 
     /**
-     * Retrieves all orders with a specific status.
-     *
-     * @param status the order status to filter by
-     * @return a list of orders with the specified status
-     */
-    public List<Order> getOrdersByStatus(String status) {
-        return repository.getOrdersByStatus(status);
-    }
-
-    /**
-     * Retrieves all orders with a specific priority.
-     *
-     * @param priority the priority level to filter by
-     * @return a list of orders with the specified priority
-     */
-    public List<Order> getOrdersByPriority(Integer priority) {
-        return repository.getOrdersByPriority(priority);
-    }
-
-    /**
      * Updates an existing order in the system.
      *
      * @param orderId the unique identifier of the order to update
@@ -109,9 +81,16 @@ public class OrderController {
     /**
      * Gets the next available order ID.
      *
-     * @return the next available order ID
+     * @return the next order ID to be used
      */
     public Integer getNextOrderId() {
         return repository.getNextOrderId();
+    }
+
+    /**
+     * Clears all orders from the system.
+     */
+    public void clearAllOrders() {
+        repository.clear();
     }
 }

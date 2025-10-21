@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.ItemCategory;
 import app.repositories.ItemCategoryRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class ItemCategoryController {
     private final ItemCategoryRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the item category repository.
      */
     public ItemCategoryController() {
-        this.repository = new ItemCategoryRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the ItemCategoryRepository to use
-     */
-    public ItemCategoryController(ItemCategoryRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getItemCategoryRepository();
     }
 
     /**
@@ -51,68 +43,54 @@ public class ItemCategoryController {
      * @return a list of all ItemCategory objects
      */
     public List<ItemCategory> getAllItemCategories() {
-        return repository.getAllCategories();
+        return repository.getAllItemCategories();
     }
 
     /**
      * Retrieves an item category by its unique identifier.
      *
-     * @param itemCategoryId the unique identifier of the item category
+     * @param categoryId the unique identifier of the item category
      * @return an Optional containing the ItemCategory if found, or empty if not found
      */
-    public Optional<ItemCategory> getItemCategoryById(Integer itemCategoryId) {
-        ItemCategory category = repository.getCategoryById(itemCategoryId);
-        return Optional.ofNullable(category);
-    }
-
-    /**
-     * Retrieves an item category by its name.
-     *
-     * @param name the name of the item category
-     * @return an Optional containing the ItemCategory if found, or empty if not found
-     */
-    public Optional<ItemCategory> getItemCategoryByName(String name) {
-        ItemCategory category = repository.getCategoryByName(name);
-        return Optional.ofNullable(category);
+    public Optional<ItemCategory> getItemCategoryById(Integer categoryId) {
+        ItemCategory itemCategory = repository.getItemCategoryById(categoryId);
+        return Optional.ofNullable(itemCategory);
     }
 
     /**
      * Updates an existing item category in the system.
      *
-     * @param itemCategoryId the unique identifier of the item category to update
+     * @param categoryId the unique identifier of the item category to update
      * @param updatedItemCategory the ItemCategory object with updated information
      * @return true if the item category was updated successfully, false otherwise
      */
-    public boolean updateItemCategory(Integer itemCategoryId, ItemCategory updatedItemCategory) {
-        return repository.updateItemCategory(itemCategoryId, updatedItemCategory);
+    public boolean updateItemCategory(Integer categoryId, ItemCategory updatedItemCategory) {
+        return repository.updateItemCategory(categoryId, updatedItemCategory);
     }
 
     /**
      * Deletes an item category from the system.
      *
-     * @param itemCategoryId the unique identifier of the item category to delete
+     * @param categoryId the unique identifier of the item category to delete
      * @return true if the item category was deleted successfully, false otherwise
      */
-    public boolean deleteItemCategory(Integer itemCategoryId) {
-        return repository.deleteItemCategory(itemCategoryId);
+    public boolean deleteItemCategory(Integer categoryId) {
+        return repository.deleteItemCategory(categoryId);
     }
 
     /**
-     * Gets the next available category ID.
+     * Gets the next available item category ID.
      *
-     * @return the next available category ID
+     * @return the next item category ID to be used
      */
-    public Integer getNextCategoryId() {
-        return repository.getNextCategoryId();
+    public Integer getNextItemCategoryId() {
+        return repository.getNextItemCategoryId();
     }
 
     /**
-     * Checks if a category with the given name exists.
-     *
-     * @param name the category name
-     * @return true if a category with this name exists, false otherwise
+     * Clears all item categories from the system.
      */
-    public boolean containsName(String name) {
-        return repository.containsName(name);
+    public void clearAllItemCategories() {
+        repository.clear();
     }
 }

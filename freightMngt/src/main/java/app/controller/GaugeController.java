@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.Gauge;
 import app.repositories.GaugeRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class GaugeController {
     private final GaugeRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the gauge repository.
      */
     public GaugeController() {
-        this.repository = new GaugeRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the GaugeRepository to use
-     */
-    public GaugeController(GaugeRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getGaugeRepository();
     }
 
     /**
@@ -100,19 +92,16 @@ public class GaugeController {
     /**
      * Gets the next available gauge ID.
      *
-     * @return the next available gauge ID
+     * @return the next gauge ID to be used
      */
     public Integer getNextGaugeId() {
         return repository.getNextGaugeId();
     }
 
     /**
-     * Checks if a gauge with the given name exists.
-     *
-     * @param gaugeName the gauge name
-     * @return true if a gauge with this name exists, false otherwise
+     * Clears all gauges from the system.
      */
-    public boolean containsName(String gaugeName) {
-        return repository.containsName(gaugeName);
+    public void clearAllGauges() {
+        repository.clear();
     }
 }

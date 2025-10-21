@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.Facility;
 import app.repositories.FacilityRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class FacilityController {
     private final FacilityRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the facility repository.
      */
     public FacilityController() {
-        this.repository = new FacilityRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the FacilityRepository to use
-     */
-    public FacilityController(FacilityRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getFacilityRepository();
     }
 
     /**
@@ -66,17 +58,6 @@ public class FacilityController {
     }
 
     /**
-     * Retrieves a facility by its name.
-     *
-     * @param name the name of the facility
-     * @return an Optional containing the Facility if found, or empty if not found
-     */
-    public Optional<Facility> getFacilityByName(String name) {
-        Facility facility = repository.getFacilityByName(name);
-        return Optional.ofNullable(facility);
-    }
-
-    /**
      * Updates an existing facility in the system.
      *
      * @param facilityId the unique identifier of the facility to update
@@ -100,19 +81,16 @@ public class FacilityController {
     /**
      * Gets the next available facility ID.
      *
-     * @return the next available facility ID
+     * @return the next facility ID to be used
      */
     public Integer getNextFacilityId() {
         return repository.getNextFacilityId();
     }
 
     /**
-     * Checks if a facility with the given name exists.
-     *
-     * @param name the facility name
-     * @return true if a facility with this name exists, false otherwise
+     * Clears all facilities from the system.
      */
-    public boolean containsName(String name) {
-        return repository.containsName(name);
+    public void clearAllFacilities() {
+        repository.clear();
     }
 }

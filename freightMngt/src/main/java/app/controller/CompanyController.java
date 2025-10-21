@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.Company;
 import app.repositories.CompanyRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class CompanyController {
     private final CompanyRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the company repository.
      */
     public CompanyController() {
-        this.repository = new CompanyRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the CompanyRepository to use
-     */
-    public CompanyController(CompanyRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getCompanyRepository();
     }
 
     /**
@@ -100,19 +92,26 @@ public class CompanyController {
     /**
      * Gets the next available company ID.
      *
-     * @return the next available company ID
+     * @return the next company ID to be used
      */
     public Integer getNextCompanyId() {
         return repository.getNextCompanyId();
     }
 
     /**
-     * Checks if a company with the given name exists.
+     * Checks if a company with the given name exists in the repository.
      *
      * @param name the company name
      * @return true if a company with this name exists, false otherwise
      */
     public boolean containsName(String name) {
         return repository.containsName(name);
+    }
+
+    /**
+     * Clears all companies from the system.
+     */
+    public void clearAllCompanies() {
+        repository.clear();
     }
 }
