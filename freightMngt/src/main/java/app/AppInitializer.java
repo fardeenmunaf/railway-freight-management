@@ -1,5 +1,6 @@
 package app;
 
+import app.controller.InventoryBalanceController;
 import app.model.*;
 import app.repositories.Repositories;
 import app.repositories.WarehouseAisleRepository;
@@ -126,6 +127,7 @@ public class AppInitializer implements Runnable {
 
     private void loadWagons(Repositories repositories) {
         List<Map<String, String>> data = CsvReader.readCsv(WAGONS_CSV, ",");
+        InventoryBalanceController balanceController = new InventoryBalanceController();
         int balanceIdCounter = 1;
         
         for (Map<String, String> row : data) {
@@ -163,7 +165,7 @@ public class AppInitializer implements Runnable {
 
             // Create InventoryBalance with bay = null (not yet assigned to any bay)
             InventoryBalance balance = new InventoryBalance(balanceIdCounter, null, lot, qty);
-            repositories.getInventoryBalanceRepository().addInventoryBalance(balance);
+            balanceController.createInventoryBalance(balance);
             balanceIdCounter++;
         }
     }
