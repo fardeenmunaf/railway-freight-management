@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.Item;
 import app.repositories.ItemRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class ItemController {
     private final ItemRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the item repository.
      */
     public ItemController() {
-        this.repository = new ItemRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the ItemRepository to use
-     */
-    public ItemController(ItemRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getItemRepository();
     }
 
     /**
@@ -100,19 +92,16 @@ public class ItemController {
     /**
      * Gets the next available item ID.
      *
-     * @return the next available item ID
+     * @return the next item ID to be used
      */
     public Integer getNextItemId() {
         return repository.getNextItemId();
     }
 
     /**
-     * Checks if an item with the given SKU exists.
-     *
-     * @param sku the stock keeping unit code
-     * @return true if an item with this SKU exists, false otherwise
+     * Clears all items from the system.
      */
-    public boolean containsSku(String sku) {
-        return repository.containsSku(sku);
+    public void clearAllItems() {
+        repository.clear();
     }
 }

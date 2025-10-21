@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.WarehouseBay;
 import app.repositories.WarehouseBayRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class WarehouseBayController {
     private final WarehouseBayRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the warehouse bay repository.
      */
     public WarehouseBayController() {
-        this.repository = new WarehouseBayRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the WarehouseBayRepository to use
-     */
-    public WarehouseBayController(WarehouseBayRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getWarehouseBayRepository();
     }
 
     /**
@@ -63,19 +55,8 @@ public class WarehouseBayController {
      * @return an Optional containing the WarehouseBay if found, or empty if not found
      */
     public Optional<WarehouseBay> getWarehouseBay(Integer warehouseId, Integer aisleNo, Integer bayNo) {
-        WarehouseBay bay = repository.getWarehouseBay(warehouseId, aisleNo, bayNo);
-        return Optional.ofNullable(bay);
-    }
-
-    /**
-     * Retrieves all bays for a specific aisle in a warehouse.
-     *
-     * @param warehouseId the warehouse identifier
-     * @param aisleNo the aisle number
-     * @return a list of all bays in the specified aisle
-     */
-    public List<WarehouseBay> getBaysByAisle(Integer warehouseId, Integer aisleNo) {
-        return repository.getBaysByAisle(warehouseId, aisleNo);
+        WarehouseBay warehouseBay = repository.getWarehouseBay(warehouseId, aisleNo, bayNo);
+        return Optional.ofNullable(warehouseBay);
     }
 
     /**
@@ -104,13 +85,20 @@ public class WarehouseBayController {
     }
 
     /**
-     * Gets the next available bay number for a specific aisle.
+     * Gets the next available warehouse bay number for a specific aisle.
      *
      * @param warehouseId the warehouse identifier
      * @param aisleNo the aisle number
-     * @return the next available bay number
+     * @return the next warehouse bay number to be used
      */
     public Integer getNextBayNo(Integer warehouseId, Integer aisleNo) {
         return repository.getNextBayNo(warehouseId, aisleNo);
+    }
+
+    /**
+     * Clears all warehouse bays from the system.
+     */
+    public void clearAllWarehouseBays() {
+        repository.clear();
     }
 }

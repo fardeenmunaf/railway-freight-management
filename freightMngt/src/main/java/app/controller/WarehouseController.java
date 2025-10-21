@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.Warehouse;
 import app.repositories.WarehouseRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class WarehouseController {
     private final WarehouseRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the warehouse repository.
      */
     public WarehouseController() {
-        this.repository = new WarehouseRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the WarehouseRepository to use
-     */
-    public WarehouseController(WarehouseRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getWarehouseRepository();
     }
 
     /**
@@ -100,19 +92,16 @@ public class WarehouseController {
     /**
      * Gets the next available warehouse ID.
      *
-     * @return the next available warehouse ID
+     * @return the next warehouse ID to be used
      */
     public Integer getNextWarehouseId() {
         return repository.getNextWarehouseId();
     }
 
     /**
-     * Checks if a warehouse with the given name exists.
-     *
-     * @param name the warehouse name
-     * @return true if a warehouse with this name exists, false otherwise
+     * Clears all warehouses from the system.
      */
-    public boolean containsName(String name) {
-        return repository.containsName(name);
+    public void clearAllWarehouses() {
+        repository.clear();
     }
 }

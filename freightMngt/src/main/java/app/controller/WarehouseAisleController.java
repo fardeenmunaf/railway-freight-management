@@ -2,6 +2,7 @@ package app.controller;
 
 import app.model.WarehouseAisle;
 import app.repositories.WarehouseAisleRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,19 +18,10 @@ public class WarehouseAisleController {
     private final WarehouseAisleRepository repository;
 
     /**
-     * Default constructor that initializes the controller with a new repository.
+     * Default constructor that initializes the controller with the warehouse aisle repository.
      */
     public WarehouseAisleController() {
-        this.repository = new WarehouseAisleRepository();
-    }
-
-    /**
-     * Constructor that accepts a repository instance.
-     *
-     * @param repository the WarehouseAisleRepository to use
-     */
-    public WarehouseAisleController(WarehouseAisleRepository repository) {
-        this.repository = repository;
+        this.repository = Repositories.getInstance().getWarehouseAisleRepository();
     }
 
     /**
@@ -62,18 +54,8 @@ public class WarehouseAisleController {
      * @return an Optional containing the WarehouseAisle if found, or empty if not found
      */
     public Optional<WarehouseAisle> getWarehouseAisle(Integer warehouseId, Integer aisleNo) {
-        WarehouseAisle aisle = repository.getAisle(warehouseId, aisleNo);
-        return Optional.ofNullable(aisle);
-    }
-
-    /**
-     * Retrieves all aisles for a specific warehouse.
-     *
-     * @param warehouseId the warehouse identifier
-     * @return a list of all aisles in the specified warehouse
-     */
-    public List<WarehouseAisle> getAislesByWarehouse(Integer warehouseId) {
-        return repository.getAislesByWarehouse(warehouseId);
+        WarehouseAisle warehouseAisle = repository.getAisle(warehouseId, aisleNo);
+        return Optional.ofNullable(warehouseAisle);
     }
 
     /**
@@ -100,12 +82,19 @@ public class WarehouseAisleController {
     }
 
     /**
-     * Gets the next available aisle number for a specific warehouse.
+     * Gets the next available warehouse aisle number for a specific warehouse.
      *
      * @param warehouseId the warehouse identifier
-     * @return the next available aisle number
+     * @return the next warehouse aisle number to be used
      */
     public Integer getNextAisleNo(Integer warehouseId) {
         return repository.getNextAisleNo(warehouseId);
+    }
+
+    /**
+     * Clears all warehouse aisles from the system.
+     */
+    public void clearAllWarehouseAisles() {
+        repository.clear();
     }
 }
