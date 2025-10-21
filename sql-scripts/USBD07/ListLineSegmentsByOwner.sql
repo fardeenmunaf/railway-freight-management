@@ -5,7 +5,7 @@ SELECT
     LS.GAUGE_ID,
     LS.MAX_WEIGHT_KG_M,
     LS.SPEED_LIMIT_KMH,
-    LS.SINGLE_TRACK,
+    LS.TRACK_NUMBER,
     LS.POSITION,
     L.LINE_ID,
     L.NAME AS LINE_NAME
@@ -14,7 +14,7 @@ FROM
         JOIN LINE L ON LS.LINE_ID = L.LINE_ID
         JOIN COMPANY C ON L.OWNER_ID = C.COMPANY_ID
 WHERE
-    C.NAME = 'Infraestruturas de Portugal, SA'
+    (:owner_id IS NULL OR C.COMPANY_ID = :owner_id)
 ORDER BY
     L.LINE_ID,
     LS.POSITION;
