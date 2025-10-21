@@ -12,7 +12,7 @@ import java.awt.*;
  * @version 1.0
  */
 
-public class LocomotiveDiesel extends Locomotive{
+public class LocomotiveDiesel extends Locomotive {
     private Locomotive locomotive;
     private Double fuelCapacity; //in liters
 
@@ -30,7 +30,7 @@ public class LocomotiveDiesel extends Locomotive{
     /**
      * Parameterized constructor that creates a LocomotiveDiesel with basic values.
      *
-     * @param locomotive the base locomotive object
+     * @param locomotive   the base locomotive object
      * @param fuelCapacity the fuel capacity in liters
      */
 
@@ -40,27 +40,29 @@ public class LocomotiveDiesel extends Locomotive{
     }
 
     /**
-     * Parameterized constructor that creates a LocomotiveDiesel with all locomotive and diesel-specific values.
+     * Parameterized constructor that creates a LocomotiveDiesel with all values.
      *
-     * @param locomotiveId the unique identifier for the locomotive
-     * @param operator the user or company operating the locomotive
-     * @param locomotiveType the type of locomotive
-     * @param brand the manufacturer brand
-     * @param model the model designation
-     * @param year the year of manufacture
-     * @param power the power output in kilowatts
-     * @param acceleration the acceleration capability in meters per second squared
-     * @param dimensions the physical dimensions
-     * @param maxSpeed the maximum speed in kilometers per hour
-     * @param max_weight the maximum weight capacity in kilograms
-     * @param total_weight the total weight of the locomotive in kilograms
-     * @param max_bogies the maximum number of bogies
-     * @param locomotive the base locomotive object
-     * @param fuelCapacity the fuel capacity in liters
+     * @param locomotiveId     the unique identifier for this locomotive
+     * @param operator         the user or company operating this locomotive
+     * @param locomotiveType   the type of the locomotive
+     * @param brand            the brand of the locomotive
+     * @param model            the model of the locomotive
+     * @param year             the manufacturing year of the locomotive
+     * @param power            the power output of the locomotive in kW
+     * @param acceleration     the acceleration of the locomotive in m/s²
+     * @param dimensions       the dimensions of the locomotive
+     * @param maxSpeed         the maximum speed of the locomotive in km/h
+     * @param operationalSpeed the operational speed of the locomotive in km/h
+     * @param maxWeight        the maximum weight capacity of the locomotive in tons
+     * @param totalWeight      the total weight of the locomotive in tons
+     * @param maxBogies        the maximum number of bogies for the locomotive
+     * @param bogieType        the type of bogies used by the locomotive
+     * @param traction         the traction type of the locomotive
+     * @param locomotive       the base locomotive object
+     * @param fuelCapacity     the fuel capacity in liters
      */
-
-    public LocomotiveDiesel(Integer locomotiveId, User operator, LocomotiveType locomotiveType, String brand, String model, Integer year, Integer power, Double acceleration, Dimension dimensions, Double maxSpeed, Double max_weight, Double total_weight, Integer max_bogies, Locomotive locomotive, Double fuelCapacity) {
-        super(locomotiveId, operator, locomotiveType, brand, model, year, power, acceleration, dimensions, maxSpeed, max_weight, total_weight, max_bogies);
+    public LocomotiveDiesel(Integer locomotiveId, User operator, LocomotiveType locomotiveType, String brand, String model, Integer year, Integer power, Double acceleration, Dimension dimensions, Double maxSpeed, Double operationalSpeed, Double maxWeight, Double totalWeight, Integer maxBogies, String bogieType, String traction, Locomotive locomotive, Double fuelCapacity) {
+        super(locomotiveId, operator, locomotiveType, brand, model, year, power, acceleration, dimensions, maxSpeed, operationalSpeed, maxWeight, totalWeight, maxBogies, bogieType, traction);
         this.locomotive = locomotive;
         this.fuelCapacity = fuelCapacity;
     }
@@ -107,9 +109,6 @@ public class LocomotiveDiesel extends Locomotive{
 
     @Override
     public String toString() {
-        return "LocomotiveDiesel{" +
-                "locomotive=" + locomotive +
-                ", fuelCapacity=" + fuelCapacity +
-                '}';
+        return "LocomotiveDiesel{" + "locomotive=" + locomotive + ", fuelCapacity=" + fuelCapacity + '}';
     }
 }

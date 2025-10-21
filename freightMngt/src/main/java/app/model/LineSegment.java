@@ -20,7 +20,7 @@ public class LineSegment {
     private Gauge gauge;
     private Double maxWeightKgM;
     private Double speedLimitKmh;
-    private Boolean singleTrack;
+    private Integer trackNumber;
     private Integer position;
 
     /**
@@ -37,7 +37,7 @@ public class LineSegment {
         this.gauge = null;
         this.maxWeightKgM = null;
         this.speedLimitKmh = null;
-        this.singleTrack = null;
+        this.trackNumber = null;
         this.position = null;
     }
 
@@ -52,11 +52,11 @@ public class LineSegment {
      * @param gauge the gauge specification for this segment
      * @param maxWeightKgM the maximum weight per meter in kilograms per meter
      * @param speedLimitKmh the speed limit in kilometers per hour
-     * @param singleTrack whether this is a single track segment
+     * @param trackNumber is several track in a segment
      * @param position the position of this segment within the line
      */
 
-    public LineSegment(Integer segmentId, Line line, Double lengthKm, TrackType trackType, Boolean electrifType, Gauge gauge, Double maxWeightKgM, Double speedLimitKmh, Boolean singleTrack, Integer position) {
+    public LineSegment(Integer segmentId, Line line, Double lengthKm, TrackType trackType, Boolean electrifType, Gauge gauge, Double maxWeightKgM, Double speedLimitKmh, Integer trackNumber, Integer position) {
         this.segmentId = segmentId;
         this.line = line;
         this.lengthKm = lengthKm;
@@ -65,7 +65,7 @@ public class LineSegment {
         this.gauge = gauge;
         this.maxWeightKgM = maxWeightKgM;
         this.speedLimitKmh = speedLimitKmh;
-        this.singleTrack = singleTrack;
+        this.trackNumber = trackNumber;
         this.position = position;
     }
 
@@ -230,23 +230,23 @@ public class LineSegment {
     }
 
     /**
-     * Gets whether this is a single track segment.
+     * Gets whether this is a singel, double, quadruple ... track segment.
      *
-     * @return true if single track, false if multiple tracks, as a Boolean
+     * @return the single track status as an Integer
      */
 
-    public Boolean getSingleTrack() {
-        return singleTrack;
+    public Integer getTrackNumber() {
+        return trackNumber;
     }
 
     /**
-     * Sets whether this is a single track segment.
+     * Sets whether this is a singel, double, quadruple ... track segment.
      *
-     * @param singleTrack the single track status to set
+     * @param trackNumber the single track status to set
      */
 
-    public void setSingleTrack(Boolean singleTrack) {
-        this.singleTrack = singleTrack;
+    public void setTrackNumber(Integer trackNumber) {
+        this.trackNumber = LineSegment.this.trackNumber;
     }
 
     /**
@@ -267,5 +267,21 @@ public class LineSegment {
 
     public void setPosition(Integer position) {
         this.position = position;
+    }
+
+    @Override
+    public String toString() {
+        return "LineSegment{" +
+                "segmentId=" + segmentId +
+                ", line=" + line +
+                ", lengthKm=" + lengthKm +
+                ", trackType=" + trackType +
+                ", electrifType=" + electrifType +
+                ", gauge=" + gauge +
+                ", maxWeightKgM=" + maxWeightKgM +
+                ", speedLimitKmh=" + speedLimitKmh +
+                ", trackNumber=" + trackNumber +
+                ", position=" + position +
+                '}';
     }
 }
