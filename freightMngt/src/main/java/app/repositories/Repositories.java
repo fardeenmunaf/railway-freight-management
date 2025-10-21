@@ -10,6 +10,7 @@ public class Repositories {
     private final WarehouseBayRepository warehouseBayRepository;
     private final ItemRepository itemRepository;
     private final ItemCategoryRepository itemCategoryRepository;
+    private final OrderRepository orderRepository;
 
     /**
      * The Singleton's constructor should always be private to prevent direct construction calls with the new operator.
@@ -21,6 +22,7 @@ public class Repositories {
         warehouseBayRepository = new WarehouseBayRepository();
         itemRepository = new ItemRepository();
         itemCategoryRepository = new ItemCategoryRepository();
+        orderRepository = new OrderRepository();
     }
 
     /**
@@ -47,11 +49,9 @@ public class Repositories {
         return itemRepository;
     }
 
-    public ItemCategoryRepository getItemCategoryRepository() {
-        return itemCategoryRepository;
-    }
+    public ItemCategoryRepository getItemCategoryRepository() { return itemCategoryRepository; }
 
-    public WarehouseBayRepository getWarehouseBayRepository() {
-        return warehouseBayRepository;
-    }
+    public WarehouseBayRepository getWarehouseBayRepository() { return warehouseBayRepository;}
+
+    public OrderRepository getOrderRepository() { return orderRepository; }
 }

@@ -5,6 +5,7 @@ import app.repositories.Repositories;
 import app.repositories.WarehouseAisleRepository;
 import app.utils.CsvReader;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ public class Bootstrap implements Runnable {
         Repositories repositories = Repositories.getInstance();
         loadBays(repositories);
         loadItems(repositories);
+        loadOrders(repositories);
     }
 
     private void loadBays(Repositories repositories) {
@@ -100,5 +102,23 @@ public class Bootstrap implements Runnable {
         return category;
     }
 
+    private void loadOrders (Repositories repositories) {
+        List<Map<String, String>> data = CsvReader.readCsv(ORDERS_CSV, ",");
+        for (Map<String, String> row : data) {
+            String orderIdStr = row.get("orderId");
+            String dueDateStr = row.get("dueDate");
+            Integer priority = Integer.parseInt(row.get("priority"));
+
+            // Extract numeric part from orderId (e.g., "ORD00001" -> 1)
+            Integer orderId = Integer.parseInt(orderIdStr.substring(3));
+
+            // Parse dueDate from ISO format
+            LocalDateTime dueDate = LocalDateTime.parse(dueDateStr);
+
+            // Create order with default status "pending"
+            Order order = new Order(orderId, "pending", priority, dueDate);
+            repositories.getOrderRepository().addOrder(order);
+        }
+    }
 
 }
