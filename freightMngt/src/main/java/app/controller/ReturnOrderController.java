@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.ReturnOrder;
-import java.util.ArrayList;
+import app.repositories.ReturnOrderRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ReturnOrderController {
-    private List<ReturnOrder> returnOrders;
+    private final ReturnOrderRepository repository;
 
     /**
-     * Default constructor that initializes the return order list.
+     * Default constructor that initializes the controller with the return order repository.
      */
     public ReturnOrderController() {
-        this.returnOrders = new ArrayList<>();
+        this.repository = Repositories.getInstance().getReturnOrderRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class ReturnOrderController {
      */
     public ReturnOrder createReturnOrder(ReturnOrder returnOrder) {
         if (returnOrder != null) {
-            returnOrders.add(returnOrder);
+            repository.addReturnOrder(returnOrder);
         }
         return returnOrder;
     }
@@ -42,45 +43,54 @@ public class ReturnOrderController {
      * @return a list of all ReturnOrder objects
      */
     public List<ReturnOrder> getAllReturnOrders() {
-        return new ArrayList<>(returnOrders);
+        return repository.getAllReturnOrders();
     }
 
     /**
      * Retrieves a return order by its unique identifier.
      *
-     * @param returnId the unique identifier of the return order
+     * @param returnOrderId the unique identifier of the return order
      * @return an Optional containing the ReturnOrder if found, or empty if not found
      */
-    public Optional<ReturnOrder> getReturnOrderById(Integer returnId) {
-        return returnOrders.stream()
-                .filter(returnOrder -> returnOrder.getReturnId().equals(returnId))
-                .findFirst();
+    public Optional<ReturnOrder> getReturnOrderById(Integer returnOrderId) {
+        ReturnOrder returnOrder = repository.getReturnOrderById(returnOrderId);
+        return Optional.ofNullable(returnOrder);
     }
 
     /**
      * Updates an existing return order in the system.
      *
-     * @param returnId the unique identifier of the return order to update
+     * @param returnOrderId the unique identifier of the return order to update
      * @param updatedReturnOrder the ReturnOrder object with updated information
      * @return true if the return order was updated successfully, false otherwise
      */
-    public boolean updateReturnOrder(Integer returnId, ReturnOrder updatedReturnOrder) {
-        Optional<ReturnOrder> existingReturnOrder = getReturnOrderById(returnId);
-        if (existingReturnOrder.isPresent()) {
-            int index = returnOrders.indexOf(existingReturnOrder.get());
-            returnOrders.set(index, updatedReturnOrder);
-            return true;
-        }
-        return false;
+    public boolean updateReturnOrder(Integer returnOrderId, ReturnOrder updatedReturnOrder) {
+        return repository.updateReturnOrder(returnOrderId, updatedReturnOrder);
     }
 
     /**
      * Deletes a return order from the system.
      *
-     * @param returnId the unique identifier of the return order to delete
+     * @param returnOrderId the unique identifier of the return order to delete
      * @return true if the return order was deleted successfully, false otherwise
      */
-    public boolean deleteReturnOrder(Integer returnId) {
-        return returnOrders.removeIf(returnOrder -> returnOrder.getReturnId().equals(returnId));
+    public boolean deleteReturnOrder(Integer returnOrderId) {
+        return repository.deleteReturnOrder(returnOrderId);
+    }
+
+    /**
+     * Gets the next available return order ID.
+     *
+     * @return the next return order ID to be used
+     */
+    public Integer getNextReturnOrderId() {
+        return repository.getNextReturnOrderId();
+    }
+
+    /**
+     * Clears all return orders from the system.
+     */
+    public void clearAllReturnOrders() {
+        repository.clear();
     }
 }

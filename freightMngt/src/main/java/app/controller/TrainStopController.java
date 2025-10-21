@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.TrainStop;
-import java.util.ArrayList;
+import app.repositories.TrainStopRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class TrainStopController {
-    private List<TrainStop> trainStops;
+    private final TrainStopRepository repository;
 
     /**
-     * Default constructor that initializes the train stop list.
+     * Default constructor that initializes the controller with the train stop repository.
      */
     public TrainStopController() {
-        this.trainStops = new ArrayList<>();
+        this.repository = Repositories.getInstance().getTrainStopRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class TrainStopController {
      */
     public TrainStop createTrainStop(TrainStop trainStop) {
         if (trainStop != null) {
-            trainStops.add(trainStop);
+            repository.addTrainStop(trainStop);
         }
         return trainStop;
     }
@@ -42,7 +43,7 @@ public class TrainStopController {
      * @return a list of all TrainStop objects
      */
     public List<TrainStop> getAllTrainStops() {
-        return new ArrayList<>(trainStops);
+        return repository.getAllTrainStops();
     }
 
     /**
@@ -52,9 +53,8 @@ public class TrainStopController {
      * @return an Optional containing the TrainStop if found, or empty if not found
      */
     public Optional<TrainStop> getTrainStopById(Integer trainStopId) {
-        return trainStops.stream()
-                .filter(trainStop -> trainStop.getTrainStopId().equals(trainStopId))
-                .findFirst();
+        TrainStop trainStop = repository.getTrainStopById(trainStopId);
+        return Optional.ofNullable(trainStop);
     }
 
     /**
@@ -65,13 +65,7 @@ public class TrainStopController {
      * @return true if the train stop was updated successfully, false otherwise
      */
     public boolean updateTrainStop(Integer trainStopId, TrainStop updatedTrainStop) {
-        Optional<TrainStop> existingTrainStop = getTrainStopById(trainStopId);
-        if (existingTrainStop.isPresent()) {
-            int index = trainStops.indexOf(existingTrainStop.get());
-            trainStops.set(index, updatedTrainStop);
-            return true;
-        }
-        return false;
+        return repository.updateTrainStop(trainStopId, updatedTrainStop);
     }
 
     /**
@@ -81,7 +75,23 @@ public class TrainStopController {
      * @return true if the train stop was deleted successfully, false otherwise
      */
     public boolean deleteTrainStop(Integer trainStopId) {
-        return trainStops.removeIf(trainStop -> trainStop.getTrainStopId().equals(trainStopId));
+        return repository.deleteTrainStop(trainStopId);
+    }
+
+    /**
+     * Gets the next available train stop ID.
+     *
+     * @return the next train stop ID to be used
+     */
+    public Integer getNextTrainStopId() {
+        return repository.getNextStopId();
+    }
+
+    /**
+     * Clears all train stops from the system.
+     */
+    public void clearAllTrainStops() {
+        repository.clear();
     }
 }
 

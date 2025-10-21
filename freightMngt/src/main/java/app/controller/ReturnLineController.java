@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.ReturnLine;
-import java.util.ArrayList;
+import app.repositories.ReturnLineRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ReturnLineController {
-    private List<ReturnLine> returnLines;
+    private final ReturnLineRepository repository;
 
     /**
-     * Default constructor that initializes the return line list.
+     * Default constructor that initializes the controller with the return line repository.
      */
     public ReturnLineController() {
-        this.returnLines = new ArrayList<>();
+        this.repository = Repositories.getInstance().getReturnLineRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class ReturnLineController {
      */
     public ReturnLine createReturnLine(ReturnLine returnLine) {
         if (returnLine != null) {
-            returnLines.add(returnLine);
+            repository.addReturnLine(returnLine);
         }
         return returnLine;
     }
@@ -42,7 +43,7 @@ public class ReturnLineController {
      * @return a list of all ReturnLine objects
      */
     public List<ReturnLine> getAllReturnLines() {
-        return new ArrayList<>(returnLines);
+        return repository.getAllReturnLines();
     }
 
     /**
@@ -52,9 +53,8 @@ public class ReturnLineController {
      * @return an Optional containing the ReturnLine if found, or empty if not found
      */
     public Optional<ReturnLine> getReturnLineById(Integer returnLineId) {
-        return returnLines.stream()
-                .filter(returnLine -> returnLine.getReturnLineId().equals(returnLineId))
-                .findFirst();
+        ReturnLine returnLine = repository.getReturnLineById(returnLineId);
+        return Optional.ofNullable(returnLine);
     }
 
     /**
@@ -65,13 +65,7 @@ public class ReturnLineController {
      * @return true if the return line was updated successfully, false otherwise
      */
     public boolean updateReturnLine(Integer returnLineId, ReturnLine updatedReturnLine) {
-        Optional<ReturnLine> existingReturnLine = getReturnLineById(returnLineId);
-        if (existingReturnLine.isPresent()) {
-            int index = returnLines.indexOf(existingReturnLine.get());
-            returnLines.set(index, updatedReturnLine);
-            return true;
-        }
-        return false;
+        return repository.updateReturnLine(returnLineId, updatedReturnLine);
     }
 
     /**
@@ -81,7 +75,22 @@ public class ReturnLineController {
      * @return true if the return line was deleted successfully, false otherwise
      */
     public boolean deleteReturnLine(Integer returnLineId) {
-        return returnLines.removeIf(returnLine -> returnLine.getReturnLineId().equals(returnLineId));
+        return repository.deleteReturnLine(returnLineId);
+    }
+
+    /**
+     * Gets the next available return line ID.
+     *
+     * @return the next return line ID to be used
+     */
+    public Integer getNextReturnLineId() {
+        return repository.getNextReturnLineId();
+    }
+
+    /**
+     * Clears all return lines from the system.
+     */
+    public void clearAllReturnLines() {
+        repository.clear();
     }
 }
-
