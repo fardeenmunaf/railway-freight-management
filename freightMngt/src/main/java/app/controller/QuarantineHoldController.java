@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.QuarantineHold;
-import java.util.ArrayList;
+import app.repositories.QuarantineHoldRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class QuarantineHoldController {
-    private List<QuarantineHold> quarantineHolds;
+    private final QuarantineHoldRepository repository;
 
     /**
-     * Default constructor that initializes the quarantine hold list.
+     * Default constructor that initializes the controller with the quarantine hold repository.
      */
     public QuarantineHoldController() {
-        this.quarantineHolds = new ArrayList<>();
+        this.repository = Repositories.getInstance().getQuarantineHoldRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class QuarantineHoldController {
      */
     public QuarantineHold createQuarantineHold(QuarantineHold quarantineHold) {
         if (quarantineHold != null) {
-            quarantineHolds.add(quarantineHold);
+            repository.addQuarantineHold(quarantineHold);
         }
         return quarantineHold;
     }
@@ -42,45 +43,54 @@ public class QuarantineHoldController {
      * @return a list of all QuarantineHold objects
      */
     public List<QuarantineHold> getAllQuarantineHolds() {
-        return new ArrayList<>(quarantineHolds);
+        return repository.getAllQuarantineHolds();
     }
 
     /**
      * Retrieves a quarantine hold by its unique identifier.
      *
-     * @param qholdId the unique identifier of the quarantine hold
+     * @param quarantineHoldId the unique identifier of the quarantine hold
      * @return an Optional containing the QuarantineHold if found, or empty if not found
      */
-    public Optional<QuarantineHold> getQuarantineHoldById(Integer qholdId) {
-        return quarantineHolds.stream()
-                .filter(quarantineHold -> quarantineHold.getQholdId().equals(qholdId))
-                .findFirst();
+    public Optional<QuarantineHold> getQuarantineHoldById(Integer quarantineHoldId) {
+        QuarantineHold quarantineHold = repository.getQuarantineHoldById(quarantineHoldId);
+        return Optional.ofNullable(quarantineHold);
     }
 
     /**
      * Updates an existing quarantine hold in the system.
      *
-     * @param qholdId the unique identifier of the quarantine hold to update
+     * @param quarantineHoldId the unique identifier of the quarantine hold to update
      * @param updatedQuarantineHold the QuarantineHold object with updated information
      * @return true if the quarantine hold was updated successfully, false otherwise
      */
-    public boolean updateQuarantineHold(Integer qholdId, QuarantineHold updatedQuarantineHold) {
-        Optional<QuarantineHold> existingQuarantineHold = getQuarantineHoldById(qholdId);
-        if (existingQuarantineHold.isPresent()) {
-            int index = quarantineHolds.indexOf(existingQuarantineHold.get());
-            quarantineHolds.set(index, updatedQuarantineHold);
-            return true;
-        }
-        return false;
+    public boolean updateQuarantineHold(Integer quarantineHoldId, QuarantineHold updatedQuarantineHold) {
+        return repository.updateQuarantineHold(quarantineHoldId, updatedQuarantineHold);
     }
 
     /**
      * Deletes a quarantine hold from the system.
      *
-     * @param qholdId the unique identifier of the quarantine hold to delete
+     * @param quarantineHoldId the unique identifier of the quarantine hold to delete
      * @return true if the quarantine hold was deleted successfully, false otherwise
      */
-    public boolean deleteQuarantineHold(Integer qholdId) {
-        return quarantineHolds.removeIf(quarantineHold -> quarantineHold.getQholdId().equals(qholdId));
+    public boolean deleteQuarantineHold(Integer quarantineHoldId) {
+        return repository.deleteQuarantineHold(quarantineHoldId);
+    }
+
+    /**
+     * Gets the next available quarantine hold ID.
+     *
+     * @return the next quarantine hold ID to be used
+     */
+    public Integer getNextQuarantineHoldId() {
+        return repository.getNextHoldId();
+    }
+
+    /**
+     * Clears all quarantine holds from the system.
+     */
+    public void clearAllQuarantineHolds() {
+        repository.clear();
     }
 }

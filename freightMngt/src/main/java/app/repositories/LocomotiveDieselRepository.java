@@ -49,6 +49,16 @@ public class LocomotiveDieselRepository {
         return locomotiveDiesels.removeIf(ld -> locomotiveId.equals(ld.getLocomotiveId()));
     }
 
+    public Integer getNextLocomotiveDieselId() {
+        int maxId = 0;
+        for (LocomotiveDiesel ld : locomotiveDiesels) {
+            if (ld.getLocomotiveId() != null && ld.getLocomotiveId() > maxId) {
+                maxId = ld.getLocomotiveId();
+            }
+        }
+        return maxId + 1;
+    }
+
     private boolean containsLocomotiveDiesel(Integer locomotiveId) {
         return getLocomotiveDieselById(locomotiveId) != null;
     }

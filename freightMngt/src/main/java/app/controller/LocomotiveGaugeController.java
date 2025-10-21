@@ -1,37 +1,38 @@
 package app.controller;
 
 import app.model.LocomotiveGauge;
-import java.util.ArrayList;
+import app.repositories.LocomotiveGaugeRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Controller class for managing LocomotiveGauge entities.
  * Provides CRUD operations (Create, Read, Update, Delete) for LocomotiveGauge objects.
- * This controller manages locomotive gauge data in the freight management system.
+ * This controller manages locomotive gauge relationships in the freight management system.
  *
  * @author G113 2DK
  * @version 1.0
  */
 public class LocomotiveGaugeController {
-    private List<LocomotiveGauge> locomotiveGauges;
+    private final LocomotiveGaugeRepository repository;
 
     /**
-     * Default constructor that initializes the locomotive gauge list.
+     * Default constructor that initializes the controller with the locomotive gauge repository.
      */
     public LocomotiveGaugeController() {
-        this.locomotiveGauges = new ArrayList<>();
+        this.repository = Repositories.getInstance().getLocomotiveGaugeRepository();
     }
 
     /**
-     * Creates and adds a new locomotive gauge to the system.
+     * Creates and adds a new locomotive gauge relationship to the system.
      *
      * @param locomotiveGauge the LocomotiveGauge object to be created
      * @return the created LocomotiveGauge object
      */
     public LocomotiveGauge createLocomotiveGauge(LocomotiveGauge locomotiveGauge) {
         if (locomotiveGauge != null) {
-            locomotiveGauges.add(locomotiveGauge);
+            repository.addLocomotiveGauge(locomotiveGauge);
         }
         return locomotiveGauge;
     }
@@ -42,45 +43,34 @@ public class LocomotiveGaugeController {
      * @return a list of all LocomotiveGauge objects
      */
     public List<LocomotiveGauge> getAllLocomotiveGauges() {
-        return new ArrayList<>(locomotiveGauges);
+        return repository.getAllLocomotiveGauges();
     }
 
     /**
-     * Retrieves a locomotive gauge by its unique identifier.
+     * Retrieves locomotive gauges by locomotive ID.
      *
-     * @param locomotiveId the unique identifier of the locomotive gauge
-     * @return an Optional containing the LocomotiveGauge if found, or empty if not found
+     * @param locomotiveId the locomotive identifier
+     * @return a list of LocomotiveGauge objects for the locomotive
      */
-    public Optional<LocomotiveGauge> getLocomotiveGaugeById(Integer locomotiveId) {
-        return locomotiveGauges.stream()
-                .filter(locomotiveGauge -> locomotiveGauge.getLocomotive().getLocomotiveId().equals(locomotiveId))
-                .findFirst();
-    }
-
-    /**
-     * Updates an existing locomotive gauge in the system.
-     *
-     * @param locomotiveId the unique identifier of the locomotive gauge to update
-     * @param updatedLocomotiveGauge the LocomotiveGauge object with updated information
-     * @return true if the locomotive gauge was updated successfully, false otherwise
-     */
-    public boolean updateLocomotiveGauge(Integer locomotiveId, LocomotiveGauge updatedLocomotiveGauge) {
-        Optional<LocomotiveGauge> existingLocomotiveGauge = getLocomotiveGaugeById(locomotiveId);
-        if (existingLocomotiveGauge.isPresent()) {
-            int index = locomotiveGauges.indexOf(existingLocomotiveGauge.get());
-            locomotiveGauges.set(index, updatedLocomotiveGauge);
-            return true;
-        }
-        return false;
+    public List<LocomotiveGauge> getLocomotiveGaugesByLocomotiveId(Integer locomotiveId) {
+        return repository.getLocomotiveGaugesByLocomotiveId(locomotiveId);
     }
 
     /**
      * Deletes a locomotive gauge from the system.
      *
-     * @param locomotiveId the unique identifier of the locomotive gauge to delete
+     * @param locomotiveId the locomotive identifier
+     * @param gaugeId the gauge identifier
      * @return true if the locomotive gauge was deleted successfully, false otherwise
      */
-    public boolean deleteLocomotiveGauge(Integer locomotiveId) {
-        return locomotiveGauges.removeIf(locomotiveGauge -> locomotiveGauge.getLocomotive().getLocomotiveId().equals(locomotiveId));
+    public boolean deleteLocomotiveGauge(Integer locomotiveId, Integer gaugeId) {
+        return repository.deleteLocomotiveGauge(locomotiveId, gaugeId);
+    }
+
+    /**
+     * Clears all locomotive gauges from the system.
+     */
+    public void clearAllLocomotiveGauges() {
+        repository.clear();
     }
 }
