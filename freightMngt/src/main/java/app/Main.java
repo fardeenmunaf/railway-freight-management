@@ -54,6 +54,50 @@ public class Main {
         System.out.println(pickingPlan.calculateTripsNeeded(pickingPlan.getAllCarts().get(4), pickingPlan.getAllOrderLines().get(0)));
         System.out.println("Wagons unloaded and bays filled successfully.\n\n");
 
+        // --- Demo - STRICT MODE ---
+        System.out.println("Running allocation planner (STRICT mode)...");
+        app.service.AllocationService.AllocationResult result = pickingPlan.planAllocations("STRICT");
+
+        System.out.println("\nOrder line eligibilities:");
+        if (result.getEligibilities().isEmpty()) {
+            System.out.println("  (no eligibilities)");
+        } else {
+            for (app.service.AllocationService.OrderEligibility e : result.getEligibilities()) {
+                System.out.println(String.format(
+                        "  orderId=%s, lineNo=%s, sku=%s, requested=%s, allocated=%s, status=%s",
+                        String.valueOf(e.getOrderId()),
+                        String.valueOf(e.getLineNo()),
+                        String.valueOf(e.getSku()),
+                        String.valueOf(e.getRequestedQty()),
+                        String.valueOf(e.getAllocatedQty()),
+                        String.valueOf(e.getStatus())
+                ));
+            }
+        }
+
+        // --- Demo - PARTIAL MODE ---
+        System.out.println("Running allocation planner (PARTIAL mode)...");
+        app.service.AllocationService.AllocationResult result2 = pickingPlan.planAllocations("PARTIAL");
+
+        System.out.println("\nOrder line eligibilities:");
+        if (result2.getEligibilities().isEmpty()) {
+            System.out.println("  (no eligibilities)");
+        } else {
+            for (app.service.AllocationService.OrderEligibility e : result2.getEligibilities()) {
+                System.out.println(String.format(
+                        "  orderId=%s, lineNo=%s, sku=%s, requested=%s, allocated=%s, status=%s",
+                        String.valueOf(e.getOrderId()),
+                        String.valueOf(e.getLineNo()),
+                        String.valueOf(e.getSku()),
+                        String.valueOf(e.getRequestedQty()),
+                        String.valueOf(e.getAllocatedQty()),
+                        String.valueOf(e.getStatus())
+                ));
+            }
+        }
+
+        // --- end demo ---
+
         System.out.println("\n\n\n");
 
         MainMenu.display();

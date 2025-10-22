@@ -117,7 +117,7 @@ public class InventoryBalance {
     public void addLot(InventoryLot lot) {
         if (lot != null) {
             this.lots.add(lot);
-            this.qty += lot.getBoxCode();
+            this.qty += lot.getQty();
         }
     }
 

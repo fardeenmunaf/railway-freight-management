@@ -94,4 +94,17 @@ public class PickingPlan {
         return (int) Math.ceil(totalQuantity / cartCapacity);
     }
 
+
+    /**
+     * Plans allocations by invoking the AllocationService.
+     * @param mode allocation mode: "STRICT" (default) or "PARTIAL"
+     * @return AllocationResult with eligibilities and allocation rows
+     */
+    public AllocationService.AllocationResult planAllocations(String mode) {
+        if (mode == null || mode.isBlank()) mode = "STRICT";
+        AllocationService allocator = new AllocationService();
+        List<Order> orders = getAllOrders();
+        List<InventoryBalance> balances = getAllItemBalences();
+        return allocator.allocateOrders(orders, balances, mode);
+    }
 }
