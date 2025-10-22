@@ -3,6 +3,7 @@ package app.service;
 import app.controller.InventoryBalanceController;
 import app.controller.WarehouseBayController;
 import app.model.InventoryBalance;
+import app.model.InventoryLot;
 import app.model.WarehouseBay;
 
 import java.util.ArrayList;
@@ -69,24 +70,24 @@ public class WagonsUnloading {
     }
 
     /**
-     * Calculates the available capacity of a warehouse bay.
-     * The available capacity is determined by subtracting the total quantity of inventory
-     * currently allocated to the bay from the bay's maximum capacity.
+     * Calculates the available capacity of a warehouse bay in terms of boxes/lots.
+     * The available capacity is determined by subtracting the number of lots (boxes)
+     * currently allocated to the bay from the bay's maximum box capacity.
      *
      * @param bay the warehouse bay to check
-     * @return the available capacity in boxes, or the full capacity if the bay is empty
+     * @return the available capacity in boxes/lots
      */
     public Integer getAvailableCapacity(WarehouseBay bay) {
         List<InventoryBalance> allBalances = balanceController.getAllInventoryBalances();
-        Integer totalOccupied = 0;
+        Integer totalLotsOccupied = 0;
 
         for (InventoryBalance balance : allBalances) {
             if (balance.getBay() != null && balance.getBay().getBayId().equals(bay.getBayId())) {
-                totalOccupied += balance.getQty();
+                totalLotsOccupied += balance.getLots().size();
             }
         }
 
-        return bay.getCapacityBox() - totalOccupied;
+        return bay.getCapacityBox() - totalLotsOccupied;
     }
 
     /**
@@ -145,21 +146,20 @@ public class WagonsUnloading {
     }
 
     /**
-     * Allocates a specific quantity of inventory to a warehouse bay.
-     * Creates a new inventory balance record with the specified bay, lot, and quantity.
-     * The new balance is assigned a unique identifier and persisted through the controller.
+     * Allocates a list of lots to a warehouse bay.
+     * Creates a new inventory balance with positive ID.
      *
-     * @param balance the original inventory balance being allocated
-     * @param bay the warehouse bay to allocate the inventory to
-     * @param qty the quantity of inventory to allocate to this bay
+     * @param lots the list of lots to allocate
+     * @param bay the warehouse bay to allocate to
+     * @param qty the total quantity of items in all lots
      */
-    public void allocateToBay(InventoryBalance balance, WarehouseBay bay, Integer qty) {
+    public void allocateToBay(List<InventoryLot> lots, WarehouseBay bay, Integer qty) {
         Integer newBalanceId = balanceController.getNextBalanceId();
 
         InventoryBalance newBalance = new InventoryBalance(
                 newBalanceId,
                 bay,
-                balance.getLots(),
+                lots,
                 qty
         );
 
@@ -167,44 +167,56 @@ public class WagonsUnloading {
     }
 
     /**
-     * Processes an inventory balance by allocating it to one or more warehouse bays.
-     * This method attempts to distribute the entire quantity across suitable bays:
-     * - Finds suitable bays that can accommodate the SKU
-     * - Allocates as much quantity as possible to each bay
-     * - Continues until the entire quantity is allocated or no suitable bays remain
-     * - Deletes the original unassigned balance if fully allocated
+     * Processes an inventory balance by allocating its lots to warehouse bays.
+     * Each lot counts as 1 box regardless of the quantity of items inside.
+     * Tries to fit as many lots as possible in each bay based on box capacity.
      *
      * @param balance the inventory balance to process and allocate
      */
     public void processBalance(InventoryBalance balance) {
-        Integer remainingQty = balance.getQty();
-        Integer sku = null;
-
-        if (!balance.getLots().isEmpty()) {
-            sku = balance.getLots().get(0).getSku();
-        }
-
-        if (sku == null) {
+        if (balance.getLots().isEmpty()) {
             return;
         }
 
-        while (remainingQty > 0) {
+        Integer sku = balance.getLots().get(0).getSku();
+        List<InventoryLot> remainingLots = new ArrayList<>(balance.getLots());
+
+        while (!remainingLots.isEmpty()) {
             WarehouseBay suitableBay = findSuitableBay(sku);
 
             if (suitableBay == null) {
                 break;
             }
 
-            Integer availableCapacity = getAvailableCapacity(suitableBay);
-            Integer qtyToAllocate = Math.min(remainingQty, availableCapacity);
+            Integer availableBoxCapacity = getAvailableCapacity(suitableBay);
+            List<InventoryLot> lotsForThisBay = new ArrayList<>();
 
-            allocateToBay(balance, suitableBay, qtyToAllocate);
+            for (int i = 0; i < Math.min(remainingLots.size(), availableBoxCapacity); i++) {
+                lotsForThisBay.add(remainingLots.get(i));
+            }
 
-            remainingQty -= qtyToAllocate;
+            if (!lotsForThisBay.isEmpty()) {
+                Integer totalQty = 0;
+                for (InventoryLot lot : lotsForThisBay) {
+                    totalQty += lot.getBoxCode();
+                }
+                allocateToBay(lotsForThisBay, suitableBay, totalQty);
+                remainingLots.removeAll(lotsForThisBay);
+            } else {
+                break;
+            }
         }
 
-        if (remainingQty == 0) {
+        if (remainingLots.isEmpty()) {
             balanceController.deleteInventoryBalance(balance.getBalanceId());
+        } else {
+            balance.setLots(remainingLots);
+            Integer newQty = 0;
+            for (InventoryLot lot : remainingLots) {
+                newQty += lot.getBoxCode();
+            }
+            balance.setQty(newQty);
+            balanceController.updateInventoryBalance(balance.getBalanceId(), balance);
         }
     }
 

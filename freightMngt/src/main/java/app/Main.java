@@ -49,6 +49,26 @@ public class Main {
         }
         System.out.println("Total unassigned balances: " + unassignedCount);
 
+        System.out.println("\n=== TESTING LOTS ORDERING (FEFO/FIFO) ===");
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() == null && !balance.getLots().isEmpty()) {
+                Integer sku = balance.getLots().get(0).getSku();
+                System.out.println("\n--- Balance ID: " + balance.getBalanceId() + " | SKU: " + sku + " ---");
+                System.out.println("Total Lots: " + balance.getLots().size() + " | Total Qty: " + balance.getQty());
+
+                int lotIndex = 1;
+                for (app.model.InventoryLot lot : balance.getLots()) {
+                    String expDateStr = lot.getExpDate() != null ? lot.getExpDate().toString() : "NO EXPIRY";
+                    String receivedStr = lot.getReceivedDate().toString();
+                    System.out.println("  Lot " + lotIndex + ": ID=" + lot.getLotId() +
+                        " | Qty=" + lot.getBoxCode() +
+                        " | ExpDate=" + expDateStr +
+                        " | ReceivedAt=" + receivedStr);
+                    lotIndex++;
+                }
+            }
+        }
+
         System.out.println("\n--- EXECUTING UNLOADING ---");
         wagonsUnloading.unloadAllWagons();
 
@@ -61,10 +81,10 @@ public class Main {
                 assignedCount++;
                 Integer sku = balance.getLots().isEmpty() ? null : balance.getLots().get(0).getSku();
                 System.out.println("Balance ID: " + balance.getBalanceId() +
-                    " | SKU: " + sku +
-                    " | Qty: " + balance.getQty() +
-                    " | Lots: " + balance.getLots().size() +
-                    " | Bay: " + balance.getBay().getBayId());
+                        " | SKU: " + sku +
+                        " | Qty: " + balance.getQty() +
+                        " | Lots: " + balance.getLots().size() +
+                        " | Bay: " + balance.getBay().getBayId());
             } else {
                 stillUnassigned++;
             }
