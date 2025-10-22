@@ -9,6 +9,15 @@ import java.util.Scanner;
 
 public class TravelTimeFeature {
 
+    /**
+     * Cria uma nova instância do calculador de tempo de viagem.
+     *
+     * @param facilityRepository repositório de instalações ferroviárias
+     * @param lineSegmentRepository repositório de segmentos de linha
+     * @param lineSegmentFacilityRepository repositório de ligações entre segmentos e instalações
+     * @param locomotiveRepository repositório de locomotivas
+     * @return nova instância de TravelTimeCalculator configurada
+     */
     public static TravelTimeCalculator create(
             FacilityRepository facilityRepository,
             LineSegmentRepository lineSegmentRepository,
@@ -22,6 +31,13 @@ public class TravelTimeFeature {
         );
     }
 
+    /**
+     * Solicita ao utilizador dados de viagem e calcula o tempo estimado.
+     * Apresenta menu interativo para seleção de estações e locomotiva,
+     * depois exibe os detalhes completos da viagem calculada.
+     *
+     * @param scanner scanner para entrada do utilizador
+     */
     public static void calculateTravelTimeFromUserInput(Scanner scanner) {
         System.out.println("\n=== Calcular Tempo de Viagem ===");
 
@@ -97,14 +113,33 @@ public class TravelTimeFeature {
         private double effectiveSpeed;
         private double distance;
 
+        /**
+         * Obtém a distância total da última viagem calculada.
+         *
+         * @return distância em quilómetros
+         */
         public double getDistanceKm() {
             return this.distance;
         }
 
+        /**
+         * Obtém a velocidade efetiva da última viagem calculada.
+         * Calculada como distância total dividida pelo tempo total.
+         *
+         * @return velocidade efetiva em km/h
+         */
         public double getEffectiveSpeedKmh() {
             return this.effectiveSpeed;
         }
 
+        /**
+         * Construtor do calculador de tempo de viagem.
+         *
+         * @param facilityRepository repositório de instalações
+         * @param lineSegmentRepository repositório de segmentos
+         * @param lineSegmentFacilityRepository repositório de ligações
+         * @param locomotiveRepository repositório de locomotivas
+         */
         public TravelTimeCalculator(
                 FacilityRepository facilityRepository,
                 LineSegmentRepository lineSegmentRepository,
@@ -116,6 +151,17 @@ public class TravelTimeFeature {
             this.locomotiveRepository = locomotiveRepository;
         }
 
+        /**
+         * Calcula o tempo de viagem entre duas estações usando uma locomotiva específica.
+         * Encontra a rota mais rápida através da análise da rede ferroviária.
+         *
+         * @param stationId1 ID da estação de origem
+         * @param stationId2 ID da estação de destino
+         * @param locomotiveId ID da locomotiva a utilizar
+         * @return tempo de viagem em minutos
+         * @throws NoDirectConnectionException se não existir ligação entre as estações
+         * @throws InvalidSpeedException se a locomotiva tiver velocidade inválida
+         */
         public double calculateTravelTimeMinutes(Integer stationId1, Integer stationId2, Integer locomotiveId) {
             Facility station1 = validateStation(stationId1);
             Facility station2 = validateStation(stationId2);
@@ -126,7 +172,7 @@ public class TravelTimeFeature {
                 throw new InvalidSpeedException("Locomotiva com velocidade máxima inválida: " + locomotiveId);
             }
 
-            PathResult result = findShortestTimePathDijkstra(station1.getFacilityId(), station2.getFacilityId(), locomotiveMaxSpeed);
+            PathResult result = findShortestTimePath(station1.getFacilityId(), station2.getFacilityId(), locomotiveMaxSpeed);
             if (result == null) {
                 throw new NoDirectConnectionException("Não existe ligação entre " + station1.getFacilityId() + " e " + station2.getFacilityId());
             }
@@ -137,6 +183,10 @@ public class TravelTimeFeature {
             return totalHours * 60.0;
         }
 
+        /**
+         * Representa o resultado de um cálculo de caminho entre estações.
+         * Contém o tempo total e distância total da rota encontrada.
+         */
         private static class PathResult {
             final double totalHours;
             final double totalDistanceKm;
@@ -146,6 +196,10 @@ public class TravelTimeFeature {
             }
         }
 
+        /**
+         * Nó utilizado na fila de prioridade para análise de caminhos.
+         * Mantém informação sobre uma estação e os custos acumulados até ela.
+         */
         private static class QueueNode {
             final Integer facilityId;
             final double hoursSoFar;
@@ -157,6 +211,10 @@ public class TravelTimeFeature {
             }
         }
 
+        /**
+         * Representa uma ligação no grafo ferroviário.
+         * Liga uma estação de destino ao segmento de linha correspondente.
+         */
         private static class Edge {
             final Integer toFacilityId;
             final LineSegment segment;
@@ -166,7 +224,17 @@ public class TravelTimeFeature {
             }
         }
 
-        private PathResult findShortestTimePathDijkstra(Integer startFacilityId, Integer targetFacilityId, double locomotiveMaxSpeed) {
+        /**
+         * Encontra o caminho mais rápido entre duas estações ferroviárias.
+         * Constrói grafo das ligações ferroviárias e calcula tempos baseados nas velocidades
+         * efetivas (menor entre limite do segmento e velocidade máxima da locomotiva).
+         *
+         * @param startFacilityId ID da estação de partida
+         * @param targetFacilityId ID da estação de chegada
+         * @param locomotiveMaxSpeed velocidade máxima da locomotiva em km/h
+         * @return resultado do caminho com tempo e distância totais, ou null se não existir caminho
+         */
+        private PathResult findShortestTimePath(Integer startFacilityId, Integer targetFacilityId, double locomotiveMaxSpeed) {
             if (startFacilityId == null || targetFacilityId == null) return null;
             java.util.Map<Integer, java.util.List<Edge>> graph = new java.util.HashMap<>();
             java.util.List<LineSegment> segments = lineSegmentRepository.getAllLineSegments();
@@ -236,6 +304,13 @@ public class TravelTimeFeature {
             return null;
         }
 
+        /**
+         * Valida se uma instalação existe e é uma estação ferroviária.
+         *
+         * @param facilityId ID da instalação a validar
+         * @return instalação validada
+         * @throws NoDirectConnectionException se a instalação não existir ou não for estação
+         */
         private Facility validateStation(Integer facilityId) {
             Facility facility = facilityRepository.getFacilityById(facilityId);
             if (facility == null) {
@@ -247,7 +322,13 @@ public class TravelTimeFeature {
             return facility;
         }
 
-
+        /**
+         * Valida se uma locomotiva existe no repositório.
+         *
+         * @param locomotiveId ID da locomotiva a validar
+         * @return locomotiva validada
+         * @throws InvalidSpeedException se a locomotiva não existir
+         */
         private Locomotive validateLocomotive(Integer locomotiveId) {
             Locomotive locomotive = locomotiveRepository.getLocomotiveById(locomotiveId);
             if (locomotive == null) {
@@ -258,12 +339,18 @@ public class TravelTimeFeature {
 
     }
 
+    /**
+     * Exceção lançada quando não existe ligação ferroviária entre duas estações.
+     */
     public static class NoDirectConnectionException extends RuntimeException {
         public NoDirectConnectionException(String message) {
             super(message);
         }
     }
 
+    /**
+     * Exceção lançada quando uma locomotiva tem velocidade inválida ou não existe.
+     */
     public static class InvalidSpeedException extends RuntimeException {
         public InvalidSpeedException(String message) {
             super(message);
