@@ -25,6 +25,7 @@ public class Repositories {
     private final LineRepository lineRepository;
     private final LocomotiveRepository locomotiveRepository;
     private final WagonRepository wagonRepository;
+    private final WagonModelRepository wagonModelRepository;
     private final WagonGaugeRepository wagonGaugeRepository;
     private final UserRoleRepository userRoleRepository;
     private final WagonTypeRepository wagonTypeRepository;
@@ -75,6 +76,7 @@ public class Repositories {
         lineRepository = new LineRepository();
         locomotiveRepository = new LocomotiveRepository();
         wagonRepository = new WagonRepository();
+        wagonModelRepository = new WagonModelRepository();
         wagonGaugeRepository = new WagonGaugeRepository();
         userRoleRepository = new UserRoleRepository();
         wagonTypeRepository = new WagonTypeRepository();
@@ -191,6 +193,10 @@ public class Repositories {
 
     public WagonRepository getWagonRepository() {
         return wagonRepository;
+    }
+
+    public WagonModelRepository getWagonModelRepository() {
+        return wagonModelRepository;
     }
 
     public WagonGaugeRepository getWagonGaugeRepository() {
