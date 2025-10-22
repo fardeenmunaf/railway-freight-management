@@ -49,7 +49,7 @@ public class Main {
         System.out.println(pickingPlan.getAllOrderLinesFromOrder(1).stream().limit(1).toList());
         System.out.println("Wagons unloaded and bays filled successfully.\n\n");
 
-        // --- Demo: run allocation planner and print results ---
+        // --- Demo - STRICT MODE ---
         System.out.println("Running allocation planner (STRICT mode)...");
         app.service.AllocationService.AllocationResult result = pickingPlan.planAllocations("STRICT");
 
@@ -70,24 +70,26 @@ public class Main {
             }
         }
 
-        System.out.println("\nAllocation rows:");
-        if (result.getAllocations().isEmpty()) {
-            System.out.println("  (no allocations)");
+        // --- Demo - PARTIAL MODE ---
+        System.out.println("Running allocation planner (PARTIAL mode)...");
+        app.service.AllocationService.AllocationResult result2 = pickingPlan.planAllocations("PARTIAL");
+
+        System.out.println("\nOrder line eligibilities:");
+        if (result2.getEligibilities().isEmpty()) {
+            System.out.println("  (no eligibilities)");
         } else {
-            for (app.service.AllocationService.AllocationRecord a : result.getAllocations()) {
+            for (app.service.AllocationService.OrderEligibility e : result2.getEligibilities()) {
                 System.out.println(String.format(
-                        "  orderId=%s, lineNo=%s, sku=%s, qty=%s, boxId=%s, aisle=%s, bay=%s",
-                        String.valueOf(a.getOrderId()),
-                        String.valueOf(a.getLineNo()),
-                        String.valueOf(a.getSku()),
-                        String.valueOf(a.getQty()),
-                        String.valueOf(a.getBoxId()),
-                        String.valueOf(a.getAisle()),
-                        String.valueOf(a.getBay())
+                        "  orderId=%s, lineNo=%s, sku=%s, requested=%s, allocated=%s, status=%s",
+                        String.valueOf(e.getOrderId()),
+                        String.valueOf(e.getLineNo()),
+                        String.valueOf(e.getSku()),
+                        String.valueOf(e.getRequestedQty()),
+                        String.valueOf(e.getAllocatedQty()),
+                        String.valueOf(e.getStatus())
                 ));
             }
         }
-        System.out.println("\nAllocation planner finished.\n\n");
 
         // --- end demo ---
 

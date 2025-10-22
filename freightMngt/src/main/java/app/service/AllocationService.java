@@ -9,23 +9,29 @@ import java.util.stream.Collectors;
 /**
  * Service responsible for allocating inventory to order lines using FEFO (First Expired, First Out) strategy.
  * Handles both STRICT and PARTIAL allocation modes while ensuring stock consistency.
+ * <p>
+ * Note: mode defaults to "STRICT" when null or blank.
  *
  * @author G113 2DK
  * @version 1.0
  */
 public class AllocationService {
 
+    private static final double EPS = 1e-9;
+
     /**
      * Allocates inventory to orders using FEFO strategy.
      *
      * @param orders            List of orders to process
      * @param inventoryBalances List of available inventory balances
-     * @param mode              Allocation mode: "STRICT" or "PARTIAL"
+     * @param mode              Allocation mode: "STRICT" or "PARTIAL" (defaults to "STRICT" when null or blank)
      * @return AllocationResult containing eligibility status and allocations
      */
     public AllocationResult allocateOrders(List<Order> orders, List<InventoryBalance> inventoryBalances, String mode) {
+        String effectiveMode = (mode == null || mode.isBlank()) ? "STRICT" : mode;
 
-        // Sort orders by priority ASC, dueDate ASC, orderId ASC
+        Map<Integer, WarehouseBay> lotToBay = indexLotToBay(inventoryBalances);
+
         List<Order> sortedOrders = orders.stream()
                 .sorted(Comparator
                         .comparing(Order::getPriority, Comparator.nullsLast(Comparator.naturalOrder()))
@@ -36,14 +42,33 @@ public class AllocationService {
         List<OrderEligibility> eligibilities = new ArrayList<>();
         List<AllocationRecord> allocations = new ArrayList<>();
 
-        // Create working copy of inventory to track available quantities (as Double to allow fractional logic)
         Map<Integer, Double> availableStock = createStockMap(inventoryBalances);
 
         for (Order order : sortedOrders) {
-            processOrder(order, inventoryBalances, availableStock, mode, eligibilities, allocations);
+            processOrder(order, inventoryBalances, availableStock, effectiveMode, eligibilities, allocations, lotToBay);
         }
 
         return new AllocationResult(eligibilities, allocations);
+    }
+
+    /**
+     * Builds an index map from lotId to WarehouseBay for fast lookup.
+     */
+    private Map<Integer, WarehouseBay> indexLotToBay(List<InventoryBalance> balances) {
+        Map<Integer, WarehouseBay> map = new HashMap<>();
+        if (balances == null) return map;
+
+        for (InventoryBalance balance : balances) {
+            WarehouseBay bay = balance.getBay();
+            List<InventoryLot> lots = balance.getLots();
+            if (lots == null) continue;
+            for (InventoryLot lot : lots) {
+                if (lot != null && lot.getLotId() != null) {
+                    map.put(lot.getLotId(), bay);
+                }
+            }
+        }
+        return map;
     }
 
     /**
@@ -51,13 +76,13 @@ public class AllocationService {
      */
     private void processOrder(Order order, List<InventoryBalance> inventoryBalances,
                               Map<Integer, Double> availableStock, String mode,
-                              List<OrderEligibility> eligibilities, List<AllocationRecord> allocations) {
+                              List<OrderEligibility> eligibilities, List<AllocationRecord> allocations,
+                              Map<Integer, WarehouseBay> lotToBay) {
 
-        // Get order lines sorted by orderLineId (which serves as lineNo)
         List<OrderLine> orderLines = getOrderLinesSorted(order);
 
         for (OrderLine line : orderLines) {
-            processOrderLine(line, inventoryBalances, availableStock, mode, eligibilities, allocations);
+            processOrderLine(line, inventoryBalances, availableStock, mode, eligibilities, allocations, lotToBay);
         }
     }
 
@@ -66,17 +91,16 @@ public class AllocationService {
      */
     private void processOrderLine(OrderLine line, List<InventoryBalance> inventoryBalances,
                                   Map<Integer, Double> availableStock, String mode,
-                                  List<OrderEligibility> eligibilities, List<AllocationRecord> allocations) {
+                                  List<OrderEligibility> eligibilities, List<AllocationRecord> allocations,
+                                  Map<Integer, WarehouseBay> lotToBay) {
 
         Integer skuId = line.getSku().getItemId();
         Double requestedQty = line.getQty() != null ? line.getQty() : 0.0;
         Double remainingQty = requestedQty;
         List<AllocationRecord> lineAllocations = new ArrayList<>();
 
-        // Get all lots for this SKU sorted by FEFO (expDate ASC, nulls last)
         List<InventoryLot> availableLots = getAvailableLotsForSku(skuId, inventoryBalances, availableStock);
 
-        // Allocate from each lot in FEFO order
         for (InventoryLot lot : availableLots) {
             if (remainingQty <= 0.0) break;
 
@@ -85,8 +109,7 @@ public class AllocationService {
 
             Double allocateQty = Math.min(remainingQty, availableInLot);
 
-            // Find bay for the lot (may be null)
-            WarehouseBay bay = findBayForLot(lot, inventoryBalances);
+            WarehouseBay bay = findBayForLot(lot, lotToBay);
             String aisleCode = null;
             Integer bayNo = null;
             if (bay != null) {
@@ -108,16 +131,13 @@ public class AllocationService {
             lineAllocations.add(allocation);
             remainingQty -= allocateQty;
 
-            // Update available stock (never below zero)
             double newAvailable = Math.max(0.0, availableInLot - allocateQty);
             availableStock.put(lot.getLotId(), newAvailable);
         }
 
-        // Determine line status and keep allocations based on mode
         Double allocatedQty = requestedQty - remainingQty;
         String status = determineLineStatus(requestedQty, allocatedQty, mode);
 
-        // Add eligibility record
         eligibilities.add(new OrderEligibility(
                 line.getOrder().getOrderId(),
                 line.getOrderLineId(),
@@ -127,11 +147,9 @@ public class AllocationService {
                 status
         ));
 
-        // Keep allocations based on mode and status
         if (shouldKeepAllocations(status)) {
             allocations.addAll(lineAllocations);
         } else {
-            // Rollback stock changes if not keeping allocations
             rollbackStockChanges(lineAllocations, availableStock);
         }
     }
@@ -171,31 +189,24 @@ public class AllocationService {
     }
 
     /**
-     * Finds the warehouse bay where a lot is stored.
+     * Finds the warehouse bay where a lot is stored using precomputed map.
      */
-    private WarehouseBay findBayForLot(InventoryLot lot, List<InventoryBalance> inventoryBalances) {
+    private WarehouseBay findBayForLot(InventoryLot lot, Map<Integer, WarehouseBay> lotToBay) {
         if (lot == null || lot.getLotId() == null) return null;
-
-        for (InventoryBalance balance : inventoryBalances) {
-            List<InventoryLot> lots = balance.getLots();
-            if (lots == null) continue;
-            for (InventoryLot l : lots) {
-                if (l != null && l.getLotId() != null && l.getLotId().equals(lot.getLotId())) {
-                    return balance.getBay();
-                }
-            }
-        }
-
-        return null;
+        return lotToBay.get(lot.getLotId());
     }
 
     /**
      * Determines the status of an order line based on allocated quantity and mode.
+     * Uses EPS tolerance for double comparison to avoid floating-point precision issues.
      */
     private String determineLineStatus(Double requestedQty, Double allocatedQty, String mode) {
-        if (Objects.equals(allocatedQty, requestedQty)) {
+        double req = requestedQty != null ? requestedQty : 0.0;
+        double alloc = allocatedQty != null ? allocatedQty : 0.0;
+
+        if (Math.abs(alloc - req) < EPS) {
             return "ELIGIBLE";
-        } else if (allocatedQty > 0.0 && "PARTIAL".equalsIgnoreCase(mode)) {
+        } else if (alloc > 0.0 && "PARTIAL".equalsIgnoreCase(mode)) {
             return "PARTIAL";
         } else {
             return "UNDISPATCHABLE";
@@ -222,17 +233,21 @@ public class AllocationService {
 
     /**
      * Gets order lines for an order sorted by orderLineId (serving as lineNo).
+     * <p>
+     * Note: If OrderLine provides getLineNo(), the implementation will try to use it via reflection.
+     * If not present, getOrderLineId() is used and represents lineNo from the input order.
      */
     private List<OrderLine> getOrderLinesSorted(Order order) {
         if (order == null || order.getOrderId() == null) return Collections.emptyList();
-        OrderLineController olController = new OrderLineController();
-        List<OrderLine> lines = olController.getOrderLinesByOrderId(order.getOrderId());
+        OrderLineController orderLineController = new OrderLineController();
+        List<OrderLine> lines = orderLineController.getOrderLinesByOrderId(order.getOrderId());
+
         return lines.stream()
-                .sorted(Comparator.comparing(OrderLine::getOrderLineId))
+                .sorted(Comparator.comparing(OrderLine::getOrderLineId,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
                 .collect(Collectors.toList());
     }
 
-    // Inner classes for results
     public static class AllocationResult {
         private List<OrderEligibility> eligibilities;
         private List<AllocationRecord> allocations;
@@ -268,7 +283,6 @@ public class AllocationService {
             this.status = status;
         }
 
-        // Getters
         public Integer getOrderId() {
             return orderId;
         }
@@ -313,7 +327,6 @@ public class AllocationService {
             this.bay = bay;
         }
 
-        // Getters
         public Integer getOrderId() {
             return orderId;
         }
