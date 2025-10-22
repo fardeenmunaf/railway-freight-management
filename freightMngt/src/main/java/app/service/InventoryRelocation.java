@@ -258,21 +258,43 @@ public class InventoryRelocation {
         for (int i = 0; i < existingLots.size(); i++) {
             InventoryLot currentLot = existingLots.get(i);
 
-            // Compare by expDate first (FEFO - First Expired First Out)
-            if (newLot.getExpDate().isBefore(currentLot.getExpDate())) {
-                return i;
-            }
-
-            // If expDate is equal, compare by receivedDate (FIFO - First In First Out)
-            if (newLot.getExpDate().isEqual(currentLot.getExpDate())) {
+            // Handle null expiration dates
+            // Lots with null expDate are considered "never expire" and should be at the end
+            if (newLot.getExpDate() == null && currentLot.getExpDate() == null) {
+                // Both null, compare by receivedDate (FIFO)
                 if (newLot.getReceivedDate().isBefore(currentLot.getReceivedDate())) {
                     return i;
                 }
-
                 // If receivedDate is also equal, compare by lotId (tie-breaker)
                 if (newLot.getReceivedDate().isEqual(currentLot.getReceivedDate()) &&
                     newLot.getLotId() < currentLot.getLotId()) {
                     return i;
+                }
+            } else if (newLot.getExpDate() == null) {
+                // newLot has no expiry, should go after lots with expiry
+                // Continue to next lot
+                continue;
+            } else if (currentLot.getExpDate() == null) {
+                // currentLot has no expiry, newLot has expiry, so newLot goes before
+                return i;
+            } else {
+                // Both have expiration dates, compare normally
+                // Compare by expDate first (FEFO - First Expired First Out)
+                if (newLot.getExpDate().isBefore(currentLot.getExpDate())) {
+                    return i;
+                }
+
+                // If expDate is equal, compare by receivedDate (FIFO - First In First Out)
+                if (newLot.getExpDate().isEqual(currentLot.getExpDate())) {
+                    if (newLot.getReceivedDate().isBefore(currentLot.getReceivedDate())) {
+                        return i;
+                    }
+
+                    // If receivedDate is also equal, compare by lotId (tie-breaker)
+                    if (newLot.getReceivedDate().isEqual(currentLot.getReceivedDate()) &&
+                        newLot.getLotId() < currentLot.getLotId()) {
+                        return i;
+                    }
                 }
             }
         }
