@@ -96,15 +96,58 @@ public class PickingPlan {
 
 
     /**
-     * Plans allocations by invoking the AllocationService.
+     * Plans allocations by invoking the Allocation.
      * @param mode allocation mode: "STRICT" (default) or "PARTIAL"
      * @return AllocationResult with eligibilities and allocation rows
      */
-    public AllocationService.AllocationResult planAllocations(String mode) {
+    public Allocation.AllocationResult planAllocations(String mode) {
         if (mode == null || mode.isBlank()) mode = "STRICT";
-        AllocationService allocator = new AllocationService();
+        Allocation allocator = new Allocation();
         List<Order> orders = getAllOrders();
         List<InventoryBalance> balances = getAllItemBalences();
         return allocator.allocateOrders(orders, balances, mode);
     }
+
+    /**
+     * Gets detailed location information for items allocated to order lines.
+     * Shows which bays contain the items needed for each order line and their quantities.
+     *
+     * @param sku the SKU to search for (optional, null returns all)
+     * @param orderId the order ID to filter (optional, null returns all)
+     * @return list of allocation records with location and quantity details
+     */
+    public List<Allocation.AllocationRecord> getItemLocations(Integer sku, Integer orderId) {
+        // Run allocation to get current state
+        Allocation.AllocationResult result = planAllocations("STRICT");
+
+        List<Allocation.AllocationRecord> allocations = result.getAllocations();
+
+        // Filter by SKU if provided
+        if (sku != null) {
+            allocations = allocations.stream()
+                    .filter(a -> sku.equals(a.getSku()))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        // Filter by order ID if provided
+        if (orderId != null) {
+            allocations = allocations.stream()
+                    .filter(a -> orderId.equals(a.getOrderId()))
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        return allocations;
+    }
+
+    /**
+     * Gets eligibility status for all order lines, showing which are dispatchable.
+     * Returns information about requested vs allocated quantities and status.
+     *
+     * @return list of order eligibilities with status information
+     */
+    public List<Allocation.OrderEligibility> getOrderEligibilities() {
+        Allocation.AllocationResult result = planAllocations("STRICT");
+        return result.getEligibilities();
+    }
+
 }

@@ -2,9 +2,12 @@ package app;
 
 import app.repositories.*;
 import app.service.TravelTimeFeature;
+import app.service.Allocation;
 import app.service.PickingPlan;
 import app.service.WagonsUnloading;
 import app.view.MainMenu;
+
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -59,49 +62,70 @@ public class Main {
         System.out.println("Cart capacity for order line ID 1:");
         System.out.println(pickingPlan.calculateCartCapacity(pickingPlan.getAllCarts().get(0), pickingPlan.getAllOrderLines().get(0)));
         System.out.println("Cart travels");
-        System.out.println(pickingPlan.calculateTripsNeeded(pickingPlan.getAllCarts().get(4), pickingPlan.getAllOrderLines().get(0)));
+        System.out.println(pickingPlan.calculateTripsNeeded(pickingPlan.getAllCarts().get(0), pickingPlan.getAllOrderLines().get(0)));
         System.out.println("Wagons unloaded and bays filled successfully.\n\n");
 
         // --- Demo - STRICT MODE ---
-        System.out.println("Running allocation planner (STRICT mode)...");
-        app.service.AllocationService.AllocationResult result = pickingPlan.planAllocations("STRICT");
+//        System.out.println("Running allocation planner (STRICT mode)...");
+//        app.service.Allocation.AllocationResult result = pickingPlan.planAllocations("STRICT");
+//
+//        System.out.println("\nOrder line eligibilities:");
+//        if (result.getEligibilities().isEmpty()) {
+//            System.out.println("  (no eligibilities)");
+//        } else {
+//            for (app.service.Allocation.OrderEligibility e : result.getEligibilities()) {
+//                System.out.println(String.format(
+//                        "  orderId=%s, lineNo=%s, sku=%s, requested=%s, allocated=%s, status=%s",
+//                        String.valueOf(e.getOrderId()),
+//                        String.valueOf(e.getLineNo()),
+//                        String.valueOf(e.getSku()),
+//                        String.valueOf(e.getRequestedQty()),
+//                        String.valueOf(e.getAllocatedQty()),
+//                        String.valueOf(e.getStatus())
+//                ));
+//            }
+//        }
 
-        System.out.println("\nOrder line eligibilities:");
-        if (result.getEligibilities().isEmpty()) {
-            System.out.println("  (no eligibilities)");
-        } else {
-            for (app.service.AllocationService.OrderEligibility e : result.getEligibilities()) {
-                System.out.println(String.format(
-                        "  orderId=%s, lineNo=%s, sku=%s, requested=%s, allocated=%s, status=%s",
-                        String.valueOf(e.getOrderId()),
-                        String.valueOf(e.getLineNo()),
-                        String.valueOf(e.getSku()),
-                        String.valueOf(e.getRequestedQty()),
-                        String.valueOf(e.getAllocatedQty()),
-                        String.valueOf(e.getStatus())
-                ));
-            }
-        }
 
         // --- Demo - PARTIAL MODE ---
-        System.out.println("Running allocation planner (PARTIAL mode)...");
-        app.service.AllocationService.AllocationResult result2 = pickingPlan.planAllocations("PARTIAL");
+//        System.out.println("Running allocation planner (PARTIAL mode)...");
+//        app.service.Allocation.AllocationResult result2 = pickingPlan.planAllocations("PARTIAL");
+//
+//        System.out.println("\nOrder line eligibilities:");
+//        if (result2.getEligibilities().isEmpty()) {
+//            System.out.println("  (no eligibilities)");
+//        } else {
+//            for (app.service.Allocation.OrderEligibility e : result2.getEligibilities()) {
+//                System.out.println(String.format(
+//                        "  orderId=%s, lineNo=%s, sku=%s, requested=%s, allocated=%s, status=%s",
+//                        String.valueOf(e.getOrderId()),
+//                        String.valueOf(e.getLineNo()),
+//                        String.valueOf(e.getSku()),
+//                        String.valueOf(e.getRequestedQty()),
+//                        String.valueOf(e.getAllocatedQty()),
+//                        String.valueOf(e.getStatus())
+//                ));
+//            }
+//        }
 
-        System.out.println("\nOrder line eligibilities:");
-        if (result2.getEligibilities().isEmpty()) {
-            System.out.println("  (no eligibilities)");
-        } else {
-            for (app.service.AllocationService.OrderEligibility e : result2.getEligibilities()) {
-                System.out.println(String.format(
-                        "  orderId=%s, lineNo=%s, sku=%s, requested=%s, allocated=%s, status=%s",
-                        String.valueOf(e.getOrderId()),
-                        String.valueOf(e.getLineNo()),
-                        String.valueOf(e.getSku()),
-                        String.valueOf(e.getRequestedQty()),
-                        String.valueOf(e.getAllocatedQty()),
-                        String.valueOf(e.getStatus())
-                ));
-            }
+        // Ver localizações de um SKU específico
+        System.out.println("\nItem locations for SKU 123:");
+        List<Allocation.AllocationRecord> locations = pickingPlan.getItemLocations(15, null);
+        for (Allocation.AllocationRecord loc : locations) {
+            System.out.println("Lot SKU " + loc.getSku() + " na Aisle " +
+                    loc.getAisle() + ", Bay " + loc.getBay() +
+                    ", Qty: " + loc.getQty());
+        }
+
+        // Ver status de elegibilidade das encomendas
+        System.out.println("\nOrder eligibilities:");
+        Allocation.AllocationResult partialAllocation = pickingPlan.planAllocations("PARTIAL");
+        List<Allocation.OrderEligibility> eligibilities = partialAllocation.getEligibilities();
+        for (Allocation.OrderEligibility e : eligibilities) {
+            if (e.getStatus().equals("ELIGIBLE") || e.getStatus().equals("PARTIAL"))
+                System.out.println("Order " + e.getOrderId() +
+                        ", SKU " + e.getSku() +
+                        ", Status: " + e.getStatus());
         }
 
         // --- end demo ---
