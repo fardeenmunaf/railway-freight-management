@@ -191,6 +191,28 @@ public class PickingPlan {
 
 
     /**
+     * Inner class to hold the result of picking task planning.
+     * Contains both the list of created PickTasks and PickWaves.
+     */
+    public static class PickingPlanResult {
+        private final List<PickTask> pickTasks;
+        private final List<PickWave> pickWaves;
+
+        public PickingPlanResult(List<PickTask> pickTasks, List<PickWave> pickWaves) {
+            this.pickTasks = pickTasks;
+            this.pickWaves = pickWaves;
+        }
+
+        public List<PickTask> getPickTasks() {
+            return pickTasks;
+        }
+
+        public List<PickWave> getPickWaves() {
+            return pickWaves;
+        }
+    }
+
+    /**
      * Plans picking tasks with pick waves for all eligible order lines.
      *
      * The planning process:
@@ -199,8 +221,10 @@ public class PickingPlan {
      * 3. Each PickWave represents ONE trip the cart needs to make
      * 4. The number of waves depends on cart capacity and total quantity needed
      * 5. If items are spread across multiple bays, creates waves for each location
+     *
+     * @return PickingPlanResult containing lists of all created PickTasks and PickWaves
      */
-    public void planPickingTask() {
+    public PickingPlanResult planPickingTask() {
         System.out.println("\n=== Planning Picking Tasks ===");
 
         // Get all necessary data
@@ -344,6 +368,9 @@ public class PickingPlan {
         System.out.println("\n=== Picking Task Planning Complete ===");
         System.out.println("Total Pick Tasks created: " + tasks.size() + " (one per eligible OrderLine)");
         System.out.println("Total Pick Waves created: " + pickWaveController.getAllPickWaves().size() + " (one per trip)");
+
+        // Return both lists through PickingPlanResult
+        return new PickingPlanResult(tasks, pickWaveController.getAllPickWaves());
     }
 
     /**
