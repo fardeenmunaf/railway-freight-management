@@ -156,12 +156,7 @@ public class WagonsUnloading {
     public void allocateToBay(List<InventoryLot> lots, WarehouseBay bay, Integer qty) {
         Integer newBalanceId = balanceController.getNextBalanceId();
 
-        InventoryBalance newBalance = new InventoryBalance(
-                newBalanceId,
-                bay,
-                lots,
-                qty
-        );
+        InventoryBalance newBalance = new InventoryBalance(newBalanceId, bay, lots, qty);
 
         balanceController.createInventoryBalance(newBalance);
     }

@@ -3,6 +3,7 @@ package app;
 import app.controller.InventoryBalanceController;
 import app.model.InventoryBalance;
 import app.repositories.*;
+import app.service.InventoryDispatch;
 import app.service.WagonsUnloading;
 import app.view.MainMenu;
 
@@ -91,6 +92,49 @@ public class Main {
         }
         System.out.println("\nTotal assigned balances: " + assignedCount);
         System.out.println("Total still unassigned: " + stillUnassigned);
+
+        System.out.println("\n=== TESTING DISPATCH OPERATION ===");
+        InventoryDispatch inventoryDispatch = new InventoryDispatch();
+
+        // Test 1: Dispatch with sufficient stock
+        System.out.println("\n--- Test 1: Dispatch 50 units of SKU 22 ---");
+        allBalances = balanceController.getAllInventoryBalances();
+        System.out.println("Before dispatch:");
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() != null && !balance.getLots().isEmpty()) {
+                Integer sku = balance.getLots().get(0).getSku();
+                if (sku.equals(22)) {
+                    System.out.println("  Balance ID: " + balance.getBalanceId() +
+                        " | SKU: " + sku +
+                        " | Qty: " + balance.getQty() +
+                        " | Lots: " + balance.getLots().size() +
+                        " | Bay: " + balance.getBay().getBayId());
+                }
+            }
+        }
+
+        boolean dispatchSuccess = inventoryDispatch.dispatchStock(22, 50);
+        System.out.println("Dispatch result: " + (dispatchSuccess ? "SUCCESS" : "FAILED"));
+
+        System.out.println("After dispatch:");
+        allBalances = balanceController.getAllInventoryBalances();
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() != null && !balance.getLots().isEmpty()) {
+                Integer sku = balance.getLots().get(0).getSku();
+                if (sku.equals(22)) {
+                    System.out.println("  Balance ID: " + balance.getBalanceId() +
+                        " | SKU: " + sku +
+                        " | Qty: " + balance.getQty() +
+                        " | Lots: " + balance.getLots().size() +
+                        " | Bay: " + balance.getBay().getBayId());
+                }
+            }
+        }
+
+        // Test 2: Dispatch with insufficient stock
+        System.out.println("\n--- Test 2: Dispatch 10000 units of SKU 22 (insufficient stock) ---");
+        dispatchSuccess = inventoryDispatch.dispatchStock(22, 10000);
+        System.out.println("Dispatch result: " + (dispatchSuccess ? "SUCCESS" : "FAILED (as expected - insufficient stock)"));
 
         //MainMenu.display();
     }
