@@ -150,4 +150,15 @@ public class QuarantineHold {
     public void setReleasedAt(LocalDateTime releasedAt) {
         this.releasedAt = releasedAt;
     }
+
+    @Override
+    public String toString() {
+        return "QuarantineHold{" +
+                "qholdId=" + qholdId +
+                ", returnOrder=" + returnOrder +
+                ", status='" + status + '\'' +
+                ", createdAt=" + createdAt +
+                ", releasedAt=" + releasedAt +
+                '}';
+    }
 }

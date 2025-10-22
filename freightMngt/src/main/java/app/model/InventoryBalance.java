@@ -1,8 +1,11 @@
 package app.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents an inventory balance record in the freight management system.
- * Each inventory balance tracks the quantity of a specific lot stored in a particular bay.
+ * Each inventory balance tracks multiple lots of a specific SKU stored in a particular bay.
  * This class establishes the relationship between warehouse bays and inventory lots
  * with their corresponding quantities, enabling precise inventory tracking and management.
  *
@@ -14,19 +17,19 @@ public class InventoryBalance {
 
     private Integer balanceId;
     private WarehouseBay bay;
-    private InventoryLot lot;
+    private List<InventoryLot> lots;
     private Integer qty;
 
     /**
      * Default constructor that creates an InventoryBalance with null/default values.
-     * Initializes all fields to null.
+     * Initializes all fields to null and lots to an empty list.
      */
 
     public InventoryBalance() {
         this.balanceId = null;
         this.bay = null;
-        this.lot = null;
-        this.qty = null;
+        this.lots = new ArrayList<>();
+        this.qty = 0;
     }
 
     /**
@@ -34,14 +37,14 @@ public class InventoryBalance {
      *
      * @param balanceId the unique identifier for this inventory balance record
      * @param bay the warehouse bay where the inventory is stored
-     * @param lot the inventory lot being tracked
-     * @param qty the quantity of items in this balance record
+     * @param lots the list of inventory lots being tracked
+     * @param qty the total quantity of items in this balance record
      */
 
-    public InventoryBalance(Integer balanceId, WarehouseBay bay, InventoryLot lot, Integer qty) {
+    public InventoryBalance(Integer balanceId, WarehouseBay bay, List<InventoryLot> lots, Integer qty) {
         this.balanceId = balanceId;
         this.bay = bay;
-        this.lot = lot;
+        this.lots = lots != null ? new ArrayList<>(lots) : new ArrayList<>();
         this.qty = qty;
     }
 
@@ -86,23 +89,36 @@ public class InventoryBalance {
     }
 
     /**
-     * Gets the inventory lot being tracked.
+     * Gets the inventory lots being tracked.
      *
-     * @return the inventory lot as an InventoryLot object
+     * @return a list of InventoryLot objects
      */
 
-    public InventoryLot getLotId() {
-        return lot;
+    public List<InventoryLot> getLots() {
+        return new ArrayList<>(lots);
     }
 
     /**
-     * Sets the inventory lot being tracked.
+     * Sets the inventory lots being tracked.
      *
-     * @param lot the inventory lot to set
+     * @param lots the list of inventory lots to set
      */
 
-    public void setLotId(InventoryLot lot) {
-        this.lot = lot;
+    public void setLots(List<InventoryLot> lots) {
+        this.lots = lots != null ? new ArrayList<>(lots) : new ArrayList<>();
+    }
+
+    /**
+     * Adds a single inventory lot to this balance.
+     *
+     * @param lot the inventory lot to add
+     */
+
+    public void addLot(InventoryLot lot) {
+        if (lot != null) {
+            this.lots.add(lot);
+            this.qty += lot.getBoxCode();
+        }
     }
 
     /**

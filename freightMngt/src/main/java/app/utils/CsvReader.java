@@ -32,6 +32,11 @@ public class CsvReader {
             String line = br.readLine();
             if (line == null) return records;
 
+            // Remove BOM (Byte Order Mark) if present
+            if (line.startsWith("\uFEFF")) {
+                line = line.substring(1);
+            }
+
             String[] headers = line.split(delimiter);
 
             while ((line = br.readLine()) != null) {

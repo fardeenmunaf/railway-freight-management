@@ -150,4 +150,15 @@ public class ReturnOrder {
     public void setReceivedAt(LocalDateTime receivedAt) {
         this.receivedAt = receivedAt;
     }
+
+    @Override
+    public String toString() {
+        return "ReturnOrder{" +
+                "returnId=" + returnId +
+                ", origOrder=" + origOrder +
+                ", reason='" + reason + '\'' +
+                ", status='" + status + '\'' +
+                ", receivedAt=" + receivedAt +
+                '}';
+    }
 }
