@@ -117,7 +117,7 @@ public class InventoryBalance {
     public void addLot(InventoryLot lot) {
         if (lot != null) {
             this.lots.add(lot);
-            this.qty += lot.getBoxCode();
+            this.qty += lot.getQty();
         }
     }
 
@@ -139,5 +139,15 @@ public class InventoryBalance {
 
     public void setQty(Integer qty) {
         this.qty = qty;
+    }
+
+    @Override
+    public String toString() {
+        return "InventoryBalance{" +
+                "balanceId=" + balanceId +
+                ", bay=" + bay +
+                ", lots=" + lots +
+                ", qty=" + qty +
+                '}';
     }
 }
