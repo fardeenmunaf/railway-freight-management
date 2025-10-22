@@ -46,60 +46,43 @@ public class InventoryRelocation {
      * @return true if relocation was successful, false otherwise
      */
     public boolean relocateLot(Integer lotId, Integer targetBayId, String reason) {
-        System.out.println("[DEBUG] Starting relocation: Lot " + lotId + " to Bay " + targetBayId);
 
         // Validation 1: Check if lot exists
         InventoryLot lotToMove = lotController.getInventoryLotById(lotId);
         if (lotToMove == null) {
-            System.out.println("[DEBUG] FAILED: Lot " + lotId + " does not exist");
             return false;
         }
-        System.out.println("[DEBUG] ✓ Lot " + lotId + " found");
 
         // Validation 2: Check if target bay exists
         WarehouseBay targetBay = findBayById(targetBayId);
         if (targetBay == null) {
-            System.out.println("[DEBUG] FAILED: Target bay " + targetBayId + " does not exist");
             return false;
         }
-        System.out.println("[DEBUG] ✓ Target bay " + targetBayId + " found");
 
         // Validation 3: Find balance containing the lot
         InventoryBalance sourceBalance = findBalanceContainingLot(lotId);
         if (sourceBalance == null) {
-            System.out.println("[DEBUG] FAILED: Lot " + lotId + " is not assigned to any balance");
             return false;
         }
-        System.out.println("[DEBUG] ✓ Found source balance " + sourceBalance.getBalanceId() + " in Bay " + sourceBalance.getBay().getBayId());
 
         // Validation 4: Check if lot is already in target bay
         if (sourceBalance.getBay().getBayId().equals(targetBayId)) {
-            System.out.println("[DEBUG] FAILED: Lot " + lotId + " is already in target bay " + targetBayId);
             return false;
         }
-        System.out.println("[DEBUG] ✓ Lot is in different bay");
 
-        // Validation 5: Check if target bay has capacity
-        if (!hasCapacityForLot(targetBay)) {
-            System.out.println("[DEBUG] FAILED: Target bay " + targetBayId + " has no capacity");
+        // Validation 5: Check if target bay has capacity for this specific lot
+        if (!hasCapacityForLot(targetBay, lotToMove)) {
             return false;
         }
-        System.out.println("[DEBUG] ✓ Target bay has capacity");
 
         // Validation 6: Check SKU compatibility
         Integer lotSku = lotToMove.getSku();
         if (!isBayCompatibleWithSku(targetBay, lotSku)) {
-            System.out.println("[DEBUG] FAILED: Target bay " + targetBayId + " is not compatible with SKU " + lotSku);
             return false;
         }
-        System.out.println("[DEBUG] ✓ SKU " + lotSku + " is compatible with target bay");
-
-        System.out.println("[DEBUG] All validations passed. Proceeding with relocation...");
 
         // Store fromBay for audit trail
         WarehouseBay fromBay = sourceBalance.getBay();
-
-        // ...existing code...
 
         // Step 1: Remove lot from source balance
         List<InventoryLot> sourceLots = new ArrayList<>(sourceBalance.getLots());
@@ -117,22 +100,24 @@ public class InventoryRelocation {
             balanceController.deleteInventoryBalance(sourceBalance.getBalanceId());
         } else {
             sourceBalance.setLots(sourceLots);
-            balanceController.updateInventoryBalance(sourceBalance.getBalanceId(), sourceBalance);
         }
 
         // Step 2: Add lot to target balance
         InventoryBalance targetBalance = findBalanceByBay(targetBayId);
 
         if (targetBalance != null) {
-            // Target bay has existing balance - add lot to it
+            // Target bay has existing balance - insert lot in FEFO position
             List<InventoryLot> targetLots = new ArrayList<>(targetBalance.getLots());
-            targetLots.add(lotToMove);
+
+            // Find correct FEFO insertion position without re-sorting existing lots
+            int insertPosition = findFEFOInsertPosition(targetLots, lotToMove);
+            targetLots.add(insertPosition, lotToMove);
 
             Integer newTargetQty = targetBalance.getQty() + lotToMove.getBoxCode();
             targetBalance.setLots(targetLots);
             targetBalance.setQty(newTargetQty);
 
-            // Controller automatically sorts lots in FEFO/FIFO order
+            // Update balance - lots are already in correct FEFO order
             balanceController.updateInventoryBalance(targetBalance.getBalanceId(), targetBalance);
         } else {
             // Target bay is empty - create new balance
@@ -156,7 +141,6 @@ public class InventoryRelocation {
 
         moveController.createInventoryMove(inventoryMove);
 
-        System.out.println("Relocation successful: Lot " + lotId + " moved from Bay " + fromBay.getBayId() + " to Bay " + targetBayId);
         return true;
     }
 
@@ -201,22 +185,26 @@ public class InventoryRelocation {
     }
 
     /**
-     * Checks if a bay has capacity for one more lot.
+     * Checks if a bay has capacity for a specific lot.
+     * Each lot occupies 1 space in the bay, regardless of its item quantity.
      *
      * @param bay the warehouse bay to check
-     * @return true if there is capacity, false otherwise
+     * @param lotToAdd the lot to be added to the bay
+     * @return true if there is capacity for one more lot, false otherwise
      */
-    private boolean hasCapacityForLot(WarehouseBay bay) {
+    private boolean hasCapacityForLot(WarehouseBay bay, InventoryLot lotToAdd) {
         List<InventoryBalance> allBalances = balanceController.getAllInventoryBalances();
         Integer totalLotsOccupied = 0;
 
         for (InventoryBalance balance : allBalances) {
             if (balance.getBay() != null && balance.getBay().getBayId().equals(bay.getBayId())) {
+                // Count total lots (each lot occupies 1 space)
                 totalLotsOccupied += balance.getLots().size();
             }
         }
 
-        return (bay.getCapacityBox() - totalLotsOccupied) > 0;
+        // Check if adding one more lot would exceed capacity
+        return (bay.getCapacityBox() - totalLotsOccupied) >= 1;
     }
 
     /**
@@ -256,5 +244,40 @@ public class InventoryRelocation {
         }
 
         return null;
+    }
+
+    /**
+     * Finds the correct FEFO insertion position for a lot in an existing list.
+     * This method maintains FEFO order without re-sorting existing lots.
+     *
+     * @param existingLots the current list of lots in the bay
+     * @param newLot the lot to be inserted
+     * @return the index where the new lot should be inserted
+     */
+    private int findFEFOInsertPosition(List<InventoryLot> existingLots, InventoryLot newLot) {
+        for (int i = 0; i < existingLots.size(); i++) {
+            InventoryLot currentLot = existingLots.get(i);
+
+            // Compare by expDate first (FEFO - First Expired First Out)
+            if (newLot.getExpDate().isBefore(currentLot.getExpDate())) {
+                return i;
+            }
+
+            // If expDate is equal, compare by receivedDate (FIFO - First In First Out)
+            if (newLot.getExpDate().isEqual(currentLot.getExpDate())) {
+                if (newLot.getReceivedDate().isBefore(currentLot.getReceivedDate())) {
+                    return i;
+                }
+
+                // If receivedDate is also equal, compare by lotId (tie-breaker)
+                if (newLot.getReceivedDate().isEqual(currentLot.getReceivedDate()) &&
+                    newLot.getLotId() < currentLot.getLotId()) {
+                    return i;
+                }
+            }
+        }
+
+        // If newLot has latest expiry date or receivedDate, insert at the end
+        return existingLots.size();
     }
 }

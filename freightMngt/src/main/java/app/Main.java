@@ -1,13 +1,9 @@
 package app;
 
 import app.controller.InventoryBalanceController;
-import app.controller.InventoryMoveController;
 import app.model.InventoryBalance;
-import app.model.InventoryMove;
-import app.model.WarehouseBay;
 import app.repositories.*;
 import app.service.InventoryDispatch;
-import app.service.InventoryRelocation;
 import app.service.WagonsUnloading;
 import app.view.MainMenu;
 
@@ -46,17 +42,13 @@ public class Main {
                 unassignedCount++;
                 Integer sku = balance.getLots().isEmpty() ? null : balance.getLots().get(0).getSku();
                 System.out.println("Balance ID: " + balance.getBalanceId() +
-                    " | SKU: " + sku +
-                    " | Qty: " + balance.getQty() +
-                    " | Lots: " + balance.getLots().size() +
-                    " | Bay: null");
+                        " | SKU: " + sku +
+                        " | Qty: " + balance.getQty() +
+                        " | Lots: " + balance.getLots().size() +
+                        " | Bay: null");
             }
         }
         System.out.println("Total unassigned balances: " + unassignedCount);
-
-
-
-
 
         System.out.println("\n=== TESTING LOTS ORDERING (FEFO/FIFO) ===");
         for (InventoryBalance balance : allBalances) {
@@ -70,9 +62,9 @@ public class Main {
                     String expDateStr = lot.getExpDate() != null ? lot.getExpDate().toString() : "NO EXPIRY";
                     String receivedStr = lot.getReceivedDate().toString();
                     System.out.println("  Lot " + lotIndex + ": ID=" + lot.getLotId() +
-                        " | Qty=" + lot.getBoxCode() +
-                        " | ExpDate=" + expDateStr +
-                        " | ReceivedAt=" + receivedStr);
+                            " | Qty=" + lot.getBoxCode() +
+                            " | ExpDate=" + expDateStr +
+                            " | ReceivedAt=" + receivedStr);
                     lotIndex++;
                 }
             }
@@ -101,260 +93,200 @@ public class Main {
         System.out.println("\nTotal assigned balances: " + assignedCount);
         System.out.println("Total still unassigned: " + stillUnassigned);
 
+        // =================================================================
+        // RELOCATION TEST: Move lot89 to bay27
+        // =================================================================
+        System.out.println("\n=================================================================");
+        System.out.println("=== TESTING RELOCATION: LOT89 -> BAY27 ===");
+        System.out.println("=================================================================");
 
-
-
-
-        System.out.println("\n=== TESTING DISPATCH OPERATION ===");
-        InventoryDispatch inventoryDispatch = new InventoryDispatch();
-
-        // Test 1: Dispatch with sufficient stock
-        System.out.println("\n--- Test 1: Dispatch 50 units of SKU 22 ---");
-        allBalances = balanceController.getAllInventoryBalances();
-        System.out.println("Before dispatch:");
-        for (InventoryBalance balance : allBalances) {
-            if (balance.getBay() != null && !balance.getLots().isEmpty()) {
-                Integer sku = balance.getLots().get(0).getSku();
-                if (sku.equals(22)) {
-                    System.out.println("  Balance ID: " + balance.getBalanceId() +
-                        " | SKU: " + sku +
-                        " | Qty: " + balance.getQty() +
-                        " | Lots: " + balance.getLots().size() +
-                        " | Bay: " + balance.getBay().getBayId());
-                }
-            }
-        }
-
-        boolean dispatchSuccess = inventoryDispatch.dispatchStock(22, 50);
-        System.out.println("Dispatch result: " + (dispatchSuccess ? "SUCCESS" : "FAILED"));
-
-        System.out.println("After dispatch:");
-        allBalances = balanceController.getAllInventoryBalances();
-        for (InventoryBalance balance : allBalances) {
-            if (balance.getBay() != null && !balance.getLots().isEmpty()) {
-                Integer sku = balance.getLots().get(0).getSku();
-                if (sku.equals(22)) {
-                    System.out.println("  Balance ID: " + balance.getBalanceId() +
-                        " | SKU: " + sku +
-                        " | Qty: " + balance.getQty() +
-                        " | Lots: " + balance.getLots().size() +
-                        " | Bay: " + balance.getBay().getBayId());
-                }
-            }
-        }
-
-        // Test 2: Dispatch with insufficient stock
-        System.out.println("\n--- Test 2: Dispatch 10000 units of SKU 22 (insufficient stock) ---");
-        dispatchSuccess = inventoryDispatch.dispatchStock(22, 10000);
-        System.out.println("Dispatch result: " + (dispatchSuccess ? "SUCCESS" : "FAILED (as expected - insufficient stock)"));
-
-
-
-        System.out.println("\n=== TESTING RELOCATION OPERATION ===");
-
-        InventoryRelocation relocationService = new InventoryRelocation();
+        app.service.InventoryRelocation inventoryRelocation = new app.service.InventoryRelocation();
         app.controller.InventoryLotController lotController = new app.controller.InventoryLotController();
-        app.controller.WarehouseBayController bayController = new app.controller.WarehouseBayController();
-        InventoryMoveController moveController = new InventoryMoveController();
+        app.controller.InventoryMoveController moveController = new app.controller.InventoryMoveController();
 
-        // Get data for testing
-        allBalances = balanceController.getAllInventoryBalances();
-        java.util.List<WarehouseBay> allBays = bayController.getAllWarehouseBays();
+        // STEP 1: Find lot89
+        System.out.println("\n--- STEP 1: Finding lot89 ---");
+        app.model.InventoryLot lot89 = lotController.getInventoryLotById(89);
+        if (lot89 == null) {
+            System.out.println("❌ ERROR: Lot 89 not found!");
+            return;
+        }
+        System.out.println("✓ Lot 89 found:");
+        System.out.println("  Lot ID: " + lot89.getLotId());
+        System.out.println("  SKU: " + lot89.getSku());
+        System.out.println("  Quantity: " + lot89.getBoxCode());
+        System.out.println("  Received Date: " + lot89.getReceivedDate());
+        System.out.println("  Expiration Date: " + lot89.getExpDate());
 
-        // Find balances with lots for testing
-        InventoryBalance testBalance1 = null;
-        InventoryBalance testBalance2 = null;
-        WarehouseBay emptyBay = null;
-        WarehouseBay fullBay = null;
-
-        for (InventoryBalance balance : allBalances) {
-            if (balance.getBay() != null && !balance.getLots().isEmpty()) {
-                if (testBalance1 == null) {
-                    testBalance1 = balance;
-                } else if (testBalance2 == null && !balance.getLots().get(0).getSku().equals(testBalance1.getLots().get(0).getSku())) {
-                    testBalance2 = balance;
+        // STEP 2: Find current location of lot89
+        System.out.println("\n--- STEP 2: Finding current location of lot89 ---");
+        InventoryBalance currentBalance = null;
+        for (InventoryBalance balance : balanceController.getAllInventoryBalances()) {
+            if (balance.getBay() != null) {
+                for (app.model.InventoryLot lot : balance.getLots()) {
+                    if (lot.getLotId().equals(89)) {
+                        currentBalance = balance;
+                        break;
+                    }
                 }
+                if (currentBalance != null) break;
             }
         }
 
-        // Find an empty bay
-        for (WarehouseBay bay : allBays) {
-            boolean isEmpty = true;
-            for (InventoryBalance balance : allBalances) {
-                if (balance.getBay() != null && balance.getBay().getBayId().equals(bay.getBayId())) {
-                    isEmpty = false;
-                    break;
-                }
-            }
-            if (isEmpty) {
-                emptyBay = bay;
+        if (currentBalance == null) {
+            System.out.println("❌ ERROR: Lot 89 not found in any bay!");
+            return;
+        }
+
+        System.out.println("✓ Lot 89 is currently in Bay " + currentBalance.getBay().getBayId());
+        System.out.println("  Current Balance ID: " + currentBalance.getBalanceId());
+        System.out.println("  Total Quantity in bay: " + currentBalance.getQty());
+        System.out.println("  Number of Lots in bay: " + currentBalance.getLots().size());
+        System.out.println("  All lots in current bay:");
+        int idx = 1;
+        for (app.model.InventoryLot lot : currentBalance.getLots()) {
+            String marker = lot.getLotId().equals(89) ? " ◄── LOT TO RELOCATE" : "";
+            System.out.println("    " + idx + ". Lot " + lot.getLotId() +
+                             " (SKU: " + lot.getSku() +
+                             ", Qty: " + lot.getBoxCode() +
+                             ", Exp: " + lot.getExpDate() + ")" + marker);
+            idx++;
+        }
+
+        // STEP 3: Check target bay27
+        System.out.println("\n--- STEP 3: Checking target bay27 ---");
+        InventoryBalance bay27Balance = null;
+        for (InventoryBalance balance : balanceController.getAllInventoryBalances()) {
+            if (balance.getBay() != null && balance.getBay().getBayId().equals(27)) {
+                bay27Balance = balance;
                 break;
             }
         }
 
-        // Find a bay that is full (capacity = number of lots)
-        for (InventoryBalance balance : allBalances) {
-            if (balance.getBay() != null && !balance.getLots().isEmpty()) {
-                WarehouseBay bay = balance.getBay();
-                int lotsInBay = balance.getLots().size();
-                if (bay.getCapacityBox() <= lotsInBay) {
-                    fullBay = bay;
+        if (bay27Balance != null) {
+            System.out.println("✓ Bay 27 has existing inventory:");
+            System.out.println("  Balance ID: " + bay27Balance.getBalanceId());
+            System.out.println("  Total Quantity: " + bay27Balance.getQty());
+            System.out.println("  Number of Lots: " + bay27Balance.getLots().size());
+            System.out.println("  Existing lots in bay27 (FEFO order):");
+            idx = 1;
+            for (app.model.InventoryLot lot : bay27Balance.getLots()) {
+                System.out.println("    " + idx + ". Lot " + lot.getLotId() +
+                                 " (SKU: " + lot.getSku() +
+                                 ", Qty: " + lot.getBoxCode() +
+                                 ", Exp: " + lot.getExpDate() + ")");
+                idx++;
+            }
+        } else {
+            System.out.println("✓ Bay 27 is currently empty");
+        }
+
+        // Count moves before relocation
+        int movesBefore = moveController.getAllInventoryMoves().size();
+
+        // Store original values BEFORE relocation for comparison
+        Integer originalSourceQty = currentBalance.getQty();
+        Integer originalSourceLotCount = currentBalance.getLots().size();
+        Integer sourceBayId = currentBalance.getBay().getBayId();
+
+        // STEP 4: Execute relocation
+        System.out.println("\n--- STEP 4: Executing relocation ---");
+        System.out.println(">>> Relocating Lot 89 from Bay " + sourceBayId + " to Bay 27...");
+
+        boolean success = inventoryRelocation.relocateLot(89, 27, "Test relocation - Moving lot89 to bay27");
+
+        // STEP 5: Show results
+        System.out.println("\n=================================================================");
+        if (success) {
+            System.out.println("✅ RELOCATION SUCCESSFUL!");
+            System.out.println("=================================================================");
+
+            System.out.println("\n--- STEP 5: Verification ---");
+
+            // Check source bay after relocation
+            InventoryBalance sourceAfter = null;
+            for (InventoryBalance balance : balanceController.getAllInventoryBalances()) {
+                if (balance.getBay() != null && balance.getBay().getBayId().equals(sourceBayId)) {
+                    sourceAfter = balance;
                     break;
                 }
             }
-        }
 
-        System.out.println("\n--- Test 1: SUCCESSFUL RELOCATION ---");
-        if (testBalance1 != null && !testBalance1.getLots().isEmpty() && emptyBay != null) {
-            app.model.InventoryLot lotToRelocate = testBalance1.getLots().get(0);
-            Integer originalBayId = testBalance1.getBay().getBayId();
-
-            System.out.println("Relocating Lot " + lotToRelocate.getLotId() +
-                             " (SKU: " + lotToRelocate.getSku() +
-                             ") from Bay " + originalBayId +
-                             " to Bay " + emptyBay.getBayId());
-
-            boolean result = relocationService.relocateLot(
-                lotToRelocate.getLotId(),
-                emptyBay.getBayId(),
-                "Test: Successful relocation to empty bay"
-            );
-
-            System.out.println("Result: " + (result ? "✓ SUCCESS" : "✗ FAILED"));
-        } else {
-            System.out.println("✗ Insufficient data for test");
-        }
-
-        System.out.println("\n--- Test 2: RELOCATION WITH NON-EXISTENT LOT ID ---");
-        Integer nonExistentLotId = 999999;
-        if (emptyBay != null) {
-            System.out.println("Attempting to relocate non-existent Lot " + nonExistentLotId +
-                             " to Bay " + emptyBay.getBayId());
-
-            boolean result = relocationService.relocateLot(
-                nonExistentLotId,
-                emptyBay.getBayId(),
-                "Test: Non-existent lot"
-            );
-
-            System.out.println("Result: " + (result ? "✗ UNEXPECTED SUCCESS" : "✓ FAILED AS EXPECTED (Lot not found)"));
-        } else {
-            System.out.println("✗ Insufficient data for test");
-        }
-
-        System.out.println("\n--- Test 3: RELOCATION TO BAY WITH INSUFFICIENT CAPACITY ---");
-        if (testBalance1 != null && !testBalance1.getLots().isEmpty()) {
-            // Create a scenario: find a bay with capacity = 1 and try to add another lot
-            WarehouseBay targetBayNoCapacity = null;
-
-            // Try to use the full bay we found earlier
-            if (fullBay != null) {
-                targetBayNoCapacity = fullBay;
-            } else {
-                // Find any bay and check its capacity vs current lots
-                for (InventoryBalance balance : allBalances) {
-                    if (balance.getBay() != null && !balance.getLots().isEmpty()) {
-                        WarehouseBay bay = balance.getBay();
-                        int currentLots = balance.getLots().size();
-                        if (bay.getCapacityBox() <= currentLots) {
-                            targetBayNoCapacity = bay;
-                            break;
-                        }
+            System.out.println("\n▸ Source Bay " + sourceBayId + " after relocation:");
+            if (sourceAfter != null) {
+                System.out.println("  Balance ID: " + sourceAfter.getBalanceId());
+                System.out.println("  Total Quantity: " + sourceAfter.getQty() + " (was: " + originalSourceQty + ")");
+                System.out.println("  Number of Lots: " + sourceAfter.getLots().size() + " (was: " + originalSourceLotCount + ")");
+                if (!sourceAfter.getLots().isEmpty()) {
+                    System.out.println("  Remaining lots:");
+                    for (app.model.InventoryLot lot : sourceAfter.getLots()) {
+                        System.out.println("    - Lot " + lot.getLotId() + " (SKU: " + lot.getSku() + ", Qty: " + lot.getBoxCode() + ")");
                     }
                 }
+            } else {
+                System.out.println("  ✓ Bay is now empty (balance deleted)");
+                System.out.println("  (was: " + originalSourceQty + " quantity, " + originalSourceLotCount + " lots)");
             }
 
-            if (targetBayNoCapacity != null) {
-                // Find a lot from a different bay to relocate
-                app.model.InventoryLot lotForCapacityTest = null;
-                for (InventoryBalance balance : allBalances) {
-                    if (balance.getBay() != null && !balance.getLots().isEmpty() &&
-                        !balance.getBay().getBayId().equals(targetBayNoCapacity.getBayId())) {
-                        lotForCapacityTest = balance.getLots().get(0);
-                        break;
-                    }
+            // Check target bay27 after relocation
+            InventoryBalance bay27After = null;
+            for (InventoryBalance balance : balanceController.getAllInventoryBalances()) {
+                if (balance.getBay() != null && balance.getBay().getBayId().equals(27)) {
+                    bay27After = balance;
+                    break;
                 }
+            }
 
-                if (lotForCapacityTest != null) {
-                    System.out.println("Attempting to relocate Lot " + lotForCapacityTest.getLotId() +
-                                     " to Bay " + targetBayNoCapacity.getBayId() +
-                                     " (capacity: " + targetBayNoCapacity.getCapacityBox() + ", currently full)");
-
-                    boolean result = relocationService.relocateLot(
-                        lotForCapacityTest.getLotId(),
-                        targetBayNoCapacity.getBayId(),
-                        "Test: Insufficient capacity"
-                    );
-
-                    System.out.println("Result: " + (result ? "✗ UNEXPECTED SUCCESS" : "✓ FAILED AS EXPECTED (No capacity)"));
-                } else {
-                    System.out.println("✗ Could not find lot for capacity test");
+            System.out.println("\n▸ Target Bay 27 after relocation:");
+            if (bay27After != null) {
+                System.out.println("  Balance ID: " + bay27After.getBalanceId());
+                System.out.println("  Total Quantity: " + bay27After.getQty());
+                System.out.println("  Number of Lots: " + bay27After.getLots().size());
+                System.out.println("  All lots in bay27 (FEFO order):");
+                idx = 1;
+                for (app.model.InventoryLot lot : bay27After.getLots()) {
+                    String marker = lot.getLotId().equals(89) ? " ◄── RELOCATED LOT" : "";
+                    System.out.println("    " + idx + ". Lot " + lot.getLotId() +
+                                     " (SKU: " + lot.getSku() +
+                                     ", Qty: " + lot.getBoxCode() +
+                                     ", Exp: " + lot.getExpDate() + ")" + marker);
+                    idx++;
                 }
             } else {
-                System.out.println("✗ Could not find full bay for capacity test");
-            }
-        } else {
-            System.out.println("✗ Insufficient data for test");
-        }
-
-        System.out.println("\n--- Test 4: RELOCATION TO BAY WITH INCOMPATIBLE SKU ---");
-        if (testBalance1 != null && testBalance2 != null &&
-            !testBalance1.getLots().isEmpty() && !testBalance2.getLots().isEmpty()) {
-
-            Integer sku1 = testBalance1.getLots().get(0).getSku();
-            Integer sku2 = testBalance2.getLots().get(0).getSku();
-
-            if (!sku1.equals(sku2)) {
-                // Try to move a lot from balance1 (with sku1) to the bay of balance2 (which has sku2)
-                app.model.InventoryLot lotWithDifferentSku = testBalance1.getLots().get(0);
-                Integer targetBayWithDifferentSku = testBalance2.getBay().getBayId();
-
-                System.out.println("Attempting to relocate Lot " + lotWithDifferentSku.getLotId() +
-                                 " (SKU: " + sku1 + ") to Bay " + targetBayWithDifferentSku +
-                                 " (which contains SKU: " + sku2 + ")");
-
-                boolean result = relocationService.relocateLot(
-                    lotWithDifferentSku.getLotId(),
-                    targetBayWithDifferentSku,
-                    "Test: SKU incompatibility"
-                );
-
-                System.out.println("Result: " + (result ? "✗ UNEXPECTED SUCCESS" : "✓ FAILED AS EXPECTED (SKU incompatible)"));
-            } else {
-                System.out.println("✗ Could not find balances with different SKUs");
-            }
-        } else {
-            System.out.println("✗ Insufficient data for test");
-        }
-
-        // Print all inventory moves created during relocations
-        System.out.println("\n=== ALL INVENTORY MOVES CREATED DURING RELOCATIONS ===");
-        java.util.List<InventoryMove> allMoves = moveController.getAllInventoryMoves();
-
-        if (allMoves.isEmpty()) {
-            System.out.println("No inventory moves recorded.");
-        } else {
-            System.out.println("Total Inventory Moves: " + allMoves.size());
-            System.out.println("\n" + "=".repeat(100));
-
-            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-
-            for (InventoryMove move : allMoves) {
-                System.out.println("\n┌─ INVENTORY MOVE #" + move.getMoveId() + " " + "─".repeat(80));
-                System.out.println("│ Lot ID:        " + move.getLot().getLotId());
-                System.out.println("│ SKU:           " + move.getLot().getSku());
-                System.out.println("│ From Bay:      " + move.getFromBay().getBayId());
-                System.out.println("│ To Bay:        " + move.getToBay().getBayId());
-                System.out.println("│ Quantity:      " + move.getQty() + " units");
-                System.out.println("│ Reason:        " + move.getReason());
-                System.out.println("│ Created At:    " + move.getCreatedAt().format(formatter));
-                System.out.println("└" + "─".repeat(99));
+                System.out.println("  ❌ ERROR: No balance found!");
             }
 
-            System.out.println("\n" + "=".repeat(100));
-            System.out.println("Summary: " + allMoves.size() + " inventory move(s) recorded successfully.");
+            // Show inventory move record
+            System.out.println("\n▸ Inventory Move Record (Audit Trail):");
+            java.util.List<app.model.InventoryMove> allMoves = moveController.getAllInventoryMoves();
+            if (allMoves.size() > movesBefore) {
+                app.model.InventoryMove lastMove = allMoves.get(allMoves.size() - 1);
+                System.out.println("  Move ID: " + lastMove.getMoveId());
+                System.out.println("  Lot ID: " + lastMove.getLot().getLotId());
+                System.out.println("  From Bay: " + lastMove.getFromBay().getBayId());
+                System.out.println("  To Bay: " + lastMove.getToBay().getBayId());
+                System.out.println("  Quantity: " + lastMove.getQty());
+                System.out.println("  Reason: " + lastMove.getReason());
+
+                // Format timestamp to be more readable
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+                String formattedTimestamp = lastMove.getCreatedAt().format(formatter);
+                System.out.println("  Timestamp: " + formattedTimestamp);
+            }
+
+        } else {
+            System.out.println("❌ RELOCATION FAILED!");
+            System.out.println("=================================================================");
+            System.out.println("Possible reasons:");
+            System.out.println("  - Lot already in target bay");
+            System.out.println("  - Target bay has no capacity");
+            System.out.println("  - Target bay contains different SKU");
+            System.out.println("  - Validation errors");
         }
 
+        System.out.println("\n=================================================================");
+        System.out.println("=== TEST COMPLETED ===");
+        System.out.println("=================================================================\n");
 
         //MainMenu.display();
     }
