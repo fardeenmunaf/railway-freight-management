@@ -130,6 +130,10 @@ public class Main {
 
         // --- end demo ---
 
+        // Test planPickingTask
+        System.out.println("\n=== Testing Pick Task Planning ===");
+        pickingPlan.planPickingTask();
+
         System.out.println("\n\n\n");
 
         MainMenu.display();

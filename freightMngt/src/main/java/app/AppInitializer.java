@@ -291,6 +291,7 @@ public class AppInitializer implements Runnable {
         CartRepository cartRepository = Repositories.getInstance().getCartRepository();
         cartRepository.initializeDefaultCarts();
     }
+
     private void loadTravelTimeData(Repositories repositories) {
         // 1. Criar tipo "Station"
         FacilityType stationType = new FacilityType();
