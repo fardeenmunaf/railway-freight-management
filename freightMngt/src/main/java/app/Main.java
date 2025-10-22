@@ -1,6 +1,7 @@
 package app;
 
 import app.repositories.*;
+import app.service.TravelTimeFeature;
 import app.view.MainMenu;
 
 public class Main {
@@ -15,6 +16,13 @@ public class Main {
         WarehouseBayRepository warehouseBayRepository = repositories.getWarehouseBayRepository();
         OrderLineRepository orderLineRepository = repositories.getOrderLineRepository();
         ReturnOrderRepository returnOrderRepository = repositories.getReturnOrderRepository();
+
+        TravelTimeFeature.TravelTimeCalculator travelTime = TravelTimeFeature.create(
+                repositories.getFacilityRepository(),
+                repositories.getLineSegmentRepository(),
+                repositories.getLineSegmentFacilityRepository(),
+                repositories.getLocomotiveRepository()
+        );
 
         System.out.println("Initializing dataset...");
         appInitializer.run();
