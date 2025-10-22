@@ -19,7 +19,6 @@ public class Main {
         ReturnOrderRepository returnOrderRepository = repositories.getReturnOrderRepository();
 
 
-
         System.out.println("Initializing dataset...");
         appInitializer.run();
 
@@ -47,6 +46,12 @@ public class Main {
         System.out.println(pickingPlan.getAllOrderLines().stream().limit(1).toList());
         System.out.println("Order lines from order ID 1:");
         System.out.println(pickingPlan.getAllOrderLinesFromOrder(1).stream().limit(1).toList());
+        System.out.println("Carts available:");
+        System.out.println(pickingPlan.getAllCarts().stream().limit(1).toList());
+        System.out.println("Cart capacity for order line ID 1:");
+        System.out.println(pickingPlan.calculateCartCapacity(pickingPlan.getAllCarts().get(0), pickingPlan.getAllOrderLines().get(0)));
+        System.out.println("Cart travels");
+        System.out.println(pickingPlan.calculateTripsNeeded(pickingPlan.getAllCarts().get(4), pickingPlan.getAllOrderLines().get(0)));
         System.out.println("Wagons unloaded and bays filled successfully.\n\n");
 
         System.out.println("\n\n\n");
