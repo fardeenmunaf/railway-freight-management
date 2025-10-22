@@ -98,7 +98,7 @@ public class InventoryLot {
      * @return the quantity as an Integer
      */
 
-    public Integer getBoxCode() {
+    public Integer getQty() {
         return qty;
     }
 
@@ -109,7 +109,7 @@ public class InventoryLot {
      *
      */
 
-    public void setBoxCode(Integer qty) {
+    public void setQty(Integer qty) {
         this.qty = qty;
     }
 
