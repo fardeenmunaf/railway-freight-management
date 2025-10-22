@@ -52,7 +52,7 @@ public class PickingPlan {
     /**
      * Calculates how many items from an order line a cart can carry based on weight capacity.
      *
-     * @param cart the cart to check capacity
+     * @param cart      the cart to check capacity
      * @param orderLine the order line containing the item information
      * @return the maximum number of items the cart can carry, or 0 if cart/orderLine is null
      */
@@ -87,7 +87,7 @@ public class PickingPlan {
      * Calculates how many trips are needed to transport all items from an order line.
      * If the cart cannot carry any items (capacity is 0), returns -1 to indicate impossibility.
      *
-     * @param cart the cart to use for transport
+     * @param cart      the cart to use for transport
      * @param orderLine the order line containing the items to transport
      * @return the number of trips needed, or -1 if impossible to transport
      */
@@ -113,9 +113,9 @@ public class PickingPlan {
      * Calculates the number of trips needed for a cart to transport a specific quantity of items.
      * Overloaded version that accepts a custom quantity instead of using the full OrderLine quantity.
      *
-     * @param cart the cart to use
+     * @param cart      the cart to use
      * @param orderLine the order line containing item information
-     * @param quantity the specific quantity to transport
+     * @param quantity  the specific quantity to transport
      * @return the number of trips needed, or -1 if impossible
      */
     public int calculateTripsNeeded(Cart cart, OrderLine orderLine, double quantity) {
@@ -136,6 +136,7 @@ public class PickingPlan {
 
     /**
      * Plans allocations by invoking the Allocation.
+     *
      * @param mode allocation mode: "STRICT" (default) or "PARTIAL"
      * @return AllocationResult with eligibilities and allocation rows
      */
@@ -151,7 +152,7 @@ public class PickingPlan {
      * Gets detailed location information for items allocated to order lines.
      * Shows which bays contain the items needed for each order line and their quantities.
      *
-     * @param sku the SKU to search for (optional, null returns all)
+     * @param sku     the SKU to search for (optional, null returns all)
      * @param orderId the order ID to filter (optional, null returns all)
      * @return list of allocation records with location and quantity details
      */
@@ -214,7 +215,7 @@ public class PickingPlan {
 
     /**
      * Plans picking tasks with pick waves for all eligible order lines.
-     *
+     * <p>
      * The planning process:
      * 1. Creates ONE PickTask per OrderLine (that is ELIGIBLE or PARTIAL)
      * 2. Each PickTask contains multiple PickWaves
@@ -236,27 +237,88 @@ public class PickingPlan {
         List<Allocation.OrderEligibility> eligibilities = allocationResult.getEligibilities();
         List<Allocation.AllocationRecord> allocations = allocationResult.getAllocations();
 
+        // Process all order lines
+        return planPickingTaskInternal(orderLines, carts, eligibilities, allocations, null);
+    }
+
+    /**
+     * Plans picking tasks with pick waves for a specific order only.
+     *
+     * @param orderId the ID of the order to plan picking tasks for
+     * @return PickingPlanResult containing lists of created PickTasks and PickWaves for this order
+     */
+    public PickingPlanResult planPickingTaskForOrder(Integer orderId) {
+        System.out.println("\n=== Planning Picking Tasks for Order " + orderId + " ===");
+
+        // Get all necessary data
+        List<OrderLine> allOrderLines = getAllOrderLines();
+        List<Cart> carts = getAllCarts();
+
+        // Filter order lines for this specific order
+        List<OrderLine> orderLinesForOrder = allOrderLines.stream()
+                .filter(ol -> ol.getOrder().getOrderId().equals(orderId))
+                .collect(java.util.stream.Collectors.toList());
+
+        if (orderLinesForOrder.isEmpty()) {
+            System.out.println("No order lines found for Order " + orderId);
+            return new PickingPlanResult(new ArrayList<>(), new ArrayList<>());
+        }
+
+        // Run allocation to get eligibilities and locations
+        Allocation.AllocationResult allocationResult = planAllocations("PARTIAL");
+        List<Allocation.OrderEligibility> eligibilities = allocationResult.getEligibilities();
+        List<Allocation.AllocationRecord> allocations = allocationResult.getAllocations();
+
+        // Process only the order lines for this order
+        return planPickingTaskInternal(orderLinesForOrder, carts, eligibilities, allocations, orderId);
+    }
+
+    /**
+     * Internal method to plan picking tasks for a given set of order lines.
+     *
+     * @param orderLines      the order lines to process
+     * @param carts           available carts
+     * @param eligibilities   order eligibilities
+     * @param allocations     allocation records
+     * @param specificOrderId if not null, only processes this order ID
+     * @return PickingPlanResult containing lists of created PickTasks and PickWaves
+     */
+    private PickingPlanResult planPickingTaskInternal(
+            List<OrderLine> orderLines,
+            List<Cart> carts,
+            List<Allocation.OrderEligibility> eligibilities,
+            List<Allocation.AllocationRecord> allocations,
+            Integer specificOrderId) {
+
+        // Track waves created in THIS execution only
+        List<PickWave> createdWaves = new ArrayList<>();
+
+        // Run allocation to get eligibilities and locations
+        Allocation.AllocationResult allocationResult = planAllocations("PARTIAL");
+        List<Allocation.OrderEligibility> eligibilitiesForTask = allocationResult.getEligibilities();
+        List<Allocation.AllocationRecord> allocationsForTask = allocationResult.getAllocations();
+
         // Process each order line (ONE PickTask per OrderLine)
         for (OrderLine orderLine : orderLines) {
             // Check if this order line is eligible (ELIGIBLE or PARTIAL)
-            Allocation.OrderEligibility eligibility = findEligibility(eligibilities, orderLine);
+            Allocation.OrderEligibility eligibility = findEligibility(eligibilitiesForTask, orderLine);
 
             if (eligibility == null ||
-                (!eligibility.getStatus().equals("ELIGIBLE") && !eligibility.getStatus().equals("PARTIAL"))) {
+                    (!eligibility.getStatus().equals("ELIGIBLE") && !eligibility.getStatus().equals("PARTIAL"))) {
                 System.out.println("Skipping OrderLine " + orderLine.getOrderLineId() +
-                                 " for Order " + orderLine.getOrder().getOrderId() +
-                                 " - Not eligible");
+                        " for Order " + orderLine.getOrder().getOrderId() +
+                        " - Not eligible");
                 continue;
             }
 
             System.out.println("\nProcessing OrderLine " + orderLine.getOrderLineId() +
-                             " for Order " + orderLine.getOrder().getOrderId() +
-                             " (SKU: " + orderLine.getSku().getSku() + ")");
+                    " for Order " + orderLine.getOrder().getOrderId() +
+                    " (SKU: " + orderLine.getSku().getSku() + ")");
 
             // Get all bay locations for this order line
             Integer skuId = orderLine.getSku().getItemId();
             List<Allocation.AllocationRecord> itemLocations = getItemLocationsForOrderLine(
-                allocations, orderLine.getOrder().getOrderId(), skuId);
+                    allocationsForTask, orderLine.getOrder().getOrderId(), skuId);
 
             if (itemLocations.isEmpty()) {
                 System.out.println("  No inventory locations found - skipping");
@@ -277,8 +339,8 @@ public class PickingPlan {
             int cartCapacity = calculateCartCapacity(bestCart, orderLine);
 
             System.out.println("  Selected Cart " + bestCart.getCartId() +
-                             " (capacity: " + cartCapacity + " items per trip)" +
-                             (cartCapacity >= 5 ? " ✓" : " - LOW CAPACITY WARNING"));
+                    " (capacity: " + cartCapacity + " items per trip)" +
+                    (cartCapacity >= 5 ? " ✓" : " - LOW CAPACITY WARNING"));
 
             // Create ONE pick task for this order line
             Integer pickTaskId = pickTaskController.getNextPickTaskId();
@@ -312,10 +374,10 @@ public class PickingPlan {
                 }
 
                 System.out.println("  Location: Aisle " + location.getAisle() +
-                                 ", Bay " + location.getBay() +
-                                 " - Available: " + qtyAtLocation +
-                                 " - To collect: " + qtyToCollectHere +
-                                 " - Trips needed: " + tripsNeeded);
+                        ", Bay " + location.getBay() +
+                        " - Available: " + qtyAtLocation +
+                        " - To collect: " + qtyToCollectHere +
+                        " - Trips needed: " + tripsNeeded);
 
                 // Create ONE WAVE for EACH TRIP needed at this location
                 double qtyCollectedFromLocation = 0.0;
@@ -326,51 +388,53 @@ public class PickingPlan {
                     double qtyForThisTrip = Math.min(cartCapacity, qtyStillNeededFromLocation);
 
                     PickWave pickWave = new PickWave(
-                        pickWaveId,
-                        bestCart,
-                        "FIFO", // Default strategy
-                        "PLANNED" // Initial status
+                            pickWaveId,
+                            bestCart,
+                            "FIFO", // Default strategy
+                            "PLANNED" // Initial status
                     );
 
                     pickWaveController.createPickWave(pickWave);
                     pickWaves.add(pickWave);
+                    createdWaves.add(pickWave); // Track waves created in this execution
 
                     qtyCollectedFromLocation += qtyForThisTrip;
                     qtyCollected += qtyForThisTrip;
 
                     System.out.println("    Wave " + pickWaveId +
-                                     ": Cart " + bestCart.getCartId() +
-                                     ", Trip " + (trip + 1) + "/" + tripsNeeded +
-                                     ", Qty: " + qtyForThisTrip +
-                                     " (Total collected: " + qtyCollected + "/" + qtyNeeded + ")");
+                            ": Cart " + bestCart.getCartId() +
+                            ", Trip " + (trip + 1) + "/" + tripsNeeded +
+                            ", Qty: " + qtyForThisTrip +
+                            " (Total collected: " + qtyCollected + "/" + qtyNeeded + ")");
                 }
             }
 
             // Create the pick task with all waves for this order line
             if (!pickWaves.isEmpty()) {
                 PickTask pickTask = new PickTask(
-                    pickTaskId,
-                    pickWaves,
-                    orderLine,
-                    eligibility.getRequestedQty().intValue() - eligibility.getAllocatedQty().intValue(), // balance
-                    eligibility.getAllocatedQty(),
-                    null // positionSequence - can be set later for route optimization
+                        pickTaskId,
+                        pickWaves,
+                        orderLine,
+                        eligibility.getRequestedQty().intValue() - eligibility.getAllocatedQty().intValue(), // balance
+                        eligibility.getAllocatedQty(),
+                        null // positionSequence - can be set later for route optimization
                 );
 
                 pickTaskController.createPickTask(pickTask);
                 tasks.add(pickTask);
 
                 System.out.println("  PickTask " + pickTaskId +
-                                 " created with " + pickWaves.size() + " wave(s) (trips)");
+                        " created with " + pickWaves.size() + " wave(s) (trips)");
             }
         }
 
-        System.out.println("\n=== Picking Task Planning Complete ===");
+        String orderInfo = specificOrderId != null ? " for Order " + specificOrderId : "";
+        System.out.println("\n=== Picking Task Planning Complete" + orderInfo + " ===");
         System.out.println("Total Pick Tasks created: " + tasks.size() + " (one per eligible OrderLine)");
-        System.out.println("Total Pick Waves created: " + pickWaveController.getAllPickWaves().size() + " (one per trip)");
+        System.out.println("Total Pick Waves created: " + createdWaves.size() + " (one per trip)");
 
         // Return both lists through PickingPlanResult
-        return new PickingPlanResult(tasks, pickWaveController.getAllPickWaves());
+        return new PickingPlanResult(tasks, createdWaves);
     }
 
     /**
@@ -380,7 +444,7 @@ public class PickingPlan {
                                                         OrderLine orderLine) {
         for (Allocation.OrderEligibility e : eligibilities) {
             if (e.getOrderId().equals(orderLine.getOrder().getOrderId()) &&
-                e.getLineNo().equals(orderLine.getOrderLineId())) {
+                    e.getLineNo().equals(orderLine.getOrderLineId())) {
                 return e;
             }
         }
@@ -392,7 +456,7 @@ public class PickingPlan {
      * Prioritizes carts that can carry at least 3 items per trip.
      * If no cart can carry 2+ items, returns the one with the highest capacity.
      *
-     * @param carts list of available carts
+     * @param carts     list of available carts
      * @param orderLine the order line to transport
      * @return the most suitable cart, or null if no suitable cart found
      */
@@ -411,8 +475,8 @@ public class PickingPlan {
             if (capacity >= 2) {
                 // If we don't have a best cart yet, or this one is better (but not too large)
                 if (bestCart == null ||
-                    (capacity < bestCapacity && capacity >= 3) ||
-                    (bestCapacity < 3 && capacity >= 3)) {
+                        (capacity < bestCapacity && capacity >= 3) ||
+                        (bestCapacity < 3 && capacity >= 3)) {
                     bestCart = cart;
                     bestCapacity = capacity;
                 }
@@ -468,13 +532,13 @@ public class PickingPlan {
                 // Sum quantities for the same location
                 Allocation.AllocationRecord existing = grouped.get(locationKey);
                 Allocation.AllocationRecord merged = new Allocation.AllocationRecord(
-                    existing.getOrderId(),
-                    existing.getLineNo(),
-                    existing.getSku(),
-                    existing.getQty() + record.getQty(), // Sum quantities
-                    existing.getBoxId(),
-                    existing.getAisle(),
-                    existing.getBay()
+                        existing.getOrderId(),
+                        existing.getLineNo(),
+                        existing.getSku(),
+                        existing.getQty() + record.getQty(), // Sum quantities
+                        existing.getBoxId(),
+                        existing.getAisle(),
+                        existing.getBay()
                 );
                 grouped.put(locationKey, merged);
             } else {

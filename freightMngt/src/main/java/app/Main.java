@@ -132,23 +132,31 @@ public class Main {
 
         // --- end demo ---
 
-        // Test planPickingTask
+        // Create PickingPlan instance
         PickingPlan pickingPlan = new PickingPlan();
+
+//        // Test planPickingTask
         System.out.println("\n=== Testing Pick Task Planning ===");
         PickingPlan.PickingPlanResult result = pickingPlan.planPickingTask();
 
         System.out.println("\n=== Pick Tasks List ===");
         for (PickTask task : result.getPickTasks()) {
             System.out.println("PickTask " + task.getPickTaskId() +
-                             " - Waves: " + task.getPickWaves().size());
+                    " - Waves: " + task.getPickWaves().size());
         }
 
         System.out.println("\n=== Pick Waves List ===");
         for (PickWave wave : result.getPickWaves()) {
             System.out.println("PickWave " + wave.getPickWaveId() +
-                             " - Cart: " + wave.getCart().getCartId() +
-                             " - Status: " + wave.getStatus());
+                    " - Cart: " + wave.getCart().getCartId() +
+                    " - Status: " + wave.getStatus());
         }
+
+        // Test planPickingTaskForOrder for a specific order
+        System.out.println("\n=== Testing Pick Task Planning for Order 1 ===");
+        PickingPlan.PickingPlanResult orderResult = pickingPlan.planPickingTaskForOrder(1);
+
+        System.out.println("Pick Waves for Order 1: " + orderResult.getPickWaves().size());
 
         System.out.println("\n\n\n");
 
