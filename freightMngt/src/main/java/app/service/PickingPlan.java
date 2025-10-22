@@ -110,6 +110,31 @@ public class PickingPlan {
     }
 
     /**
+     * Calculates the number of trips needed for a cart to transport a specific quantity of items.
+     * Overloaded version that accepts a custom quantity instead of using the full OrderLine quantity.
+     *
+     * @param cart the cart to use
+     * @param orderLine the order line containing item information
+     * @param quantity the specific quantity to transport
+     * @return the number of trips needed, or -1 if impossible
+     */
+    public int calculateTripsNeeded(Cart cart, OrderLine orderLine, double quantity) {
+        if (cart == null || orderLine == null || quantity <= 0) {
+            return -1;
+        }
+
+        int cartCapacity = calculateCartCapacity(cart, orderLine);
+
+        // If cart cannot carry any items, it's impossible
+        if (cartCapacity == 0) {
+            return -1;
+        }
+
+        // Calculate trips needed (round up to ensure all items are transported)
+        return (int) Math.ceil(quantity / cartCapacity);
+    }
+
+    /**
      * Plans allocations by invoking the Allocation.
      * @param mode allocation mode: "STRICT" (default) or "PARTIAL"
      * @return AllocationResult with eligibilities and allocation rows
@@ -187,8 +212,6 @@ public class PickingPlan {
         List<Allocation.OrderEligibility> eligibilities = allocationResult.getEligibilities();
         List<Allocation.AllocationRecord> allocations = allocationResult.getAllocations();
 
-        int cartIndex = 0; // Track which cart to use next
-
         // Process each order line (ONE PickTask per OrderLine)
         for (OrderLine orderLine : orderLines) {
             // Check if this order line is eligible (ELIGIBLE or PARTIAL)
@@ -219,6 +242,20 @@ public class PickingPlan {
             // Group locations by bay to avoid duplicates and sum quantities
             List<Allocation.AllocationRecord> groupedLocations = groupLocationsByBay(itemLocations);
 
+            // Find the MOST SUITABLE cart for this order line (not round-robin)
+            Cart bestCart = findBestCart(carts, orderLine);
+
+            if (bestCart == null) {
+                System.out.println("  ERROR: No suitable cart found for OrderLine " + orderLine.getOrderLineId());
+                continue;
+            }
+
+            int cartCapacity = calculateCartCapacity(bestCart, orderLine);
+
+            System.out.println("  Selected Cart " + bestCart.getCartId() +
+                             " (capacity: " + cartCapacity + " items per trip)" +
+                             (cartCapacity >= 5 ? " ✓" : " - LOW CAPACITY WARNING"));
+
             // Create ONE pick task for this order line
             Integer pickTaskId = pickTaskController.getNextPickTaskId();
             List<PickWave> pickWaves = new ArrayList<>();
@@ -235,36 +272,26 @@ public class PickingPlan {
                     break;
                 }
 
-                if (carts.isEmpty()) {
-                    System.out.println("  ERROR: No carts available!");
-                    break;
-                }
-
-                // Get next available cart (round-robin)
-                Cart cart = carts.get(cartIndex % carts.size());
-                cartIndex++;
-
-                int cartCapacity = calculateCartCapacity(cart, orderLine);
-
-                if (cartCapacity == 0) {
-                    System.out.println("  WARNING: Cart " + cart.getCartId() +
-                                     " cannot carry items from OrderLine " + orderLine.getOrderLineId());
-                    continue;
-                }
+                // Use the best cart selected for this order line
 
                 // Calculate how much we still need and how much is available at this location
                 double remainingNeeded = qtyNeeded - qtyCollected;
                 double qtyAtLocation = location.getQty();
                 double qtyToCollectHere = Math.min(remainingNeeded, qtyAtLocation);
 
-                int tripsNeeded = (int) Math.ceil(qtyToCollectHere / cartCapacity);
+                // Use calculateTripsNeeded method instead of manual calculation
+                int tripsNeeded = calculateTripsNeeded(bestCart, orderLine, qtyToCollectHere);
+
+                if (tripsNeeded < 0) {
+                    System.out.println("  ERROR: Cannot calculate trips for Cart " + bestCart.getCartId());
+                    continue;
+                }
 
                 System.out.println("  Location: Aisle " + location.getAisle() +
                                  ", Bay " + location.getBay() +
                                  " - Available: " + qtyAtLocation +
                                  " - To collect: " + qtyToCollectHere +
-                                 " - Trips needed: " + tripsNeeded +
-                                 " (Cart capacity: " + cartCapacity + ")");
+                                 " - Trips needed: " + tripsNeeded);
 
                 // Create ONE WAVE for EACH TRIP needed at this location
                 double qtyCollectedFromLocation = 0.0;
@@ -276,7 +303,7 @@ public class PickingPlan {
 
                     PickWave pickWave = new PickWave(
                         pickWaveId,
-                        cart,
+                        bestCart,
                         "FIFO", // Default strategy
                         "PLANNED" // Initial status
                     );
@@ -288,7 +315,7 @@ public class PickingPlan {
                     qtyCollected += qtyForThisTrip;
 
                     System.out.println("    Wave " + pickWaveId +
-                                     ": Cart " + cart.getCartId() +
+                                     ": Cart " + bestCart.getCartId() +
                                      ", Trip " + (trip + 1) + "/" + tripsNeeded +
                                      ", Qty: " + qtyForThisTrip +
                                      " (Total collected: " + qtyCollected + "/" + qtyNeeded + ")");
@@ -331,6 +358,57 @@ public class PickingPlan {
             }
         }
         return null;
+    }
+
+    /**
+     * Finds the most suitable cart for an order line.
+     * Prioritizes carts that can carry at least 3 items per trip.
+     * If no cart can carry 2+ items, returns the one with the highest capacity.
+     *
+     * @param carts list of available carts
+     * @param orderLine the order line to transport
+     * @return the most suitable cart, or null if no suitable cart found
+     */
+    private Cart findBestCart(List<Cart> carts, OrderLine orderLine) {
+        if (carts == null || carts.isEmpty() || orderLine == null) {
+            return null;
+        }
+
+        Cart bestCart = null;
+        int bestCapacity = 0;
+
+        // First, try to find a cart that can carry at least 3 items
+        for (Cart cart : carts) {
+            int capacity = calculateCartCapacity(cart, orderLine);
+
+            if (capacity >= 2) {
+                // If we don't have a best cart yet, or this one is better (but not too large)
+                if (bestCart == null ||
+                    (capacity < bestCapacity && capacity >= 3) ||
+                    (bestCapacity < 3 && capacity >= 3)) {
+                    bestCart = cart;
+                    bestCapacity = capacity;
+                }
+                // If current best is also >= 2, prefer smaller cart (more efficient)
+                else if (bestCapacity >= 3 && capacity >= 3 && capacity < bestCapacity) {
+                    bestCart = cart;
+                    bestCapacity = capacity;
+                }
+            }
+        }
+
+        // If no cart can carry 2+ items, find the one with highest capacity
+        if (bestCart == null) {
+            for (Cart cart : carts) {
+                int capacity = calculateCartCapacity(cart, orderLine);
+                if (capacity > bestCapacity) {
+                    bestCart = cart;
+                    bestCapacity = capacity;
+                }
+            }
+        }
+
+        return bestCart;
     }
 
     /**
