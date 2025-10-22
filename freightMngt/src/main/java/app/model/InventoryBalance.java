@@ -140,4 +140,14 @@ public class InventoryBalance {
     public void setQty(Integer qty) {
         this.qty = qty;
     }
+
+    @Override
+    public String toString() {
+        return "InventoryBalance{" +
+                "balanceId=" + balanceId +
+                ", bay=" + bay +
+                ", lots=" + lots +
+                ", qty=" + qty +
+                '}';
+    }
 }

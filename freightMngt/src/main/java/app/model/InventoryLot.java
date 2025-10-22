@@ -152,4 +152,15 @@ public class InventoryLot {
     public void setReceivedDate(LocalDateTime receivedDate) {
         this.receivedDate = receivedDate;
     }
+
+    @Override
+    public String toString() {
+        return "InventoryLot{" +
+                "lotId=" + lotId +
+                ", sku=" + sku +
+                ", qty=" + qty +
+                ", expDate=" + expDate +
+                ", receivedDate=" + receivedDate +
+                '}';
+    }
 }
