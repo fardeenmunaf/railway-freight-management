@@ -24,14 +24,6 @@ public class Main {
                 repositories.getLocomotiveRepository()
         );
 
-        TravelTimeFeature.loadMockedData(
-                repositories.getFacilityRepository(),
-                repositories.getFacilityTypeRepository(),
-                repositories.getLineSegmentRepository(),
-                repositories.getLineSegmentFacilityRepository(),
-                repositories.getLocomotiveRepository()
-        );
-
         System.out.println("Initializing dataset...");
         appInitializer.run();
 

@@ -6,7 +6,6 @@ import app.repositories.*;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class TravelTimeFeature {
 
@@ -23,117 +22,45 @@ public class TravelTimeFeature {
         );
     }
 
-    public static void loadMockedData(
-            FacilityRepository facilityRepo,
-            FacilityTypeRepository facilityTypeRepo,
-            LineSegmentRepository lineSegmentRepo,
-            LineSegmentFacilityRepository lineSegmentFacilityRepo,
-            LocomotiveRepository locomotiveRepo) {
-
-        // 1. Criar tipo "Station"
-        FacilityType stationType = new FacilityType();
-        stationType.setFacilityTypeId(2);
-        stationType.setName("Station");
-        facilityTypeRepo.addFacilityType(stationType);
-
-        // 2. Criar Lisboa
-        Facility lisboa = new Facility();
-        lisboa.setFacilityId(1);
-        lisboa.setName("Lisboa Santa Apolónia");
-        lisboa.setFacilityType(stationType);
-        facilityRepo.addFacility(lisboa);
-        System.out.println("✓ Lisboa adicionada - ID: " + lisboa.getFacilityId());
-
-        // 3. Verificar se foi guardada
-        Facility test = facilityRepo.getFacilityById(1);
-        System.out.println("✓ Lisboa recuperada: " + (test != null ? test.getName() : "NULL!"));
-
-        // 4. Criar Porto
-        Facility porto = new Facility();
-        porto.setFacilityId(2);
-        porto.setName("Porto Campanhã");
-        porto.setFacilityType(stationType);
-        facilityRepo.addFacility(porto);
-        System.out.println("✓ Porto adicionado - ID: " + porto.getFacilityId());
-
-        // 5. Criar Coimbra
-        Facility coimbra = new Facility();
-        coimbra.setFacilityId(3);
-        coimbra.setName("Coimbra-B");
-        coimbra.setFacilityType(stationType);
-        facilityRepo.addFacility(coimbra);
-        System.out.println("✓ Coimbra adicionada - ID: " + coimbra.getFacilityId());
-
-        // 6. Criar segmento Lisboa → Porto
-        LineSegment seg1 = new LineSegment();
-        seg1.setSegmentId(1);
-        seg1.setLengthKm(200.0);
-        seg1.setSpeedLimitKmh(120.0);
-        lineSegmentRepo.addLineSegment(seg1);
-
-        // 7. Criar segmento Porto → Coimbra
-        LineSegment seg2 = new LineSegment();
-        seg2.setSegmentId(2);
-        seg2.setLengthKm(120.0);
-        seg2.setSpeedLimitKmh(100.0);
-        lineSegmentRepo.addLineSegment(seg2);
-
-        // 8. Ligar Lisboa ao segmento 1
-        LineSegmentFacility lsf1 = new LineSegmentFacility();
-        lsf1.setSegmentFacilityId(1);
-        lsf1.setLineSegment(seg1);
-        lsf1.setFacility(lisboa);
-        lineSegmentFacilityRepo.addLineSegmentFacility(lsf1);
-
-        // 9. Ligar Porto ao segmento 1
-        LineSegmentFacility lsf2 = new LineSegmentFacility();
-        lsf2.setSegmentFacilityId(2);
-        lsf2.setLineSegment(seg1);
-        lsf2.setFacility(porto);
-        lineSegmentFacilityRepo.addLineSegmentFacility(lsf2);
-
-        // 10. Ligar Porto ao segmento 2
-        LineSegmentFacility lsf3 = new LineSegmentFacility();
-        lsf3.setSegmentFacilityId(3);
-        lsf3.setLineSegment(seg2);
-        lsf3.setFacility(porto);
-        lineSegmentFacilityRepo.addLineSegmentFacility(lsf3);
-
-        // 11. Ligar Coimbra ao segmento 2
-        LineSegmentFacility lsf4 = new LineSegmentFacility();
-        lsf4.setSegmentFacilityId(4);
-        lsf4.setLineSegment(seg2);
-        lsf4.setFacility(coimbra);
-        lineSegmentFacilityRepo.addLineSegmentFacility(lsf4);
-
-        // 12. Criar locomotivas
-        Locomotive loco1 = new Locomotive();
-        loco1.setLocomotiveId(1);
-        loco1.setMaxSpeed(160.0);
-        locomotiveRepo.addLocomotive(loco1);
-
-        Locomotive loco2 = new Locomotive();
-        loco2.setLocomotiveId(2);
-        loco2.setMaxSpeed(220.0);
-        locomotiveRepo.addLocomotive(loco2);
-
-        System.out.println("✓ Mocked data carregada!");
-    }
-
     public static void calculateTravelTimeFromUserInput(Scanner scanner) {
-        System.out.println("\n=== Calculate Travel Time ===");
+        System.out.println("\n=== Calcular Tempo de Viagem ===");
+
+        Repositories repositories = Repositories.getInstance();
+        FacilityRepository facilityRepo = repositories.getFacilityRepository();
+        LocomotiveRepository locomotiveRepo = repositories.getLocomotiveRepository();
+
+        System.out.println("\nEstações disponíveis:");
+        List<Facility> facilities = facilityRepo.getAllFacilities();
+        if (facilities != null && !facilities.isEmpty()) {
+            facilities.stream()
+                    .filter(f -> f != null && f.getFacilityType() != null
+                            && Integer.valueOf(2).equals(f.getFacilityType().getFacilityTypeId()))
+                    .sorted(Comparator.comparing(f -> f.getFacilityId() == null ? Integer.MAX_VALUE : f.getFacilityId()))
+                    .forEach(f -> System.out.println(f.getFacilityId() + " - " + (f.getName() != null ? f.getName() : "(sem nome)")));
+        } else {
+            System.out.println("(nenhuma estação encontrada)");
+        }
+
+        System.out.println("\nLocomotivas disponíveis:");
+        List<Locomotive> locos = locomotiveRepo.getAllLocomotives();
+        if (locos != null && !locos.isEmpty()) {
+            locos.stream()
+                    .sorted(Comparator.comparing(l -> l.getLocomotiveId() == null ? Integer.MAX_VALUE : l.getLocomotiveId()))
+                    .forEach(l -> System.out.println(l.getLocomotiveId() + " - " + (l.getName() != null ? l.getName() : "(sem nome)")));
+        } else {
+            System.out.println("(nenhuma locomotiva encontrada)");
+        }
 
         try {
-            System.out.print("Enter origin station ID: ");
-            int originId = Integer.parseInt(scanner.nextLine());
+            System.out.print("Digite o nr da estação de origem: ");
+            int originId = Integer.parseInt(scanner.nextLine().trim());
 
-            System.out.print("Enter destination station ID: ");
-            int destinationId = Integer.parseInt(scanner.nextLine());
+            System.out.print("Digite o nr da estação de destino: ");
+            int destinationId = Integer.parseInt(scanner.nextLine().trim());
 
-            System.out.print("Enter locomotive ID: ");
-            int locomotiveId = Integer.parseInt(scanner.nextLine());
+            System.out.print("Digite o nr da locomotiva: ");
+            int locomotiveId = Integer.parseInt(scanner.nextLine().trim());
 
-            Repositories repositories = Repositories.getInstance();
             TravelTimeCalculator calculator = TravelTimeFeature.create(
                     repositories.getFacilityRepository(),
                     repositories.getLineSegmentRepository(),
@@ -143,20 +70,20 @@ public class TravelTimeFeature {
 
             double travelTime = calculator.calculateTravelTimeMinutes(originId, destinationId, locomotiveId);
 
-            System.out.println("\n--- Travel Details ---");
-            System.out.println("Distance: " + calculator.getDistanceKm() + " km");
-            System.out.println("Effective Speed: " + calculator.getEffectiveSpeedKmh() + " km/h");
-            System.out.println("Estimated Travel Time: " + travelTime + " minutes");
-            System.out.println("----------------------\n");
+            System.out.println("\n--- Detalhes da Viagem ---");
+            System.out.println("Distância: " + String.format("%.2f", calculator.getDistanceKm()) + " km");
+            System.out.println("Velocidade Efetiva: " + String.format("%.2f", calculator.getEffectiveSpeedKmh()) + " km/h");
+            System.out.println("Tempo Estimado: " + String.format("%.2f", travelTime) + " minutos");
+            System.out.println("--------------------------\n");
 
         } catch (NumberFormatException e) {
-            System.out.println("Error: Please enter valid numeric IDs.");
+            System.out.println("Erro: introduza IDs numéricos válidos.");
         } catch (NoDirectConnectionException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Erro: " + e.getMessage());
         } catch (InvalidSpeedException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.out.println("Erro: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Unexpected error: " + e.getMessage());
+            System.out.println("Erro inesperado: " + e.getMessage());
         }
     }
 
@@ -169,6 +96,14 @@ public class TravelTimeFeature {
         private LineSegment currentSegment;
         private double effectiveSpeed;
         private double distance;
+
+        public double getDistanceKm() {
+            return this.distance;
+        }
+
+        public double getEffectiveSpeedKmh() {
+            return this.effectiveSpeed;
+        }
 
         public TravelTimeCalculator(
                 FacilityRepository facilityRepository,
@@ -186,43 +121,119 @@ public class TravelTimeFeature {
             Facility station2 = validateStation(stationId2);
             Locomotive locomotive = validateLocomotive(locomotiveId);
 
-            LineSegment segment = findDirectConnection(station1, station2);
-            this.currentSegment = segment;
-
-            double distanceKm = segment.getLengthKm() != null ? segment.getLengthKm() : 0.0;
-            this.distance = distanceKm;
-
-            if (distanceKm == 0.0) {
-                this.effectiveSpeed = 0.0;
-                return 0.0;
-            }
-
             Double locomotiveMaxSpeed = locomotive.getMaxSpeed();
             if (locomotiveMaxSpeed == null || locomotiveMaxSpeed <= 0) {
                 throw new InvalidSpeedException("Locomotiva com velocidade máxima inválida: " + locomotiveId);
             }
 
-            Double segmentSpeedLimit = segment.getSpeedLimitKmh();
-            double speedKmh = segmentSpeedLimit != null && segmentSpeedLimit > 0
-                    ? Math.min(segmentSpeedLimit, locomotiveMaxSpeed)
-                    : locomotiveMaxSpeed;
-
-            if (speedKmh <= 0) {
-                throw new InvalidSpeedException("Velocidade efetiva inválida para o cálculo");
+            PathResult result = findShortestTimePathDijkstra(station1.getFacilityId(), station2.getFacilityId(), locomotiveMaxSpeed);
+            if (result == null) {
+                throw new NoDirectConnectionException("Não existe ligação entre " + station1.getFacilityId() + " e " + station2.getFacilityId());
             }
 
-            this.effectiveSpeed = speedKmh;
-
-            double hours = distanceKm / speedKmh;
-            return hours * 60.0;
+            this.distance = result.totalDistanceKm;
+            double totalHours = result.totalHours;
+            this.effectiveSpeed = totalHours > 0 ? (result.totalDistanceKm / totalHours) : 0.0;
+            return totalHours * 60.0;
         }
 
-        public double getEffectiveSpeedKmh() {
-            return effectiveSpeed;
+        private static class PathResult {
+            final double totalHours;
+            final double totalDistanceKm;
+            PathResult(double totalHours, double totalDistanceKm) {
+                this.totalHours = totalHours;
+                this.totalDistanceKm = totalDistanceKm;
+            }
         }
 
-        public double getDistanceKm() {
-            return distance;
+        private static class QueueNode {
+            final Integer facilityId;
+            final double hoursSoFar;
+            final double distanceSoFar;
+            QueueNode(Integer facilityId, double hoursSoFar, double distanceSoFar) {
+                this.facilityId = facilityId;
+                this.hoursSoFar = hoursSoFar;
+                this.distanceSoFar = distanceSoFar;
+            }
+        }
+
+        private static class Edge {
+            final Integer toFacilityId;
+            final LineSegment segment;
+            Edge(Integer toFacilityId, LineSegment segment) {
+                this.toFacilityId = toFacilityId;
+                this.segment = segment;
+            }
+        }
+
+        private PathResult findShortestTimePathDijkstra(Integer startFacilityId, Integer targetFacilityId, double locomotiveMaxSpeed) {
+            if (startFacilityId == null || targetFacilityId == null) return null;
+            java.util.Map<Integer, java.util.List<Edge>> graph = new java.util.HashMap<>();
+            java.util.List<LineSegment> segments = lineSegmentRepository.getAllLineSegments();
+            if (segments == null) segments = java.util.Collections.emptyList();
+
+            for (LineSegment seg : segments) {
+                if (seg == null) continue;
+                Integer segId = seg.getSegmentId();
+                if (segId == null) continue;
+                java.util.List<LineSegmentFacility> facs = lineSegmentFacilityRepository.getLineSegmentFacilitiesBySegmentId(segId);
+                if (facs == null || facs.isEmpty()) continue;
+                java.util.List<Integer> facilityIds = new java.util.ArrayList<>();
+                for (LineSegmentFacility lsf : facs) {
+                    if (lsf == null || lsf.getFacility() == null || lsf.getFacility().getFacilityId() == null) continue;
+                    facilityIds.add(lsf.getFacility().getFacilityId());
+                }
+                for (int i = 0; i < facilityIds.size(); i++) {
+                    for (int j = 0; j < facilityIds.size(); j++) {
+                        if (i == j) continue;
+                        Integer a = facilityIds.get(i);
+                        Integer b = facilityIds.get(j);
+                        graph.computeIfAbsent(a, k -> new java.util.ArrayList<>()).add(new Edge(b, seg));
+                    }
+                }
+            }
+
+            java.util.PriorityQueue<QueueNode> pq = new java.util.PriorityQueue<>(java.util.Comparator.comparingDouble(n -> n.hoursSoFar));
+            java.util.Map<Integer, Double> bestHours = new java.util.HashMap<>();
+            pq.add(new QueueNode(startFacilityId, 0.0, 0.0));
+            bestHours.put(startFacilityId, 0.0);
+
+            while (!pq.isEmpty()) {
+                QueueNode node = pq.poll();
+                Integer cur = node.facilityId;
+                double curHours = node.hoursSoFar;
+                double curDistance = node.distanceSoFar;
+
+                Double best = bestHours.get(cur);
+                if (best != null && curHours > best + 1e-9) continue;
+
+                if (cur.equals(targetFacilityId)) {
+                    return new PathResult(curHours, curDistance);
+                }
+
+                java.util.List<Edge> neighbors = graph.getOrDefault(cur, java.util.Collections.emptyList());
+                for (Edge e : neighbors) {
+                    if (e == null || e.segment == null) continue;
+                    double segDistanceKm = e.segment.getLengthKm() != null ? e.segment.getLengthKm() : 0.0;
+                    if (segDistanceKm <= 0.0) continue;
+
+                    Double segSpeedLimit = e.segment.getSpeedLimitKmh();
+                    double speedKmh = (segSpeedLimit != null && segSpeedLimit > 0) ? Math.min(segSpeedLimit, locomotiveMaxSpeed) : locomotiveMaxSpeed;
+                    if (speedKmh <= 0.0) continue;
+
+                    double edgeHours = segDistanceKm / speedKmh;
+                    double newHours = curHours + edgeHours;
+                    double newDist = curDistance + segDistanceKm;
+
+                    Double known = bestHours.get(e.toFacilityId);
+                    if (known == null || newHours + 1e-9 < known) {
+                        bestHours.put(e.toFacilityId, newHours);
+                        pq.add(new QueueNode(e.toFacilityId, newHours, newDist));
+                    }
+                }
+            }
+
+            return null;
         }
 
         private Facility validateStation(Integer facilityId) {
@@ -236,34 +247,15 @@ public class TravelTimeFeature {
             return facility;
         }
 
-        private Locomotive validateLocomotive(Integer lomotiveId) {
-            Locomotive locomotive = locomotiveRepository.getLocomotiveById(lomotiveId);
+
+        private Locomotive validateLocomotive(Integer locomotiveId) {
+            Locomotive locomotive = locomotiveRepository.getLocomotiveById(locomotiveId);
             if (locomotive == null) {
-                throw new InvalidSpeedException("Locomotiva não encontrada: " + lomotiveId);
+                throw new InvalidSpeedException("Locomotiva não encontrada: " + locomotiveId);
             }
             return locomotive;
         }
 
-        private LineSegment findDirectConnection(Facility station1, Facility station2) {
-            List<LineSegment> segments = lineSegmentRepository.getAllLineSegments();
-
-            for (LineSegment segment : segments) {
-                List<LineSegmentFacility> facilities = lineSegmentFacilityRepository.getLineSegmentFacilitiesBySegmentId(segment.getSegmentId());
-
-                if (facilities.size() == 2) {
-                    Facility f1 = facilities.get(0).getFacility();
-                    Facility f2 = facilities.get(1).getFacility();
-
-                    if ((f1.equals(station1) && f2.equals(station2)) ||
-                            (f1.equals(station2) && f2.equals(station1))) {
-                        return segment;
-                    }
-                }
-            }
-
-            throw new NoDirectConnectionException(
-                    "Não existe ligação direta entre " + station1.getFacilityId() + " e " + station2.getFacilityId());
-        }
     }
 
     public static class NoDirectConnectionException extends RuntimeException {

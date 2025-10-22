@@ -416,6 +416,10 @@ public class Locomotive {
         this.traction = traction;
     }
 
+    public String getName() {
+        return brand + " " + model + " " + locomotiveId;
+    }
+
     @Override
     public String toString() {
         return "Locomotive{" +
