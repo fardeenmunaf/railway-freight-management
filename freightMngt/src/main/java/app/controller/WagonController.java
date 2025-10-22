@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Wagon;
-import java.util.ArrayList;
+import app.repositories.WagonRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class WagonController {
-    private List<Wagon> wagons;
+    private final WagonRepository repository;
 
     /**
-     * Default constructor that initializes the wagon list.
+     * Default constructor that initializes the controller with the wagon repository.
      */
     public WagonController() {
-        this.wagons = new ArrayList<>();
+        this.repository = Repositories.getInstance().getWagonRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class WagonController {
      */
     public Wagon createWagon(Wagon wagon) {
         if (wagon != null) {
-            wagons.add(wagon);
+            repository.addWagon(wagon);
         }
         return wagon;
     }
@@ -42,7 +43,7 @@ public class WagonController {
      * @return a list of all Wagon objects
      */
     public List<Wagon> getAllWagons() {
-        return new ArrayList<>(wagons);
+        return repository.getAllWagons();
     }
 
     /**
@@ -52,9 +53,8 @@ public class WagonController {
      * @return an Optional containing the Wagon if found, or empty if not found
      */
     public Optional<Wagon> getWagonById(Integer wagonId) {
-        return wagons.stream()
-                .filter(wagon -> wagon.getWagonId().equals(wagonId))
-                .findFirst();
+        Wagon wagon = repository.getWagonById(wagonId);
+        return Optional.ofNullable(wagon);
     }
 
     /**
@@ -65,13 +65,7 @@ public class WagonController {
      * @return true if the wagon was updated successfully, false otherwise
      */
     public boolean updateWagon(Integer wagonId, Wagon updatedWagon) {
-        Optional<Wagon> existingWagon = getWagonById(wagonId);
-        if (existingWagon.isPresent()) {
-            int index = wagons.indexOf(existingWagon.get());
-            wagons.set(index, updatedWagon);
-            return true;
-        }
-        return false;
+        return repository.updateWagon(wagonId, updatedWagon);
     }
 
     /**
@@ -81,7 +75,23 @@ public class WagonController {
      * @return true if the wagon was deleted successfully, false otherwise
      */
     public boolean deleteWagon(Integer wagonId) {
-        return wagons.removeIf(wagon -> wagon.getWagonId().equals(wagonId));
+        return repository.deleteWagon(wagonId);
+    }
+
+    /**
+     * Gets the next available wagon ID.
+     *
+     * @return the next wagon ID to be used
+     */
+    public Integer getNextWagonId() {
+        return repository.getNextWagonId();
+    }
+
+    /**
+     * Clears all wagons from the system.
+     */
+    public void clearAllWagons() {
+        repository.clear();
     }
 }
 

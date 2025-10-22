@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.Order;
-import java.util.ArrayList;
+import app.repositories.OrderRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class OrderController {
-    private List<Order> orders;
+    private final OrderRepository repository;
 
     /**
-     * Default constructor that initializes the order list.
+     * Default constructor that initializes the controller with the order repository.
      */
     public OrderController() {
-        this.orders = new ArrayList<>();
+        this.repository = Repositories.getInstance().getOrderRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class OrderController {
      */
     public Order createOrder(Order order) {
         if (order != null) {
-            orders.add(order);
+            repository.addOrder(order);
         }
         return order;
     }
@@ -42,7 +43,7 @@ public class OrderController {
      * @return a list of all Order objects
      */
     public List<Order> getAllOrders() {
-        return new ArrayList<>(orders);
+        return repository.getAllOrders();
     }
 
     /**
@@ -52,9 +53,8 @@ public class OrderController {
      * @return an Optional containing the Order if found, or empty if not found
      */
     public Optional<Order> getOrderById(Integer orderId) {
-        return orders.stream()
-                .filter(order -> order.getOrderId().equals(orderId))
-                .findFirst();
+        Order order = repository.getOrderById(orderId);
+        return Optional.ofNullable(order);
     }
 
     /**
@@ -65,13 +65,7 @@ public class OrderController {
      * @return true if the order was updated successfully, false otherwise
      */
     public boolean updateOrder(Integer orderId, Order updatedOrder) {
-        Optional<Order> existingOrder = getOrderById(orderId);
-        if (existingOrder.isPresent()) {
-            int index = orders.indexOf(existingOrder.get());
-            orders.set(index, updatedOrder);
-            return true;
-        }
-        return false;
+        return repository.updateOrder(orderId, updatedOrder);
     }
 
     /**
@@ -81,7 +75,22 @@ public class OrderController {
      * @return true if the order was deleted successfully, false otherwise
      */
     public boolean deleteOrder(Integer orderId) {
-        return orders.removeIf(order -> order.getOrderId().equals(orderId));
+        return repository.deleteOrder(orderId);
+    }
+
+    /**
+     * Gets the next available order ID.
+     *
+     * @return the next order ID to be used
+     */
+    public Integer getNextOrderId() {
+        return repository.getNextOrderId();
+    }
+
+    /**
+     * Clears all orders from the system.
+     */
+    public void clearAllOrders() {
+        repository.clear();
     }
 }
-

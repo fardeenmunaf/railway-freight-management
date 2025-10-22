@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.User;
-import java.util.ArrayList;
+import app.repositories.UserRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class UserController {
-    private List<User> users;
+    private final UserRepository repository;
 
     /**
-     * Default constructor that initializes the user list.
+     * Default constructor that initializes the controller with the user repository.
      */
     public UserController() {
-        this.users = new ArrayList<>();
+        this.repository = Repositories.getInstance().getUserRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class UserController {
      */
     public User createUser(User user) {
         if (user != null) {
-            users.add(user);
+            repository.addUser(user);
         }
         return user;
     }
@@ -42,7 +43,7 @@ public class UserController {
      * @return a list of all User objects
      */
     public List<User> getAllUsers() {
-        return new ArrayList<>(users);
+        return repository.getAllUsers();
     }
 
     /**
@@ -52,9 +53,19 @@ public class UserController {
      * @return an Optional containing the User if found, or empty if not found
      */
     public Optional<User> getUserById(Integer userId) {
-        return users.stream()
-                .filter(user -> user.getUserId().equals(userId))
-                .findFirst();
+        User user = repository.getUserById(userId);
+        return Optional.ofNullable(user);
+    }
+
+    /**
+     * Retrieves a user by its username.
+     *
+     * @param username the username of the user
+     * @return an Optional containing the User if found, or empty if not found
+     */
+    public Optional<User> getUserByUsername(String username) {
+        User user = repository.getUserByUsername(username);
+        return Optional.ofNullable(user);
     }
 
     /**
@@ -65,13 +76,7 @@ public class UserController {
      * @return true if the user was updated successfully, false otherwise
      */
     public boolean updateUser(Integer userId, User updatedUser) {
-        Optional<User> existingUser = getUserById(userId);
-        if (existingUser.isPresent()) {
-            int index = users.indexOf(existingUser.get());
-            users.set(index, updatedUser);
-            return true;
-        }
-        return false;
+        return repository.updateUser(userId, updatedUser);
     }
 
     /**
@@ -81,7 +86,33 @@ public class UserController {
      * @return true if the user was deleted successfully, false otherwise
      */
     public boolean deleteUser(Integer userId) {
-        return users.removeIf(user -> user.getUserId().equals(userId));
+        return repository.deleteUser(userId);
+    }
+
+    /**
+     * Gets the next available user ID.
+     *
+     * @return the next user ID to be used
+     */
+    public Integer getNextUserId() {
+        return repository.getNextUserId();
+    }
+
+    /**
+     * Checks if a user with the given username exists in the repository.
+     *
+     * @param username the username
+     * @return true if a user with this username exists, false otherwise
+     */
+    public boolean containsUsername(String username) {
+        return repository.containsUsername(username);
+    }
+
+    /**
+     * Clears all users from the system.
+     */
+    public void clearAllUsers() {
+        repository.clear();
     }
 }
 

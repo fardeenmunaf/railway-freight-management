@@ -1,6 +1,5 @@
 package app.model;
 
-import javax.swing.text.StyledEditorKit;
 
 /**
  * Represents a facility in the freight management system.
@@ -38,12 +37,12 @@ public class Facility {
     /**
      * Parameterized constructor that creates a Facility with specified values.
      *
-     * @param facilityId   the unique identifier for this facility
+     * @param facilityId    the unique identifier for this facility
      * @param name          the name of the facility
-     * @param facilityType the type/category of this facility
+     * @param facilityType  the type/category of this facility
      * @param lat           the latitude coordinate in degrees
      * @param lon           the longitude coordinate in degrees
-     * @param isIntermodal true if the facility supports intermodal operations, false otherwise
+     * @param isIntermodal  true if the facility supports intermodal operations, false otherwise
      */
 
     public Facility(Integer facilityId, String name, FacilityType facilityType, Double lat, Double lon, Boolean isIntermodal) {
@@ -173,5 +172,17 @@ public class Facility {
 
     public void setIsIntermodal(Boolean isIntermodal) {
         this.isIntermodal = isIntermodal;
+    }
+
+    @Override
+    public String toString() {
+        return "Facility{" +
+                "facilityId=" + facilityId +
+                ", name='" + name + '\'' +
+                ", facilityType=" + facilityType +
+                ", lat=" + lat +
+                ", lon=" + lon +
+                ", isIntermodal=" + isIntermodal +
+                '}';
     }
 }
