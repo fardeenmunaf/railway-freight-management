@@ -91,7 +91,7 @@ public class InventoryRelocation {
         // Recalculate source balance quantity
         Integer newSourceQty = 0;
         for (InventoryLot lot : sourceLots) {
-            newSourceQty += lot.getBoxCode();
+            newSourceQty += lot.getQty();
         }
         sourceBalance.setQty(newSourceQty);
 
@@ -113,7 +113,7 @@ public class InventoryRelocation {
             int insertPosition = findFEFOInsertPosition(targetLots, lotToMove);
             targetLots.add(insertPosition, lotToMove);
 
-            Integer newTargetQty = targetBalance.getQty() + lotToMove.getBoxCode();
+            Integer newTargetQty = targetBalance.getQty() + lotToMove.getQty();
             targetBalance.setLots(targetLots);
             targetBalance.setQty(newTargetQty);
 
@@ -129,7 +129,7 @@ public class InventoryRelocation {
                 newBalanceId,
                 targetBay,
                 newLots,
-                lotToMove.getBoxCode()
+                lotToMove.getQty()
             );
 
             balanceController.createInventoryBalance(newBalance);
@@ -137,7 +137,7 @@ public class InventoryRelocation {
 
         // Step 3: Create audit trail (InventoryMove)
         Integer moveId = moveController.getNextInventoryMoveId();
-        InventoryMove inventoryMove = new InventoryMove(moveId, lotToMove, fromBay, targetBay, lotToMove.getBoxCode(), reason, LocalDateTime.now());
+        InventoryMove inventoryMove = new InventoryMove(moveId, lotToMove, fromBay, targetBay, lotToMove.getQty(), reason, LocalDateTime.now());
 
         moveController.createInventoryMove(inventoryMove);
 
