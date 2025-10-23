@@ -2,6 +2,7 @@ package app;
 
 import app.controller.InventoryBalanceController;
 import app.model.*;
+import app.repositories.CartRepository;
 import app.repositories.Repositories;
 import app.repositories.WarehouseAisleRepository;
 import app.utils.CsvReader;
@@ -34,6 +35,8 @@ public class AppInitializer implements Runnable {
         loadOrderLines(repositories);
         loadWagons(repositories);
         loadReturns(repositories);
+        loadTravelTimeData(repositories);
+        loadMockedData();
     }
 
     private void loadBays(Repositories repositories) {
@@ -212,7 +215,7 @@ public class AppInitializer implements Runnable {
      * Helper method to find an existing InventoryBalance by SKU.
      *
      * @param balanceController the inventory balance controller
-     * @param sku the SKU to search for
+     * @param sku               the SKU to search for
      * @return the existing InventoryBalance, or null if not found
      */
     private InventoryBalance findBalanceBySku(InventoryBalanceController balanceController, Integer sku) {
@@ -285,7 +288,88 @@ public class AppInitializer implements Runnable {
     }
 
     private void loadMockedData() {
-        // This method is used to create all repositories with mocked data for testing purposes.
-
+        CartRepository cartRepository = Repositories.getInstance().getCartRepository();
+        cartRepository.initializeDefaultCarts();
     }
+
+    private void loadTravelTimeData(Repositories repositories) {
+        // 1. Criar tipo "Station"
+        FacilityType stationType = new FacilityType();
+        stationType.setFacilityTypeId(2);
+        stationType.setName("Station");
+        repositories.getFacilityTypeRepository().addFacilityType(stationType);
+
+        // 2-4. Criar estações
+        Facility lisboa = new Facility();
+        lisboa.setFacilityId(1);
+        lisboa.setName("Lisboa Santa Apolónia");
+        lisboa.setFacilityType(stationType);
+        repositories.getFacilityRepository().addFacility(lisboa);
+
+        Facility porto = new Facility();
+        porto.setFacilityId(2);
+        porto.setName("Porto Campanhã");
+        porto.setFacilityType(stationType);
+        repositories.getFacilityRepository().addFacility(porto);
+
+        Facility coimbra = new Facility();
+        coimbra.setFacilityId(3);
+        coimbra.setName("Coimbra-B");
+        coimbra.setFacilityType(stationType);
+        repositories.getFacilityRepository().addFacility(coimbra);
+
+        // 5-6. Criar segmentos
+        LineSegment seg1 = new LineSegment();
+        seg1.setSegmentId(1);
+        seg1.setLengthKm(200.0);
+        seg1.setSpeedLimitKmh(120.0);
+        repositories.getLineSegmentRepository().addLineSegment(seg1);
+
+        LineSegment seg2 = new LineSegment();
+        seg2.setSegmentId(2);
+        seg2.setLengthKm(120.0);
+        seg2.setSpeedLimitKmh(100.0);
+        repositories.getLineSegmentRepository().addLineSegment(seg2);
+
+        // 7-10. Criar ligações estação-segmento
+        LineSegmentFacility lsf1 = new LineSegmentFacility();
+        lsf1.setSegmentFacilityId(1);
+        lsf1.setLineSegment(seg1);
+        lsf1.setFacility(lisboa);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf1);
+
+        LineSegmentFacility lsf2 = new LineSegmentFacility();
+        lsf2.setSegmentFacilityId(2);
+        lsf2.setLineSegment(seg1);
+        lsf2.setFacility(porto);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf2);
+
+        LineSegmentFacility lsf3 = new LineSegmentFacility();
+        lsf3.setSegmentFacilityId(3);
+        lsf3.setLineSegment(seg2);
+        lsf3.setFacility(porto);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf3);
+
+        LineSegmentFacility lsf4 = new LineSegmentFacility();
+        lsf4.setSegmentFacilityId(4);
+        lsf4.setLineSegment(seg2);
+        lsf4.setFacility(coimbra);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf4);
+
+        // 11. Criar locomotivas
+        Locomotive loco1 = new Locomotive();
+        loco1.setLocomotiveId(1);
+        loco1.setModel("Class E10");
+        loco1.setBrand("DB");
+        loco1.setMaxSpeed(160.0);
+        repositories.getLocomotiveRepository().addLocomotive(loco1);
+
+        Locomotive loco2 = new Locomotive();
+        loco2.setLocomotiveId(2);
+        loco2.setModel("Euro Sprinter");
+        loco2.setBrand("Siemens");
+        loco2.setMaxSpeed(220.0);
+        repositories.getLocomotiveRepository().addLocomotive(loco2);
+    }
+
 }
