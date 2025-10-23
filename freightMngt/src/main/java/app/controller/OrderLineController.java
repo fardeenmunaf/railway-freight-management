@@ -3,8 +3,11 @@ package app.controller;
 import app.model.OrderLine;
 import app.repositories.OrderLineRepository;
 import app.repositories.Repositories;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Controller class for managing OrderLine entities.
@@ -66,6 +69,21 @@ public class OrderLineController {
      */
     public boolean updateOrderLine(Integer orderLineId, OrderLine updatedOrderLine) {
         return repository.updateOrderLine(orderLineId, updatedOrderLine);
+    }
+
+    /**
+     * Retrieves all order lines associated with a specific order ID.
+     *
+     * @param orderId the unique identifier of the order
+     * @return a list of OrderLine objects associated with the specified order ID
+     */
+    public List<OrderLine> getOrderLinesByOrderId(Integer orderId) {
+        if (orderId == null) {
+            return Collections.emptyList();
+        }
+        return repository.getAllOrderLines().stream()
+                .filter(ol -> ol != null && orderId.equals(ol.getOrder().getOrderId()))
+                .collect(Collectors.toList());
     }
 
     /**

@@ -2,6 +2,7 @@ package app;
 
 import app.controller.InventoryBalanceController;
 import app.model.*;
+import app.repositories.CartRepository;
 import app.repositories.Repositories;
 import app.repositories.WarehouseAisleRepository;
 import app.utils.CsvReader;
@@ -35,6 +36,7 @@ public class AppInitializer implements Runnable {
         loadWagons(repositories);
         loadReturns(repositories);
         loadTravelTimeData(repositories);
+        loadMockedData();
     }
 
     private void loadBays(Repositories repositories) {
@@ -213,7 +215,7 @@ public class AppInitializer implements Runnable {
      * Helper method to find an existing InventoryBalance by SKU.
      *
      * @param balanceController the inventory balance controller
-     * @param sku the SKU to search for
+     * @param sku               the SKU to search for
      * @return the existing InventoryBalance, or null if not found
      */
     private InventoryBalance findBalanceBySku(InventoryBalanceController balanceController, Integer sku) {
@@ -286,9 +288,10 @@ public class AppInitializer implements Runnable {
     }
 
     private void loadMockedData() {
-        // This method is used to create all repositories with mocked data for testing purposes.
-
+        CartRepository cartRepository = Repositories.getInstance().getCartRepository();
+        cartRepository.initializeDefaultCarts();
     }
+
     private void loadTravelTimeData(Repositories repositories) {
         // 1. Criar tipo "Station"
         FacilityType stationType = new FacilityType();
