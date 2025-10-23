@@ -175,17 +175,94 @@ public class Allocation {
     private List<InventoryLot> getAvailableLotsForSku(Integer skuId, List<InventoryBalance> inventoryBalances,
                                                       Map<Integer, Double> availableStock) {
 
-        Comparator<InventoryLot> fefoComparator = Comparator
-                .comparing(InventoryLot::getExpDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(InventoryLot::getReceivedDate, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(InventoryLot::getLotId);
+        // Create lot-to-bay map for sorting by bay proximity
+        Map<Integer, WarehouseBay> lotToBayMap = indexLotToBay(inventoryBalances);
 
-        return inventoryBalances.stream()
+        // Create a more explicit FEFO comparator that handles our specific case
+        Comparator<InventoryLot> fefoComparator = (lot1, lot2) -> {
+            // First: Compare expiration dates (FEFO - First Expired First Out)
+            // Lots with expiration dates come BEFORE lots without expiration dates
+            if (lot1.getExpDate() != null && lot2.getExpDate() != null) {
+                int expDateCompare = lot1.getExpDate().compareTo(lot2.getExpDate());
+                if (expDateCompare != 0) {
+                    return expDateCompare; // Earlier expiration date wins
+                }
+            } else if (lot1.getExpDate() != null && lot2.getExpDate() == null) {
+                return -1; // Lot with expiration date comes BEFORE lot without
+            } else if (lot1.getExpDate() == null && lot2.getExpDate() != null) {
+                return 1; // Lot without expiration date comes AFTER lot with
+            }
+
+            // Second: Compare received dates (FIFO - First In First Out)
+            if (lot1.getReceivedDate() != null && lot2.getReceivedDate() != null) {
+                int receivedDateCompare = lot1.getReceivedDate().compareTo(lot2.getReceivedDate());
+                if (receivedDateCompare != 0) {
+                    return receivedDateCompare; // Earlier received date wins
+                }
+            } else if (lot1.getReceivedDate() != null && lot2.getReceivedDate() == null) {
+                return -1; // Lot with received date comes BEFORE lot without
+            } else if (lot1.getReceivedDate() == null && lot2.getReceivedDate() != null) {
+                return 1; // Lot without received date comes AFTER lot with
+            }
+
+            // Third: Compare bay numbers (closer bays first)
+            WarehouseBay bay1 = lotToBayMap.get(lot1.getLotId());
+            WarehouseBay bay2 = lotToBayMap.get(lot2.getLotId());
+
+            Integer bayNo1 = bay1 != null ? bay1.getBayNo() : Integer.MAX_VALUE;
+            Integer bayNo2 = bay2 != null ? bay2.getBayNo() : Integer.MAX_VALUE;
+
+            int bayCompare = bayNo1.compareTo(bayNo2);
+            if (bayCompare != 0) {
+                return bayCompare; // Lower bay number wins
+            }
+
+            // Fourth: Compare lot IDs (tie-breaker)
+            return lot1.getLotId().compareTo(lot2.getLotId());
+        };
+
+        List<InventoryLot> sortedLots = inventoryBalances.stream()
                 .flatMap(balance -> balance.getLots().stream())
                 .filter(lot -> lot.getSku() != null && lot.getSku().equals(skuId))
                 .filter(lot -> availableStock.getOrDefault(lot.getLotId(), 0.0) > 0.0)
                 .sorted(fefoComparator)
                 .collect(Collectors.toList());
+
+        // DEBUG: Show FEFO order for the specific SKU
+        if (skuId == 8) {
+            System.out.println("\n=== DEBUG: FEFO Order for SKU " + skuId + " ===");
+            System.out.println("Current date: 2025-10-23 (for reference)");
+
+            // Show unsorted lots first
+            List<InventoryLot> unsortedLots = inventoryBalances.stream()
+                .flatMap(balance -> balance.getLots().stream())
+                .filter(lot -> lot.getSku() != null && lot.getSku().equals(skuId))
+                .filter(lot -> availableStock.getOrDefault(lot.getLotId(), 0.0) > 0.0)
+                .collect(Collectors.toList());
+
+            System.out.println("\n-- BEFORE SORTING --");
+            for (InventoryLot lot : unsortedLots) {
+                WarehouseBay bay = lotToBayMap.get(lot.getLotId());
+                System.out.println("Lot " + lot.getLotId() +
+                    " - ExpDate: " + (lot.getExpDate() != null ? lot.getExpDate() : "N/A") +
+                    " - ReceivedDate: " + lot.getReceivedDate() +
+                    " - Bay: " + (bay != null ? bay.getBayNo() : "N/A") +
+                    " - Qty: " + lot.getQty());
+            }
+
+            System.out.println("\n-- AFTER SORTING (FEFO) --");
+            for (InventoryLot lot : sortedLots) {
+                WarehouseBay bay = lotToBayMap.get(lot.getLotId());
+                System.out.println("Lot " + lot.getLotId() +
+                    " - ExpDate: " + (lot.getExpDate() != null ? lot.getExpDate() : "N/A") +
+                    " - ReceivedDate: " + lot.getReceivedDate() +
+                    " - Bay: " + (bay != null ? bay.getBayNo() : "N/A") +
+                    " - Qty: " + lot.getQty());
+            }
+            System.out.println("=== END DEBUG ===\n");
+        }
+
+        return sortedLots;
     }
 
     /**

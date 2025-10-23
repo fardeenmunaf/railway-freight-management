@@ -311,9 +311,9 @@ public class PickingPlan {
                 continue;
             }
 
-            System.out.println("\nProcessing OrderLine " + orderLine.getOrderLineId() +
-                    " for Order " + orderLine.getOrder().getOrderId() +
-                    " (SKU: " + orderLine.getSku().getSku() + ")");
+//            System.out.println("\nProcessing OrderLine " + orderLine.getOrderLineId() +
+//                    " for Order " + orderLine.getOrder().getOrderId() +
+//                    " (SKU: " + orderLine.getSku().getSku() + ")");
 
             // Get all bay locations for this order line
             Integer skuId = orderLine.getSku().getItemId();
@@ -515,15 +515,38 @@ public class PickingPlan {
                 result.add(record);
             }
         }
+
+        // DEBUG: Show order of allocations for SKU 8
+        if (sku == 8) {
+            System.out.println("\n=== DEBUG: AllocationRecords for SKU " + sku + " (Order " + orderId + ") ===");
+            for (Allocation.AllocationRecord record : result) {
+                System.out.println("AllocationRecord - Bay: " + record.getBay() +
+                    ", Qty: " + record.getQty() +
+                    ", BoxId: " + record.getBoxId());
+            }
+            System.out.println("=== END DEBUG AllocationRecords ===\n");
+        }
+
         return result;
     }
 
     /**
      * Groups allocation records by unique bay location (aisle + bay),
-     * summing quantities for duplicate locations.
+     * summing quantities for duplicate locations while maintaining FEFO order.
      */
     private List<Allocation.AllocationRecord> groupLocationsByBay(List<Allocation.AllocationRecord> locations) {
-        java.util.Map<String, Allocation.AllocationRecord> grouped = new java.util.HashMap<>();
+        java.util.Map<String, Allocation.AllocationRecord> grouped = new java.util.LinkedHashMap<>();
+
+        // DEBUG: Show input order for SKU 8
+        boolean isSku8 = !locations.isEmpty() && locations.get(0).getSku() == 8;
+        if (isSku8) {
+            System.out.println("\n=== DEBUG: Before groupLocationsByBay for SKU 8 ===");
+            for (Allocation.AllocationRecord record : locations) {
+                System.out.println("Input - Bay: " + record.getBay() +
+                    ", Qty: " + record.getQty() +
+                    ", BoxId: " + record.getBoxId());
+            }
+        }
 
         for (Allocation.AllocationRecord record : locations) {
             String locationKey = record.getAisle() + "-" + record.getBay();
@@ -546,6 +569,19 @@ public class PickingPlan {
             }
         }
 
-        return new ArrayList<>(grouped.values());
+        List<Allocation.AllocationRecord> result = new ArrayList<>(grouped.values());
+
+        // DEBUG: Show output order for SKU 8
+        if (isSku8) {
+            System.out.println("=== DEBUG: After groupLocationsByBay for SKU 8 ===");
+            for (Allocation.AllocationRecord record : result) {
+                System.out.println("Output - Bay: " + record.getBay() +
+                    ", Qty: " + record.getQty() +
+                    ", BoxId: " + record.getBoxId());
+            }
+            System.out.println("=== END DEBUG groupLocationsByBay ===\n");
+        }
+
+        return result;
     }
 }

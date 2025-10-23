@@ -2,6 +2,8 @@ package app;
 
 import app.model.PickTask;
 import app.model.PickWave;
+import app.model.InventoryBalance;
+import app.controller.InventoryBalanceController;
 import app.repositories.*;
 import app.service.TravelTimeFeature;
 import app.service.Allocation;
@@ -49,6 +51,7 @@ public class Main {
         System.out.println("Unloading wagons and fill bays with items...");
         WagonsUnloading wagonsUnloading = new WagonsUnloading();
         wagonsUnloading.unloadAllWagons();
+
 
         //Testes comentados para mais tarde!!!!!!!
 //        System.out.println("Available inventory balances:");
@@ -110,14 +113,15 @@ public class Main {
 //            }
 //        }
 
+        PickingPlan pickingPlan = new PickingPlan();
         // Ver localizações de um SKU específico
-//        System.out.println("\nItem locations for SKU 123:");
-//        List<Allocation.AllocationRecord> locations = pickingPlan.getItemLocations(15, null);
-//        for (Allocation.AllocationRecord loc : locations) {
-//            System.out.println("Lot SKU " + loc.getSku() + " na Aisle " +
-//                    loc.getAisle() + ", Bay " + loc.getBay() +
-//                    ", Qty: " + loc.getQty());
-//        }
+        System.out.println("\nItem locations for SKU 0008:");
+        List<Allocation.AllocationRecord> locations = pickingPlan.getItemLocations(8, null);
+        for (Allocation.AllocationRecord loc : locations) {
+            System.out.println("Lot SKU " + loc.getSku() + " na Aisle " +
+                    loc.getAisle() + ", Bay " + loc.getBay() +
+                    ", Qty: " + loc.getQty());
+        }
 //
 //        // Ver status de elegibilidade das encomendas
 //        System.out.println("\nOrder eligibilities:");
@@ -133,33 +137,114 @@ public class Main {
         // --- end demo ---
 
         // Create PickingPlan instance
-        PickingPlan pickingPlan = new PickingPlan();
 
 //        // Test planPickingTask
         System.out.println("\n=== Testing Pick Task Planning ===");
         PickingPlan.PickingPlanResult result = pickingPlan.planPickingTask();
 
-        System.out.println("\n=== Pick Tasks List ===");
-        for (PickTask task : result.getPickTasks()) {
-            System.out.println("PickTask " + task.getPickTaskId() +
-                    " - Waves: " + task.getPickWaves().size());
-        }
+//        System.out.println("\n=== Pick Tasks List ===");
+//        for (PickTask task : result.getPickTasks()) {
+//            System.out.println("PickTask " + task.getPickTaskId() +
+//                    " - Waves: " + task.getPickWaves().size());
+//        }
 
-        System.out.println("\n=== Pick Waves List ===");
-        for (PickWave wave : result.getPickWaves()) {
-            System.out.println("PickWave " + wave.getPickWaveId() +
-                    " - Cart: " + wave.getCart().getCartId() +
-                    " - Status: " + wave.getStatus());
-        }
+//        System.out.println("\n=== Pick Waves List ===");
+//        for (PickWave wave : result.getPickWaves()) {
+//            System.out.println("PickWave " + wave.getPickWaveId() +
+//                    " - Cart: " + wave.getCart().getCartId() +
+//                    " - Status: " + wave.getStatus());
+//        }
 
         // Test planPickingTaskForOrder for a specific order
         System.out.println("\n=== Testing Pick Task Planning for Order 1 ===");
-        PickingPlan.PickingPlanResult orderResult = pickingPlan.planPickingTaskForOrder(1);
+        PickingPlan.PickingPlanResult orderResult = pickingPlan.planPickingTaskForOrder(5);
 
         System.out.println("Pick Waves for Order 1: " + orderResult.getPickWaves().size());
+
+
+        System.out.println("\n--- AFTER UNLOADING ---");
+        InventoryBalanceController balanceController = new InventoryBalanceController();
+        List<InventoryBalance> allBalances = balanceController.getAllInventoryBalances();
+        allBalances = balanceController.getAllInventoryBalances();
+        int assignedCount = 0;
+        int stillUnassigned = 0;
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() != null) {
+                assignedCount++;
+                System.out.println("Balance ID: " + balance.getBalanceId() +
+                        " - Bay: " + balance.getBay().getBayNo());
+
+                // Print lot details including expDate and receivedDate
+                for (app.model.InventoryLot lot : balance.getLots()) {
+                    System.out.println("  Lot ID: " + lot.getLotId() +
+                            ", SKU: " + lot.getSku() +
+                            ", Qty: " + lot.getQty() +
+                            ", ExpDate: " + (lot.getExpDate() != null ? lot.getExpDate() : "N/A") +
+                            ", ReceivedDate: " + (lot.getReceivedDate() != null ? lot.getReceivedDate() : "N/A"));
+                }
+            } else {
+                stillUnassigned++;
+            }
+        }
+        System.out.println("\nTotal assigned balances: " + assignedCount);
+        System.out.println("Total still unassigned: " + stillUnassigned);
+
+        // Print inventory balance for bay 2
+        System.out.println("\n=== Inventory Balance for Bay 2 ===");
+
+        boolean foundBay2 = false;
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() != null && balance.getBay().getBayId() == 2) {
+                System.out.println("Balance ID: " + balance.getBalanceId());
+                System.out.println("Bay ID: " + balance.getBay().getBayId());
+                System.out.println("Quantity: " + balance.getQty());
+                System.out.println("Number of lots: " + balance.getLots().size());
+                if (!balance.getLots().isEmpty()) {
+                    System.out.println("Lots details:");
+                    balance.getLots().forEach(lot -> {
+                        System.out.println("  - Lot ID: " + lot.getLotId() +
+                                ", SKU: " + lot.getSku() +
+                                ", Qty: " + lot.getQty());
+                    });
+                }
+                System.out.println("---");
+                foundBay2 = true;
+            }
+        }
+
+        if (!foundBay2) {
+            System.out.println("No inventory balance found for bay 2");
+        }
+
+        boolean foundBay3 = false;
+        for (InventoryBalance balance : allBalances) {
+            if (balance.getBay() != null && balance.getBay().getBayId() == 3) {
+                System.out.println("Balance ID: " + balance.getBalanceId());
+                System.out.println("Bay ID: " + balance.getBay().getBayId());
+                System.out.println("Quantity: " + balance.getQty());
+                System.out.println("Number of lots: " + balance.getLots().size());
+                if (!balance.getLots().isEmpty()) {
+                    System.out.println("Lots details:");
+                    balance.getLots().forEach(lot -> {
+                        System.out.println("  - Lot ID: " + lot.getLotId() +
+                                ", SKU: " + lot.getSku() +
+                                ", Qty: " + lot.getQty());
+                    });
+                }
+                System.out.println("---");
+                foundBay3 = true;
+            }
+        }
+
+        if (!foundBay3) {
+            System.out.println("No inventory balance found for bay 3");
+        }
+        System.out.println("=====================================\n");
+
 
         System.out.println("\n\n\n");
 
         MainMenu.display();
     }
 }
+

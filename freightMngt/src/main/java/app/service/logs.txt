@@ -1,0 +1,282 @@
+=== DEBUG: FEFO Order for SKU 8 ===
+Current date: 2025-10-23 (for reference)
+
+-- BEFORE SORTING --
+Lot 43 - ExpDate: 2025-10-22T00:00 - ReceivedDate: 2025-08-02T13:17 - Bay: 2 - Qty: 9
+Lot 2 - ExpDate: 2026-01-05T00:00 - ReceivedDate: 2025-07-21T22:02 - Bay: 3 - Qty: 26
+Lot 84 - ExpDate: N/A - ReceivedDate: 2025-08-17T06:39 - Bay: 3 - Qty: 33
+Lot 47 - ExpDate: N/A - ReceivedDate: 2025-09-10T23:06 - Bay: 3 - Qty: 34
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+
+-- AFTER SORTING (FEFO) --
+Lot 43 - ExpDate: 2025-10-22T00:00 - ReceivedDate: 2025-08-02T13:17 - Bay: 2 - Qty: 9
+Lot 2 - ExpDate: 2026-01-05T00:00 - ReceivedDate: 2025-07-21T22:02 - Bay: 3 - Qty: 26
+Lot 84 - ExpDate: N/A - ReceivedDate: 2025-08-17T06:39 - Bay: 3 - Qty: 33
+Lot 47 - ExpDate: N/A - ReceivedDate: 2025-09-10T23:06 - Bay: 3 - Qty: 34
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+=== END DEBUG ===
+
+
+=== DEBUG: FEFO Order for SKU 8 ===
+Current date: 2025-10-23 (for reference)
+
+-- BEFORE SORTING --
+Lot 84 - ExpDate: N/A - ReceivedDate: 2025-08-17T06:39 - Bay: 3 - Qty: 33
+Lot 47 - ExpDate: N/A - ReceivedDate: 2025-09-10T23:06 - Bay: 3 - Qty: 34
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+
+-- AFTER SORTING (FEFO) --
+Lot 84 - ExpDate: N/A - ReceivedDate: 2025-08-17T06:39 - Bay: 3 - Qty: 33
+Lot 47 - ExpDate: N/A - ReceivedDate: 2025-09-10T23:06 - Bay: 3 - Qty: 34
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+=== END DEBUG ===
+
+
+=== DEBUG: FEFO Order for SKU 8 ===
+Current date: 2025-10-23 (for reference)
+
+-- BEFORE SORTING --
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+
+-- AFTER SORTING (FEFO) --
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+=== END DEBUG ===
+
+
+=== DEBUG: FEFO Order for SKU 8 ===
+Current date: 2025-10-23 (for reference)
+
+-- BEFORE SORTING --
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+
+-- AFTER SORTING (FEFO) --
+Lot 111 - ExpDate: N/A - ReceivedDate: 2025-09-20T17:57 - Bay: 3 - Qty: 70
+=== END DEBUG ===
+
+
+=== DEBUG: FEFO Order for SKU 8 ===
+Current date: 2025-10-23 (for reference)
+
+-- BEFORE SORTING --
+
+-- AFTER SORTING (FEFO) --
+=== END DEBUG ===
+
+  Selected Cart 3 (capacity: 4 items per trip) - LOW CAPACITY WARNING
+  Location: Aisle W1-A1, Bay 1 - Available: 34.0 - To collect: 34.0 - Trips needed: 9
+    Wave 828: Cart 3, Trip 1/9, Qty: 4.0 (Total collected: 4.0/34.0)
+    Wave 829: Cart 3, Trip 2/9, Qty: 4.0 (Total collected: 8.0/34.0)
+    Wave 830: Cart 3, Trip 3/9, Qty: 4.0 (Total collected: 12.0/34.0)
+    Wave 831: Cart 3, Trip 4/9, Qty: 4.0 (Total collected: 16.0/34.0)
+    Wave 832: Cart 3, Trip 5/9, Qty: 4.0 (Total collected: 20.0/34.0)
+    Wave 833: Cart 3, Trip 6/9, Qty: 4.0 (Total collected: 24.0/34.0)
+    Wave 834: Cart 3, Trip 7/9, Qty: 4.0 (Total collected: 28.0/34.0)
+    Wave 835: Cart 3, Trip 8/9, Qty: 4.0 (Total collected: 32.0/34.0)
+    Wave 836: Cart 3, Trip 9/9, Qty: 2.0 (Total collected: 34.0/34.0)
+  PickTask 99 created with 9 wave(s) (trips)
+
+=== DEBUG: AllocationRecords for SKU 8 (Order 5) ===
+AllocationRecord - Bay: 3, Qty: 54.0, BoxId: 111
+=== END DEBUG AllocationRecords ===
+
+
+=== DEBUG: Before groupLocationsByBay for SKU 8 ===
+Input - Bay: 3, Qty: 54.0, BoxId: 111
+=== DEBUG: After groupLocationsByBay for SKU 8 ===
+Output - Bay: 3, Qty: 54.0, BoxId: 111
+=== END DEBUG groupLocationsByBay ===
+
+  Selected Cart 4 (capacity: 3 items per trip) - LOW CAPACITY WARNING
+  Location: Aisle W1-A1, Bay 3 - Available: 54.0 - To collect: 54.0 - Trips needed: 18
+    Wave 837: Cart 4, Trip 1/18, Qty: 3.0 (Total collected: 3.0/54.0)
+    Wave 838: Cart 4, Trip 2/18, Qty: 3.0 (Total collected: 6.0/54.0)
+    Wave 839: Cart 4, Trip 3/18, Qty: 3.0 (Total collected: 9.0/54.0)
+    Wave 840: Cart 4, Trip 4/18, Qty: 3.0 (Total collected: 12.0/54.0)
+    Wave 841: Cart 4, Trip 5/18, Qty: 3.0 (Total collected: 15.0/54.0)
+    Wave 842: Cart 4, Trip 6/18, Qty: 3.0 (Total collected: 18.0/54.0)
+    Wave 843: Cart 4, Trip 7/18, Qty: 3.0 (Total collected: 21.0/54.0)
+    Wave 844: Cart 4, Trip 8/18, Qty: 3.0 (Total collected: 24.0/54.0)
+    Wave 845: Cart 4, Trip 9/18, Qty: 3.0 (Total collected: 27.0/54.0)
+    Wave 846: Cart 4, Trip 10/18, Qty: 3.0 (Total collected: 30.0/54.0)
+    Wave 847: Cart 4, Trip 11/18, Qty: 3.0 (Total collected: 33.0/54.0)
+    Wave 848: Cart 4, Trip 12/18, Qty: 3.0 (Total collected: 36.0/54.0)
+    Wave 849: Cart 4, Trip 13/18, Qty: 3.0 (Total collected: 39.0/54.0)
+    Wave 850: Cart 4, Trip 14/18, Qty: 3.0 (Total collected: 42.0/54.0)
+    Wave 851: Cart 4, Trip 15/18, Qty: 3.0 (Total collected: 45.0/54.0)
+    Wave 852: Cart 4, Trip 16/18, Qty: 3.0 (Total collected: 48.0/54.0)
+    Wave 853: Cart 4, Trip 17/18, Qty: 3.0 (Total collected: 51.0/54.0)
+    Wave 854: Cart 4, Trip 18/18, Qty: 3.0 (Total collected: 54.0/54.0)
+  PickTask 100 created with 18 wave(s) (trips)
+
+=== Picking Task Planning Complete for Order 5 ===
+Total Pick Tasks created: 100 (one per eligible OrderLine)
+Total Pick Waves created: 27 (one per trip)
+Pick Waves for Order 1: 27
+
+--- AFTER UNLOADING ---
+Balance ID: 1 - Bay: 1
+  Lot ID: 4, SKU: 22, Qty: 19, ExpDate: 2026-01-10T00:00, ReceivedDate: 2025-09-06T12:45
+  Lot ID: 89, SKU: 22, Qty: 61, ExpDate: 2026-05-11T00:00, ReceivedDate: 2025-09-22T19:57
+  Lot ID: 1, SKU: 22, Qty: 7, ExpDate: N/A, ReceivedDate: 2025-07-05T15:42
+  Lot ID: 76, SKU: 22, Qty: 39, ExpDate: N/A, ReceivedDate: 2025-07-25T15:50
+  Lot ID: 14, SKU: 22, Qty: 54, ExpDate: N/A, ReceivedDate: 2025-08-03T21:19
+Balance ID: 2 - Bay: 2
+  Lot ID: 43, SKU: 8, Qty: 9, ExpDate: 2025-10-22T00:00, ReceivedDate: 2025-08-02T13:17
+Balance ID: 3 - Bay: 3
+  Lot ID: 2, SKU: 8, Qty: 26, ExpDate: 2026-01-05T00:00, ReceivedDate: 2025-07-21T22:02
+  Lot ID: 84, SKU: 8, Qty: 33, ExpDate: N/A, ReceivedDate: 2025-08-17T06:39
+  Lot ID: 47, SKU: 8, Qty: 34, ExpDate: N/A, ReceivedDate: 2025-09-10T23:06
+  Lot ID: 111, SKU: 8, Qty: 70, ExpDate: N/A, ReceivedDate: 2025-09-20T17:57
+Balance ID: 4 - Bay: 4
+  Lot ID: 3, SKU: 6, Qty: 52, ExpDate: 2025-09-20T00:00, ReceivedDate: 2025-09-17T21:57
+  Lot ID: 34, SKU: 6, Qty: 74, ExpDate: 2025-12-10T00:00, ReceivedDate: 2025-08-08T19:18
+  Lot ID: 42, SKU: 6, Qty: 27, ExpDate: 2026-03-11T00:00, ReceivedDate: 2025-08-05T07:48
+  Lot ID: 6, SKU: 6, Qty: 48, ExpDate: 2026-05-16T00:00, ReceivedDate: 2025-08-03T22:13
+Balance ID: 5 - Bay: 5
+  Lot ID: 110, SKU: 16, Qty: 49, ExpDate: 2026-01-27T00:00, ReceivedDate: 2025-08-03T09:06
+  Lot ID: 28, SKU: 16, Qty: 32, ExpDate: 2026-02-11T00:00, ReceivedDate: 2025-09-18T10:27
+  Lot ID: 52, SKU: 16, Qty: 42, ExpDate: 2026-05-07T00:00, ReceivedDate: 2025-08-12T00:25
+  Lot ID: 29, SKU: 16, Qty: 49, ExpDate: N/A, ReceivedDate: 2025-08-06T11:18
+  Lot ID: 59, SKU: 16, Qty: 50, ExpDate: N/A, ReceivedDate: 2025-08-08T06:43
+  Lot ID: 5, SKU: 16, Qty: 64, ExpDate: N/A, ReceivedDate: 2025-08-22T17:56
+  Lot ID: 96, SKU: 16, Qty: 73, ExpDate: N/A, ReceivedDate: 2025-09-04T09:42
+  Lot ID: 61, SKU: 16, Qty: 79, ExpDate: N/A, ReceivedDate: 2025-09-08T16:34
+  Lot ID: 66, SKU: 16, Qty: 71, ExpDate: N/A, ReceivedDate: 2025-09-18T13:03
+Balance ID: 6 - Bay: 6
+  Lot ID: 7, SKU: 1, Qty: 55, ExpDate: 2025-10-17T00:00, ReceivedDate: 2025-09-23T21:48
+  Lot ID: 51, SKU: 1, Qty: 44, ExpDate: N/A, ReceivedDate: 2025-07-11T03:58
+  Lot ID: 38, SKU: 1, Qty: 37, ExpDate: N/A, ReceivedDate: 2025-08-24T22:33
+Balance ID: 7 - Bay: 7
+  Lot ID: 104, SKU: 18, Qty: 66, ExpDate: 2025-10-08T00:00, ReceivedDate: 2025-07-12T19:15
+  Lot ID: 8, SKU: 18, Qty: 34, ExpDate: 2026-01-22T00:00, ReceivedDate: 2025-08-04T03:07
+Balance ID: 8 - Bay: 8
+  Lot ID: 22, SKU: 19, Qty: 19, ExpDate: 2025-10-23T00:00, ReceivedDate: 2025-08-16T09:26
+  Lot ID: 9, SKU: 19, Qty: 75, ExpDate: 2026-02-04T00:00, ReceivedDate: 2025-08-14T02:43
+  Lot ID: 73, SKU: 19, Qty: 24, ExpDate: N/A, ReceivedDate: 2025-08-07T21:23
+Balance ID: 9 - Bay: 9
+  Lot ID: 81, SKU: 5, Qty: 36, ExpDate: 2025-10-27T00:00, ReceivedDate: 2025-09-04T16:00
+  Lot ID: 114, SKU: 5, Qty: 46, ExpDate: 2025-12-08T00:00, ReceivedDate: 2025-07-26T07:39
+  Lot ID: 78, SKU: 5, Qty: 63, ExpDate: 2025-12-29T00:00, ReceivedDate: 2025-09-25T02:04
+  Lot ID: 95, SKU: 5, Qty: 15, ExpDate: 2026-02-18T00:00, ReceivedDate: 2025-08-25T03:21
+  Lot ID: 72, SKU: 5, Qty: 8, ExpDate: 2026-02-20T00:00, ReceivedDate: 2025-07-02T19:46
+  Lot ID: 77, SKU: 5, Qty: 73, ExpDate: 2026-03-22T00:00, ReceivedDate: 2025-09-23T01:53
+  Lot ID: 92, SKU: 5, Qty: 10, ExpDate: 2026-04-09T00:00, ReceivedDate: 2025-08-05T16:35
+  Lot ID: 26, SKU: 5, Qty: 38, ExpDate: N/A, ReceivedDate: 2025-07-03T14:42
+  Lot ID: 10, SKU: 5, Qty: 74, ExpDate: N/A, ReceivedDate: 2025-08-06T00:19
+Balance ID: 10 - Bay: 10
+  Lot ID: 109, SKU: 17, Qty: 67, ExpDate: 2025-09-08T00:00, ReceivedDate: 2025-07-09T12:24
+  Lot ID: 99, SKU: 17, Qty: 46, ExpDate: 2026-02-09T00:00, ReceivedDate: 2025-09-08T13:37
+  Lot ID: 90, SKU: 17, Qty: 51, ExpDate: 2026-02-27T00:00, ReceivedDate: 2025-08-21T17:20
+  Lot ID: 36, SKU: 17, Qty: 55, ExpDate: 2026-03-03T00:00, ReceivedDate: 2025-07-10T18:47
+  Lot ID: 91, SKU: 17, Qty: 26, ExpDate: 2026-03-14T00:00, ReceivedDate: 2025-07-25T02:17
+  Lot ID: 80, SKU: 17, Qty: 57, ExpDate: N/A, ReceivedDate: 2025-07-01T13:31
+  Lot ID: 11, SKU: 17, Qty: 34, ExpDate: N/A, ReceivedDate: 2025-09-01T09:38
+Balance ID: 11 - Bay: 11
+  Lot ID: 45, SKU: 21, Qty: 27, ExpDate: 2025-09-26T00:00, ReceivedDate: 2025-07-20T02:05
+  Lot ID: 74, SKU: 21, Qty: 62, ExpDate: 2025-11-16T00:00, ReceivedDate: 2025-06-30T22:34
+  Lot ID: 17, SKU: 21, Qty: 35, ExpDate: 2026-05-13T00:00, ReceivedDate: 2025-08-02T21:48
+  Lot ID: 12, SKU: 21, Qty: 17, ExpDate: N/A, ReceivedDate: 2025-09-21T01:26
+Balance ID: 12 - Bay: 12
+  Lot ID: 21, SKU: 2, Qty: 38, ExpDate: 2025-10-23T00:00, ReceivedDate: 2025-08-17T13:33
+  Lot ID: 101, SKU: 2, Qty: 6, ExpDate: 2025-12-20T00:00, ReceivedDate: 2025-07-31T05:18
+  Lot ID: 13, SKU: 2, Qty: 64, ExpDate: 2025-12-23T00:00, ReceivedDate: 2025-09-10T04:45
+  Lot ID: 87, SKU: 2, Qty: 59, ExpDate: N/A, ReceivedDate: 2025-08-16T01:22
+Balance ID: 13 - Bay: 13
+  Lot ID: 115, SKU: 13, Qty: 79, ExpDate: 2025-10-15T00:00, ReceivedDate: 2025-08-13T16:42
+  Lot ID: 16, SKU: 13, Qty: 26, ExpDate: 2025-11-23T00:00, ReceivedDate: 2025-07-14T03:04
+  Lot ID: 15, SKU: 13, Qty: 59, ExpDate: 2026-03-02T00:00, ReceivedDate: 2025-08-21T00:37
+  Lot ID: 70, SKU: 13, Qty: 41, ExpDate: N/A, ReceivedDate: 2025-08-17T21:26
+Balance ID: 14 - Bay: 14
+  Lot ID: 83, SKU: 7, Qty: 15, ExpDate: 2025-09-08T00:00, ReceivedDate: 2025-09-27T07:25
+  Lot ID: 19, SKU: 7, Qty: 20, ExpDate: 2025-11-10T00:00, ReceivedDate: 2025-08-29T17:55
+  Lot ID: 82, SKU: 7, Qty: 39, ExpDate: 2025-12-01T00:00, ReceivedDate: 2025-07-09T13:43
+  Lot ID: 49, SKU: 7, Qty: 71, ExpDate: 2025-12-05T00:00, ReceivedDate: 2025-08-02T17:14
+  Lot ID: 58, SKU: 7, Qty: 26, ExpDate: 2026-01-12T00:00, ReceivedDate: 2025-09-08T02:38
+  Lot ID: 18, SKU: 7, Qty: 41, ExpDate: 2026-03-26T00:00, ReceivedDate: 2025-07-04T00:22
+  Lot ID: 113, SKU: 7, Qty: 35, ExpDate: N/A, ReceivedDate: 2025-08-31T19:05
+  Lot ID: 25, SKU: 7, Qty: 53, ExpDate: N/A, ReceivedDate: 2025-09-01T16:14
+  Lot ID: 35, SKU: 7, Qty: 57, ExpDate: N/A, ReceivedDate: 2025-09-19T18:02
+Balance ID: 15 - Bay: 15
+  Lot ID: 103, SKU: 4, Qty: 56, ExpDate: 2025-10-05T00:00, ReceivedDate: 2025-08-22T19:38
+  Lot ID: 20, SKU: 4, Qty: 40, ExpDate: 2025-11-24T00:00, ReceivedDate: 2025-08-25T12:37
+  Lot ID: 57, SKU: 4, Qty: 48, ExpDate: 2026-05-19T00:00, ReceivedDate: 2025-07-17T12:53
+  Lot ID: 97, SKU: 4, Qty: 78, ExpDate: 2026-05-24T00:00, ReceivedDate: 2025-09-12T19:58
+  Lot ID: 32, SKU: 4, Qty: 53, ExpDate: N/A, ReceivedDate: 2025-08-15T04:39
+  Lot ID: 64, SKU: 4, Qty: 6, ExpDate: N/A, ReceivedDate: 2025-08-21T04:06
+  Lot ID: 23, SKU: 4, Qty: 60, ExpDate: N/A, ReceivedDate: 2025-09-09T00:51
+Balance ID: 16 - Bay: 16
+  Lot ID: 24, SKU: 20, Qty: 18, ExpDate: 2025-09-09T00:00, ReceivedDate: 2025-08-26T19:44
+  Lot ID: 94, SKU: 20, Qty: 27, ExpDate: 2025-10-10T00:00, ReceivedDate: 2025-07-25T11:26
+  Lot ID: 107, SKU: 20, Qty: 9, ExpDate: 2025-12-06T00:00, ReceivedDate: 2025-07-14T04:29
+  Lot ID: 75, SKU: 20, Qty: 39, ExpDate: N/A, ReceivedDate: 2025-07-09T00:41
+  Lot ID: 53, SKU: 20, Qty: 20, ExpDate: N/A, ReceivedDate: 2025-09-07T09:25
+  Lot ID: 106, SKU: 20, Qty: 23, ExpDate: N/A, ReceivedDate: 2025-09-09T13:43
+  Lot ID: 60, SKU: 20, Qty: 38, ExpDate: N/A, ReceivedDate: 2025-09-18T13:45
+Balance ID: 17 - Bay: 17
+  Lot ID: 56, SKU: 12, Qty: 52, ExpDate: 2026-01-25T00:00, ReceivedDate: 2025-08-22T01:15
+  Lot ID: 27, SKU: 12, Qty: 69, ExpDate: N/A, ReceivedDate: 2025-07-11T23:08
+  Lot ID: 50, SKU: 12, Qty: 10, ExpDate: N/A, ReceivedDate: 2025-07-15T21:05
+  Lot ID: 62, SKU: 12, Qty: 5, ExpDate: N/A, ReceivedDate: 2025-07-16T20:36
+  Lot ID: 88, SKU: 12, Qty: 22, ExpDate: N/A, ReceivedDate: 2025-09-11T02:06
+Balance ID: 18 - Bay: 18
+  Lot ID: 30, SKU: 15, Qty: 12, ExpDate: 2026-05-07T00:00, ReceivedDate: 2025-09-12T09:42
+  Lot ID: 54, SKU: 15, Qty: 26, ExpDate: N/A, ReceivedDate: 2025-07-18T14:00
+  Lot ID: 93, SKU: 15, Qty: 26, ExpDate: N/A, ReceivedDate: 2025-08-21T05:31
+Balance ID: 19 - Bay: 19
+  Lot ID: 31, SKU: 10, Qty: 53, ExpDate: 2025-10-22T00:00, ReceivedDate: 2025-09-17T19:04
+  Lot ID: 39, SKU: 10, Qty: 73, ExpDate: N/A, ReceivedDate: 2025-07-27T19:16
+Balance ID: 20 - Bay: 20
+  Lot ID: 33, SKU: 24, Qty: 21, ExpDate: 2025-09-19T00:00, ReceivedDate: 2025-08-26T01:24
+  Lot ID: 69, SKU: 24, Qty: 50, ExpDate: 2025-12-19T00:00, ReceivedDate: 2025-07-16T00:19
+  Lot ID: 79, SKU: 24, Qty: 79, ExpDate: N/A, ReceivedDate: 2025-07-17T06:00
+  Lot ID: 48, SKU: 24, Qty: 51, ExpDate: N/A, ReceivedDate: 2025-07-20T19:22
+  Lot ID: 55, SKU: 24, Qty: 38, ExpDate: N/A, ReceivedDate: 2025-09-06T07:49
+Balance ID: 21 - Bay: 1
+  Lot ID: 108, SKU: 23, Qty: 63, ExpDate: 2025-09-11T00:00, ReceivedDate: 2025-08-27T20:55
+  Lot ID: 37, SKU: 23, Qty: 29, ExpDate: 2025-11-14T00:00, ReceivedDate: 2025-09-19T16:18
+  Lot ID: 65, SKU: 23, Qty: 78, ExpDate: N/A, ReceivedDate: 2025-07-05T22:10
+Balance ID: 22 - Bay: 2
+  Lot ID: 105, SKU: 3, Qty: 64, ExpDate: 2025-12-05T00:00, ReceivedDate: 2025-07-03T07:10
+  Lot ID: 71, SKU: 3, Qty: 41, ExpDate: N/A, ReceivedDate: 2025-07-03T04:01
+  Lot ID: 116, SKU: 3, Qty: 50, ExpDate: N/A, ReceivedDate: 2025-07-07T10:14
+  Lot ID: 40, SKU: 3, Qty: 48, ExpDate: N/A, ReceivedDate: 2025-07-12T17:11
+  Lot ID: 63, SKU: 3, Qty: 17, ExpDate: N/A, ReceivedDate: 2025-08-09T07:57
+Balance ID: 23 - Bay: 3
+  Lot ID: 41, SKU: 9, Qty: 31, ExpDate: 2025-09-16T00:00, ReceivedDate: 2025-08-06T08:45
+  Lot ID: 102, SKU: 9, Qty: 52, ExpDate: 2025-12-01T00:00, ReceivedDate: 2025-07-16T10:14
+  Lot ID: 112, SKU: 9, Qty: 43, ExpDate: N/A, ReceivedDate: 2025-08-03T05:33
+Balance ID: 24 - Bay: 4
+  Lot ID: 44, SKU: 25, Qty: 54, ExpDate: 2026-03-11T00:00, ReceivedDate: 2025-09-05T15:03
+  Lot ID: 100, SKU: 25, Qty: 60, ExpDate: 2026-04-03T00:00, ReceivedDate: 2025-08-13T09:00
+  Lot ID: 46, SKU: 25, Qty: 10, ExpDate: N/A, ReceivedDate: 2025-09-22T03:29
+Balance ID: 25 - Bay: 5
+  Lot ID: 67, SKU: 14, Qty: 53, ExpDate: N/A, ReceivedDate: 2025-07-15T09:02
+  Lot ID: 86, SKU: 14, Qty: 16, ExpDate: N/A, ReceivedDate: 2025-09-05T05:58
+Balance ID: 26 - Bay: 6
+  Lot ID: 68, SKU: 11, Qty: 71, ExpDate: 2026-03-22T00:00, ReceivedDate: 2025-08-16T12:45
+  Lot ID: 85, SKU: 11, Qty: 50, ExpDate: 2026-04-10T00:00, ReceivedDate: 2025-07-01T14:49
+  Lot ID: 98, SKU: 11, Qty: 36, ExpDate: N/A, ReceivedDate: 2025-09-18T20:32
+
+Total assigned balances: 26
+Total still unassigned: 0
+
+=== Inventory Balance for Bay 2 ===
+Balance ID: 2
+Bay ID: 2
+Quantity: 9
+Number of lots: 1
+Lots details:
+  - Lot ID: 43, SKU: 8, Qty: 9
+---
+Balance ID: 3
+Bay ID: 3
+Quantity: 163
+Number of lots: 4
+Lots details:
+  - Lot ID: 2, SKU: 8, Qty: 26
+  - Lot ID: 84, SKU: 8, Qty: 33
+  - Lot ID: 47, SKU: 8, Qty: 34
+  - Lot ID: 111, SKU: 8, Qty: 70
+---
+=====================================
+
