@@ -1,15 +1,13 @@
 package app;
 
+import app.controller.PickRouteController;
 import app.model.PickTask;
 import app.model.PickWave;
 import app.repositories.*;
-import app.service.TravelTimeFeature;
-import app.service.Allocation;
-import app.service.PickingPlan;
-import app.service.WagonsUnloading;
+import app.service.*;
 import app.view.MainMenu;
 
-import java.util.List;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -158,6 +156,47 @@ public class Main {
 
         System.out.println("Pick Waves for Order 1: " + orderResult.getPickWaves().size());
 
+
+
+        // Calculate routes for all pick tasks
+        PickRouteController routeController = new PickRouteController();
+        System.out.println("\n=== Calculating Optimal Routes ===");
+        Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> allRoutes =
+                routeController.calculateRoutesForPickTasks(result);
+
+        // Display results
+        for (Map.Entry<Integer, Map<String, PickRouteOptimizationService.RouteResult>> entry : allRoutes.entrySet()) {
+            System.out.println("\nPickTask " + entry.getKey() + ":");
+            for (Map.Entry<String, PickRouteOptimizationService.RouteResult> routeEntry : entry.getValue().entrySet()) {
+                System.out.println("  " + routeEntry.getValue());
+            }
+        }
+
+        // Calculate and display total distance for all pick tasks
+        System.out.println("\n=== Total Distance Summary ===");
+        int totalDistanceStrategyA = 0;
+        int totalDistanceStrategyB = 0;
+
+        for (Map.Entry<Integer, Map<String, PickRouteOptimizationService.RouteResult>> entry : allRoutes.entrySet()) {
+            Map<String, PickRouteOptimizationService.RouteResult> strategies = entry.getValue();
+
+            if (strategies.containsKey("strategyA")) {
+                totalDistanceStrategyA += strategies.get("strategyA").getTotalDistance();
+            }
+            if (strategies.containsKey("strategyB")) {
+                totalDistanceStrategyB += strategies.get("strategyB").getTotalDistance();
+            }
+        }
+
+        System.out.println("Total Distance (Strategy A - Deterministic Sweep): " + totalDistanceStrategyA);
+        System.out.println("Total Distance (Strategy B - Nearest Neighbour): " + totalDistanceStrategyB);
+        System.out.println("Best Strategy: " + (totalDistanceStrategyA <= totalDistanceStrategyB ?
+                "Strategy A (saves " + (totalDistanceStrategyB - totalDistanceStrategyA) + " steps)" :
+                "Strategy B (saves " + (totalDistanceStrategyA - totalDistanceStrategyB) + " steps)"));
+
+        // Calculate consolidated route for all pick tasks
+
+        
         System.out.println("\n\n\n");
 
         MainMenu.display();
