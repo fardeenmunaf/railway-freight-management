@@ -191,9 +191,13 @@ public class Main {
                 "Strategy A (saves " + (totalDistanceStrategyB - totalDistanceStrategyA) + " steps)" :
                 "Strategy B (saves " + (totalDistanceStrategyA - totalDistanceStrategyB) + " steps)"));
 
-// === NOVA SECÇÃO: Rotas consolidadas por Order com detalhe ===
+// ═══════════════════════════════════════════════════════════════
+// NOVA SECÇÃO: Rotas Detalhadas por Order (do zero)
+// ═══════════════════════════════════════════════════════════════
 
-        System.out.println("\n\n=== Detailed Route Information by Order ===");
+        System.out.println("\n\n╔════════════════════════════════════════════════════════════╗");
+        System.out.println("║         DETAILED ROUTE ANALYSIS BY ORDER                   ║");
+        System.out.println("╚════════════════════════════════════════════════════════════╝");
 
 // 1. Agrupar PickTasks por Order
         Map<Integer, List<PickTask>> tasksByOrder = new HashMap<>();
@@ -207,58 +211,77 @@ public class Main {
             Integer orderId = entry.getKey();
             List<PickTask> tasks = entry.getValue();
 
-            System.out.println("\n╔══════════════════════════════════════════════════════════════╗");
-            System.out.println("║  ORDER " + orderId + " - Detailed Route                              ║");
-            System.out.println("╚══════════════════════════════════════════════════════════════╝");
+            System.out.println("\n╔════════════════════════════════════════════════════════════╗");
+            System.out.println("║  ORDER " + String.format("%5d", orderId) + " - Route Comparison                         ║");
+            System.out.println("╚════════════════════════════════════════════════════════════╝");
 
-            // Coletar bays únicas e mapear SKUs por bay
+            // 2.1 Coletar todas as bays únicas desta order
             Map<String, PickRouteOptimizationService.BayLocation> uniqueBays = new LinkedHashMap<>();
-            Map<String, List<Integer>> skusByBay = new HashMap<>();
+            Map<String, Map<Integer, Double>> qtyBySkuByBay = new HashMap<>();
 
             for (PickTask pickTask : tasks) {
                 Integer sku = pickTask.getOrderLine().getSku().getItemId();
+                Double requestedQty = pickTask.getOrderLine().getQty();
+
                 List<Allocation.AllocationRecord> allocations =
                         pickingPlan.getItemLocations(sku, orderId);
 
                 for (Allocation.AllocationRecord record : allocations) {
                     String bayKey = "1-" + record.getBay();
 
+                    // Guardar quantidade por SKU por bay
+                    qtyBySkuByBay.computeIfAbsent(bayKey, k -> new HashMap<>())
+                            .merge(sku, record.getQty(), Double::sum);
+
+                    // Criar BayLocation única
                     if (!uniqueBays.containsKey(bayKey)) {
                         uniqueBays.put(bayKey, new PickRouteOptimizationService.BayLocation(
-                                "1", record.getBay(), record.getQty()
+                                "1", record.getBay(), 0.0
                         ));
                     }
 
-                    skusByBay.computeIfAbsent(bayKey, k -> new ArrayList<>()).add(sku);
+                    // Atualizar quantidade total da bay
+                    double totalQty = qtyBySkuByBay.get(bayKey).values().stream()
+                            .mapToDouble(Double::doubleValue).sum();
+                    uniqueBays.get(bayKey).setQuantity(totalQty);
                 }
             }
 
-            // Calcular rotas
+            // 2.2 Calcular rotas para as bays únicas
+            if (uniqueBays.isEmpty()) {
+                System.out.println("  ⚠️  No inventory available for this order");
+                continue;
+            }
+
             List<PickRouteOptimizationService.BayLocation> orderBays =
                     new ArrayList<>(uniqueBays.values());
 
             Map<String, PickRouteOptimizationService.RouteResult> orderRoutes =
                     routeController.optimizeRoute(orderBays);
 
-            // Apresentar Strategy A
+            // ═══════════════════════════════════════════════════════════════
+            // STRATEGY A - Deterministic Sweep (Ascending)
+            // ═══════════════════════════════════════════════════════════════
+
             if (orderRoutes.containsKey("strategyA")) {
                 PickRouteOptimizationService.RouteResult routeA = orderRoutes.get("strategyA");
 
-                System.out.println("\n▶ Strategy A (Deterministic Sweep):");
+                System.out.println("\n▶ Strategy A (Deterministic Sweep - Ascending)");
                 System.out.println("  Total Distance: " + routeA.getTotalDistance() + " steps\n");
 
                 int currentAisle = 0;
                 int currentBay = 0;
                 int stepCount = 0;
 
-                System.out.println("  Step-by-step route:");
-                System.out.println("  ─────────────────────────────────────────────────────────────");
+                System.out.println("  Step | From     → To       | Distance | Cumulative | Items Picked");
+                System.out.println("  ─────┼──────────┼──────────┼──────────┼────────────┼────────────────────────");
 
                 for (int i = 0; i < routeA.getPath().size(); i++) {
                     PickRouteOptimizationService.BayLocation bay = routeA.getPath().get(i);
                     int nextAisle = Integer.parseInt(bay.getAisle());
                     int nextBay = bay.getBay();
 
+                    // Calcular distância
                     int distance = 0;
                     if (currentAisle == nextAisle) {
                         distance = Math.abs(currentBay - nextBay);
@@ -268,41 +291,51 @@ public class Main {
 
                     stepCount += distance;
 
+                    // Buscar SKUs nesta bay
                     String bayKey = nextAisle + "-" + nextBay;
-                    List<Integer> skus = skusByBay.getOrDefault(bayKey, Collections.emptyList());
+                    Map<Integer, Double> skusInBay = qtyBySkuByBay.getOrDefault(bayKey, new HashMap<>());
 
-                    System.out.println(String.format(
-                            "  [%d] (%d,%d) → (%d,%d) | Distance: %d steps | Cumulative: %d steps",
+                    // Formatar SKUs
+                    StringBuilder skuDetails = new StringBuilder();
+                    for (Map.Entry<Integer, Double> skuEntry : skusInBay.entrySet()) {
+                        skuDetails.append("SKU").append(skuEntry.getKey())
+                                .append("(").append(String.format("%.0f", skuEntry.getValue())).append(") ");
+                    }
+
+                    // Mostrar passo
+                    System.out.printf("  %4d │ (%d,%2d) → (%d,%2d) │ %8d │ %10d │ %s%n",
                             i + 1,
                             currentAisle, currentBay,
                             nextAisle, nextBay,
                             distance,
-                            stepCount
-                    ));
-
-                    System.out.println("      ↳ Pick SKU(s): " + skus + " (qty: " + bay.getQuantity() + ")");
+                            stepCount,
+                            skuDetails.toString().trim()
+                    );
 
                     currentAisle = nextAisle;
                     currentBay = nextBay;
                 }
 
-                System.out.println("  ─────────────────────────────────────────────────────────────");
-                System.out.println("  Final position: (" + currentAisle + "," + currentBay + ")");
+                System.out.println("  ─────┴──────────┴──────────┴──────────┴────────────┴────────────────────────");
+                System.out.println("  Final Position: (" + currentAisle + "," + currentBay + ")");
             }
 
-            // Apresentar Strategy B
+            // ═══════════════════════════════════════════════════════════════
+            // STRATEGY B - Nearest Neighbour
+            // ═══════════════════════════════════════════════════════════════
+
             if (orderRoutes.containsKey("strategyB")) {
                 PickRouteOptimizationService.RouteResult routeB = orderRoutes.get("strategyB");
 
-                System.out.println("\n▶ Strategy B (Nearest Neighbour):");
+                System.out.println("\n▶ Strategy B (Nearest Neighbour)");
                 System.out.println("  Total Distance: " + routeB.getTotalDistance() + " steps\n");
 
                 int currentAisle = 0;
                 int currentBay = 0;
                 int stepCount = 0;
 
-                System.out.println("  Step-by-step route:");
-                System.out.println("  ─────────────────────────────────────────────────────────────");
+                System.out.println("  Step | From     → To       | Distance | Cumulative | Items Picked");
+                System.out.println("  ─────┼──────────┼──────────┼──────────┼────────────┼────────────────────────");
 
                 for (int i = 0; i < routeB.getPath().size(); i++) {
                     PickRouteOptimizationService.BayLocation bay = routeB.getPath().get(i);
@@ -319,27 +352,58 @@ public class Main {
                     stepCount += distance;
 
                     String bayKey = nextAisle + "-" + nextBay;
-                    List<Integer> skus = skusByBay.getOrDefault(bayKey, Collections.emptyList());
+                    Map<Integer, Double> skusInBay = qtyBySkuByBay.getOrDefault(bayKey, new HashMap<>());
 
-                    System.out.println(String.format(
-                            "  [%d] (%d,%d) → (%d,%d) | Distance: %d steps | Cumulative: %d steps",
+                    StringBuilder skuDetails = new StringBuilder();
+                    for (Map.Entry<Integer, Double> skuEntry : skusInBay.entrySet()) {
+                        skuDetails.append("SKU").append(skuEntry.getKey())
+                                .append("(").append(String.format("%.0f", skuEntry.getValue())).append(") ");
+                    }
+
+                    System.out.printf("  %4d │ (%d,%2d) → (%d,%2d) │ %8d │ %10d │ %s%n",
                             i + 1,
                             currentAisle, currentBay,
                             nextAisle, nextBay,
                             distance,
-                            stepCount
-                    ));
-
-                    System.out.println("      ↳ Pick SKU(s): " + skus + " (qty: " + bay.getQuantity() + ")");
+                            stepCount,
+                            skuDetails.toString().trim()
+                    );
 
                     currentAisle = nextAisle;
                     currentBay = nextBay;
                 }
 
-                System.out.println("  ─────────────────────────────────────────────────────────────");
-                System.out.println("  Final position: (" + currentAisle + "," + currentBay + ")");
+                System.out.println("  ─────┴──────────┴──────────┴──────────┴────────────┴────────────────────────");
+                System.out.println("  Final Position: (" + currentAisle + "," + currentBay + ")");
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // COMPARAÇÃO
+            // ═══════════════════════════════════════════════════════════════
+
+            if (orderRoutes.containsKey("strategyA") && orderRoutes.containsKey("strategyB")) {
+                int distA = orderRoutes.get("strategyA").getTotalDistance();
+                int distB = orderRoutes.get("strategyB").getTotalDistance();
+
+                System.out.println("\n  ╔════════════════════════════════════════════════════════════╗");
+                System.out.println("  ║  COMPARISON                                                ║");
+                System.out.println("  ╠════════════════════════════════════════════════════════════╣");
+                System.out.printf("  ║  Strategy A: %4d steps                                      ║%n", distA);
+                System.out.printf("  ║  Strategy B: %4d steps                                      ║%n", distB);
+                System.out.println("  ╠════════════════════════════════════════════════════════════╣");
+
+                if (distA < distB) {
+                    System.out.printf("  ║  ✓ Best: Strategy A (saves %d steps)                       ║%n", distB - distA);
+                } else if (distB < distA) {
+                    System.out.printf("  ║  ✓ Best: Strategy B (saves %d steps)                       ║%n", distA - distB);
+                } else {
+                    System.out.println("  ║  ✓ Both strategies are equal                              ║");
+                }
+
+                System.out.println("  ╚════════════════════════════════════════════════════════════╝");
             }
         }
+
 
         System.out.println("\n\n\n");
 
