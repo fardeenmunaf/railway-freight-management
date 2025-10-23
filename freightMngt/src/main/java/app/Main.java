@@ -155,9 +155,6 @@ public class Main {
                     " - Status: " + wave.getStatus());
         }
 
-
-
-
         // Calculate routes for all pick tasks
         PickRouteController routeController = new PickRouteController();
         System.out.println("\n=== Calculating Optimal Routes ===");
@@ -194,9 +191,156 @@ public class Main {
                 "Strategy A (saves " + (totalDistanceStrategyB - totalDistanceStrategyA) + " steps)" :
                 "Strategy B (saves " + (totalDistanceStrategyA - totalDistanceStrategyB) + " steps)"));
 
-        // Calculate consolidated route for all pick tasks
+// === NOVA SECÇÃO: Rotas consolidadas por Order com detalhe ===
 
-        
+        System.out.println("\n\n=== Detailed Route Information by Order ===");
+
+// 1. Agrupar PickTasks por Order
+        Map<Integer, List<PickTask>> tasksByOrder = new HashMap<>();
+        for (PickTask pickTask : result.getPickTasks()) {
+            Integer orderId = pickTask.getOrderLine().getOrder().getOrderId();
+            tasksByOrder.computeIfAbsent(orderId, k -> new ArrayList<>()).add(pickTask);
+        }
+
+// 2. Processar cada Order
+        for (Map.Entry<Integer, List<PickTask>> entry : tasksByOrder.entrySet()) {
+            Integer orderId = entry.getKey();
+            List<PickTask> tasks = entry.getValue();
+
+            System.out.println("\n╔══════════════════════════════════════════════════════════════╗");
+            System.out.println("║  ORDER " + orderId + " - Detailed Route                              ║");
+            System.out.println("╚══════════════════════════════════════════════════════════════╝");
+
+            // Coletar bays únicas e mapear SKUs por bay
+            Map<String, PickRouteOptimizationService.BayLocation> uniqueBays = new LinkedHashMap<>();
+            Map<String, List<Integer>> skusByBay = new HashMap<>();
+
+            for (PickTask pickTask : tasks) {
+                Integer sku = pickTask.getOrderLine().getSku().getItemId();
+                List<Allocation.AllocationRecord> allocations =
+                        pickingPlan.getItemLocations(sku, orderId);
+
+                for (Allocation.AllocationRecord record : allocations) {
+                    String bayKey = "1-" + record.getBay();
+
+                    if (!uniqueBays.containsKey(bayKey)) {
+                        uniqueBays.put(bayKey, new PickRouteOptimizationService.BayLocation(
+                                "1", record.getBay(), record.getQty()
+                        ));
+                    }
+
+                    skusByBay.computeIfAbsent(bayKey, k -> new ArrayList<>()).add(sku);
+                }
+            }
+
+            // Calcular rotas
+            List<PickRouteOptimizationService.BayLocation> orderBays =
+                    new ArrayList<>(uniqueBays.values());
+
+            Map<String, PickRouteOptimizationService.RouteResult> orderRoutes =
+                    routeController.optimizeRoute(orderBays);
+
+            // Apresentar Strategy A
+            if (orderRoutes.containsKey("strategyA")) {
+                PickRouteOptimizationService.RouteResult routeA = orderRoutes.get("strategyA");
+
+                System.out.println("\n▶ Strategy A (Deterministic Sweep):");
+                System.out.println("  Total Distance: " + routeA.getTotalDistance() + " steps\n");
+
+                int currentAisle = 0;
+                int currentBay = 0;
+                int stepCount = 0;
+
+                System.out.println("  Step-by-step route:");
+                System.out.println("  ─────────────────────────────────────────────────────────────");
+
+                for (int i = 0; i < routeA.getPath().size(); i++) {
+                    PickRouteOptimizationService.BayLocation bay = routeA.getPath().get(i);
+                    int nextAisle = Integer.parseInt(bay.getAisle());
+                    int nextBay = bay.getBay();
+
+                    int distance = 0;
+                    if (currentAisle == nextAisle) {
+                        distance = Math.abs(currentBay - nextBay);
+                    } else {
+                        distance = currentBay + Math.abs(currentAisle - nextAisle) * 3 + nextBay;
+                    }
+
+                    stepCount += distance;
+
+                    String bayKey = nextAisle + "-" + nextBay;
+                    List<Integer> skus = skusByBay.getOrDefault(bayKey, Collections.emptyList());
+
+                    System.out.println(String.format(
+                            "  [%d] (%d,%d) → (%d,%d) | Distance: %d steps | Cumulative: %d steps",
+                            i + 1,
+                            currentAisle, currentBay,
+                            nextAisle, nextBay,
+                            distance,
+                            stepCount
+                    ));
+
+                    System.out.println("      ↳ Pick SKU(s): " + skus + " (qty: " + bay.getQuantity() + ")");
+
+                    currentAisle = nextAisle;
+                    currentBay = nextBay;
+                }
+
+                System.out.println("  ─────────────────────────────────────────────────────────────");
+                System.out.println("  Final position: (" + currentAisle + "," + currentBay + ")");
+            }
+
+            // Apresentar Strategy B
+            if (orderRoutes.containsKey("strategyB")) {
+                PickRouteOptimizationService.RouteResult routeB = orderRoutes.get("strategyB");
+
+                System.out.println("\n▶ Strategy B (Nearest Neighbour):");
+                System.out.println("  Total Distance: " + routeB.getTotalDistance() + " steps\n");
+
+                int currentAisle = 0;
+                int currentBay = 0;
+                int stepCount = 0;
+
+                System.out.println("  Step-by-step route:");
+                System.out.println("  ─────────────────────────────────────────────────────────────");
+
+                for (int i = 0; i < routeB.getPath().size(); i++) {
+                    PickRouteOptimizationService.BayLocation bay = routeB.getPath().get(i);
+                    int nextAisle = Integer.parseInt(bay.getAisle());
+                    int nextBay = bay.getBay();
+
+                    int distance = 0;
+                    if (currentAisle == nextAisle) {
+                        distance = Math.abs(currentBay - nextBay);
+                    } else {
+                        distance = currentBay + Math.abs(currentAisle - nextAisle) * 3 + nextBay;
+                    }
+
+                    stepCount += distance;
+
+                    String bayKey = nextAisle + "-" + nextBay;
+                    List<Integer> skus = skusByBay.getOrDefault(bayKey, Collections.emptyList());
+
+                    System.out.println(String.format(
+                            "  [%d] (%d,%d) → (%d,%d) | Distance: %d steps | Cumulative: %d steps",
+                            i + 1,
+                            currentAisle, currentBay,
+                            nextAisle, nextBay,
+                            distance,
+                            stepCount
+                    ));
+
+                    System.out.println("      ↳ Pick SKU(s): " + skus + " (qty: " + bay.getQuantity() + ")");
+
+                    currentAisle = nextAisle;
+                    currentBay = nextBay;
+                }
+
+                System.out.println("  ─────────────────────────────────────────────────────────────");
+                System.out.println("  Final position: (" + currentAisle + "," + currentBay + ")");
+            }
+        }
+
         System.out.println("\n\n\n");
 
         MainMenu.display();
