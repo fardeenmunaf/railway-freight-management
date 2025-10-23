@@ -1,7 +1,9 @@
 package app.controller;
 
 import app.model.Cart;
-import java.util.ArrayList;
+import app.repositories.CartRepository;
+import app.repositories.Repositories;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +16,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class CartController {
-    private List<Cart> carts;
+    private final CartRepository cartRepository;
 
     /**
-     * Default constructor that initializes the cart list.
+     * Default constructor that initializes the cart repository.
      */
     public CartController() {
-        this.carts = new ArrayList<>();
+        this.cartRepository = Repositories.getInstance().getCartRepository();
     }
 
     /**
@@ -31,7 +33,7 @@ public class CartController {
      */
     public Cart createCart(Cart cart) {
         if (cart != null) {
-            carts.add(cart);
+            cartRepository.addCart(cart);
         }
         return cart;
     }
@@ -42,7 +44,7 @@ public class CartController {
      * @return a list of all Cart objects
      */
     public List<Cart> getAllCarts() {
-        return new ArrayList<>(carts);
+        return cartRepository.getAllCarts();
     }
 
     /**
@@ -52,9 +54,8 @@ public class CartController {
      * @return an Optional containing the Cart if found, or empty if not found
      */
     public Optional<Cart> getCartById(Integer cartId) {
-        return carts.stream()
-                .filter(cart -> cart.getCartId().equals(cartId))
-                .findFirst();
+        Cart cart = cartRepository.getCartById(cartId);
+        return Optional.ofNullable(cart);
     }
 
     /**
@@ -65,13 +66,7 @@ public class CartController {
      * @return true if the cart was updated successfully, false otherwise
      */
     public boolean updateCart(Integer cartId, Cart updatedCart) {
-        Optional<Cart> existingCart = getCartById(cartId);
-        if (existingCart.isPresent()) {
-            int index = carts.indexOf(existingCart.get());
-            carts.set(index, updatedCart);
-            return true;
-        }
-        return false;
+        return cartRepository.updateCart(cartId, updatedCart);
     }
 
     /**
@@ -81,6 +76,6 @@ public class CartController {
      * @return true if the cart was deleted successfully, false otherwise
      */
     public boolean deleteCart(Integer cartId) {
-        return carts.removeIf(cart -> cart.getCartId().equals(cartId));
+        return cartRepository.deleteCart(cartId);
     }
 }

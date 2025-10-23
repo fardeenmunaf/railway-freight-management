@@ -70,7 +70,7 @@ public class InventoryDispatch {
                     break;
                 }
 
-                Integer lotQty = lot.getBoxCode();
+                Integer lotQty = lot.getQty();
 
                 if (lotQty <= remainingToDispatch) {
                     // Consume entire lot
@@ -79,7 +79,7 @@ public class InventoryDispatch {
                 } else {
                     // Consume partial lot
                     Integer newQty = lotQty - remainingToDispatch;
-                    lot.setBoxCode(newQty);
+                    lot.setQty(newQty);
                     remainingToDispatch = 0;
                 }
             }
@@ -93,7 +93,7 @@ public class InventoryDispatch {
             // Recalculate total quantity
             Integer newTotalQty = 0;
             for (InventoryLot lot : balance.getLots()) {
-                newTotalQty += lot.getBoxCode();
+                newTotalQty += lot.getQty();
             }
             balance.setQty(newTotalQty);
 

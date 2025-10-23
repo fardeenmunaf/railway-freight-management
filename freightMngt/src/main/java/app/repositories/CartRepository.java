@@ -67,5 +67,13 @@ public class CartRepository {
     public void clear() {
         carts.clear();
     }
+
+    public void initializeDefaultCarts() {
+        addCart(new Cart(1, "Carrinho Pequeno", 5.5));
+        addCart(new Cart(2, "Carrinho Médio", 10.0));
+        addCart(new Cart(3, "Carrinho Grande", 20.0));
+        addCart(new Cart(4, "Carrinho Extra Grande", 35.0));
+        addCart(new Cart(5, "Empilhadora", 50.0));
+    }
 }
 

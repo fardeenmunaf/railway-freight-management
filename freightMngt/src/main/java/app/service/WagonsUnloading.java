@@ -193,7 +193,7 @@ public class WagonsUnloading {
             if (!lotsForThisBay.isEmpty()) {
                 Integer totalQty = 0;
                 for (InventoryLot lot : lotsForThisBay) {
-                    totalQty += lot.getBoxCode();
+                    totalQty += lot.getQty();
                 }
                 allocateToBay(lotsForThisBay, suitableBay, totalQty);
                 remainingLots.removeAll(lotsForThisBay);
@@ -208,7 +208,7 @@ public class WagonsUnloading {
             balance.setLots(remainingLots);
             Integer newQty = 0;
             for (InventoryLot lot : remainingLots) {
-                newQty += lot.getBoxCode();
+                newQty += lot.getQty();
             }
             balance.setQty(newQty);
             balanceController.updateInventoryBalance(balance.getBalanceId(), balance);
