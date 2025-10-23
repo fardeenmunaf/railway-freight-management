@@ -17,10 +17,10 @@ public class MainMenu {
         while (true) {
             System.out.println("--------------------------------");
             System.out.println("|   Please select an option:   |");
-            System.out.println("| 1. Manage Trains             |");
-            System.out.println("| 2. Manage Wagons             |");
-            System.out.println("| 3. Manage Train Services     |");
-            System.out.println("| 4. Calculate Travel Time     |");
+            System.out.println("| 1. Calculate Travel Time     |");
+            System.out.println("| 1.      |");
+            System.out.println("| 1. Calculate Travel Time     |");
+            System.out.println("| 1. Calculate Travel Time     |");
             System.out.println("| 5. Exit                      |");
             System.out.println("--------------------------------");
             System.out.print("Enter your choice (1-5): ");
