@@ -2,6 +2,8 @@ package app;
 
 import app.model.PickTask;
 import app.model.PickWave;
+import app.model.InventoryBalance;
+import app.controller.InventoryBalanceController;
 import app.repositories.*;
 import app.service.TravelTimeFeature;
 import app.service.Allocation;
@@ -49,6 +51,7 @@ public class Main {
         System.out.println("Unloading wagons and fill bays with items...");
         WagonsUnloading wagonsUnloading = new WagonsUnloading();
         wagonsUnloading.unloadAllWagons();
+
 
         //Testes comentados para mais tarde!!!!!!!
 //        System.out.println("Available inventory balances:");
@@ -110,9 +113,13 @@ public class Main {
 //            }
 //        }
 
+        // Create PickingPlan instance
+        PickingPlan pickingPlan = new PickingPlan();
+
+
         // Ver localizações de um SKU específico
-//        System.out.println("\nItem locations for SKU 123:");
-//        List<Allocation.AllocationRecord> locations = pickingPlan.getItemLocations(15, null);
+//        System.out.println("\nItem locations for SKU 0008:");
+//        List<Allocation.AllocationRecord> locations = pickingPlan.getItemLocations(8, null);
 //        for (Allocation.AllocationRecord loc : locations) {
 //            System.out.println("Lot SKU " + loc.getSku() + " na Aisle " +
 //                    loc.getAisle() + ", Bay " + loc.getBay() +
@@ -132,8 +139,6 @@ public class Main {
 
         // --- end demo ---
 
-        // Create PickingPlan instance
-        PickingPlan pickingPlan = new PickingPlan();
 
 //        // Test planPickingTask
         System.out.println("\n=== Testing Pick Task Planning ===");
@@ -152,14 +157,10 @@ public class Main {
                     " - Status: " + wave.getStatus());
         }
 
-        // Test planPickingTaskForOrder for a specific order
-        System.out.println("\n=== Testing Pick Task Planning for Order 1 ===");
-        PickingPlan.PickingPlanResult orderResult = pickingPlan.planPickingTaskForOrder(1);
-
-        System.out.println("Pick Waves for Order 1: " + orderResult.getPickWaves().size());
 
         System.out.println("\n\n\n");
 
         MainMenu.display();
     }
 }
+
