@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * @author G113 2DK
  * @version 1.0
  */
-public class AllocationService {
+public class Allocation {
 
     private static final double EPS = 1e-9;
 
