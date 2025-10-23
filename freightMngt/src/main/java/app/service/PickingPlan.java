@@ -21,8 +21,18 @@ public class PickingPlan {
     PickWaveController pickWaveController = new PickWaveController();
     PickTaskController pickTaskController = new PickTaskController();
 
+    // Shared allocation result to prevent duplicate allocations
+    private static Allocation.AllocationResult sharedAllocationResult = null;
+
     public PickingPlan() {
         this.tasks = new ArrayList<>();
+    }
+
+    /**
+     * Resets the shared allocation result - call this at the start of new planning cycle
+     */
+    public static void resetSharedAllocation() {
+        sharedAllocationResult = null;
     }
 
     public List<InventoryBalance> getAllItemBalences() {
@@ -141,11 +151,16 @@ public class PickingPlan {
      * @return AllocationResult with eligibilities and allocation rows
      */
     public Allocation.AllocationResult planAllocations(String mode) {
-        if (mode == null || mode.isBlank()) mode = "STRICT";
-        Allocation allocator = new Allocation();
-        List<Order> orders = getAllOrders();
-        List<InventoryBalance> balances = getAllItemBalences();
-        return allocator.allocateOrders(orders, balances, mode);
+        // Use shared allocation result if available to prevent duplicate allocations
+        if (sharedAllocationResult == null) {
+            if (mode == null || mode.isBlank()) mode = "STRICT";
+            Allocation allocator = new Allocation();
+            List<Order> orders = getAllOrders();
+            List<InventoryBalance> balances = getAllItemBalences();
+            sharedAllocationResult = allocator.allocateOrders(orders, balances, mode);
+        }
+
+        return sharedAllocationResult;
     }
 
     /**
@@ -300,33 +315,44 @@ public class PickingPlan {
 
         // Process each order line (ONE PickTask per OrderLine)
         for (OrderLine orderLine : orderLines) {
+            Integer skuId = orderLine.getSku().getItemId();
+
             // Check if this order line is eligible (ELIGIBLE or PARTIAL)
             Allocation.OrderEligibility eligibility = findEligibility(eligibilitiesForTask, orderLine);
 
             if (eligibility == null ||
                     (!eligibility.getStatus().equals("ELIGIBLE") && !eligibility.getStatus().equals("PARTIAL"))) {
-                System.out.println("Skipping OrderLine " + orderLine.getOrderLineId() +
-                        " for Order " + orderLine.getOrder().getOrderId() +
-                        " - Not eligible");
                 continue;
             }
 
-//            System.out.println("\nProcessing OrderLine " + orderLine.getOrderLineId() +
-//                    " for Order " + orderLine.getOrder().getOrderId() +
-//                    " (SKU: " + orderLine.getSku().getSku() + ")");
+            System.out.println("\n>>> Processing OrderLine " + orderLine.getOrderLineId() +
+                " (Order " + orderLine.getOrder().getOrderId() + ", SKU " + skuId +
+                ", Qty: " + orderLine.getQty() + ") <<<");
 
             // Get all bay locations for this order line
-            Integer skuId = orderLine.getSku().getItemId();
             List<Allocation.AllocationRecord> itemLocations = getItemLocationsForOrderLine(
                     allocationsForTask, orderLine.getOrder().getOrderId(), skuId);
 
             if (itemLocations.isEmpty()) {
-                System.out.println("  No inventory locations found - skipping");
+                System.out.println("  No inventory locations found - skipping OrderLine " +
+                    orderLine.getOrderLineId() + " (Order " + orderLine.getOrder().getOrderId() + ")");
                 continue;
             }
 
             // Group locations by bay to avoid duplicates and sum quantities
             List<Allocation.AllocationRecord> groupedLocations = groupLocationsByBay(itemLocations);
+
+            // Show bay locations for this order line
+            if (groupedLocations.size() > 1) {
+                System.out.println("🔄 MULTI-BAY ORDER - OrderLine " + orderLine.getOrderLineId() +
+                    " (Order " + orderLine.getOrder().getOrderId() + ") spans " + groupedLocations.size() + " bays:");
+                for (Allocation.AllocationRecord location : groupedLocations) {
+                    System.out.println("   → Bay " + location.getBay() + ": " + location.getQty() + " units");
+                }
+            } else if (groupedLocations.size() == 1) {
+                System.out.println("📍 Single bay - Bay " + groupedLocations.get(0).getBay() +
+                    ": " + groupedLocations.get(0).getQty() + " units");
+            }
 
             // Find the MOST SUITABLE cart for this order line (not round-robin)
             Cart bestCart = findBestCart(carts, orderLine);
@@ -516,16 +542,7 @@ public class PickingPlan {
             }
         }
 
-        // DEBUG: Show order of allocations for SKU 8
-        if (sku == 8) {
-            System.out.println("\n=== DEBUG: AllocationRecords for SKU " + sku + " (Order " + orderId + ") ===");
-            for (Allocation.AllocationRecord record : result) {
-                System.out.println("AllocationRecord - Bay: " + record.getBay() +
-                    ", Qty: " + record.getQty() +
-                    ", BoxId: " + record.getBoxId());
-            }
-            System.out.println("=== END DEBUG AllocationRecords ===\n");
-        }
+
 
         return result;
     }
@@ -537,16 +554,7 @@ public class PickingPlan {
     private List<Allocation.AllocationRecord> groupLocationsByBay(List<Allocation.AllocationRecord> locations) {
         java.util.Map<String, Allocation.AllocationRecord> grouped = new java.util.LinkedHashMap<>();
 
-        // DEBUG: Show input order for SKU 8
-        boolean isSku8 = !locations.isEmpty() && locations.get(0).getSku() == 8;
-        if (isSku8) {
-            System.out.println("\n=== DEBUG: Before groupLocationsByBay for SKU 8 ===");
-            for (Allocation.AllocationRecord record : locations) {
-                System.out.println("Input - Bay: " + record.getBay() +
-                    ", Qty: " + record.getQty() +
-                    ", BoxId: " + record.getBoxId());
-            }
-        }
+
 
         for (Allocation.AllocationRecord record : locations) {
             String locationKey = record.getAisle() + "-" + record.getBay();
@@ -569,19 +577,6 @@ public class PickingPlan {
             }
         }
 
-        List<Allocation.AllocationRecord> result = new ArrayList<>(grouped.values());
-
-        // DEBUG: Show output order for SKU 8
-        if (isSku8) {
-            System.out.println("=== DEBUG: After groupLocationsByBay for SKU 8 ===");
-            for (Allocation.AllocationRecord record : result) {
-                System.out.println("Output - Bay: " + record.getBay() +
-                    ", Qty: " + record.getQty() +
-                    ", BoxId: " + record.getBoxId());
-            }
-            System.out.println("=== END DEBUG groupLocationsByBay ===\n");
-        }
-
-        return result;
+        return new ArrayList<>(grouped.values());
     }
 }
