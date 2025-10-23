@@ -99,6 +99,7 @@ public class Allocation {
         Double remainingQty = requestedQty;
         List<AllocationRecord> lineAllocations = new ArrayList<>();
 
+
         List<InventoryLot> availableLots = getAvailableLotsForSku(skuId, inventoryBalances, availableStock);
 
         for (InventoryLot lot : availableLots) {
@@ -228,39 +229,7 @@ public class Allocation {
                 .sorted(fefoComparator)
                 .collect(Collectors.toList());
 
-        // DEBUG: Show FEFO order for the specific SKU
-        if (skuId == 8) {
-            System.out.println("\n=== DEBUG: FEFO Order for SKU " + skuId + " ===");
-            System.out.println("Current date: 2025-10-23 (for reference)");
 
-            // Show unsorted lots first
-            List<InventoryLot> unsortedLots = inventoryBalances.stream()
-                .flatMap(balance -> balance.getLots().stream())
-                .filter(lot -> lot.getSku() != null && lot.getSku().equals(skuId))
-                .filter(lot -> availableStock.getOrDefault(lot.getLotId(), 0.0) > 0.0)
-                .collect(Collectors.toList());
-
-            System.out.println("\n-- BEFORE SORTING --");
-            for (InventoryLot lot : unsortedLots) {
-                WarehouseBay bay = lotToBayMap.get(lot.getLotId());
-                System.out.println("Lot " + lot.getLotId() +
-                    " - ExpDate: " + (lot.getExpDate() != null ? lot.getExpDate() : "N/A") +
-                    " - ReceivedDate: " + lot.getReceivedDate() +
-                    " - Bay: " + (bay != null ? bay.getBayNo() : "N/A") +
-                    " - Qty: " + lot.getQty());
-            }
-
-            System.out.println("\n-- AFTER SORTING (FEFO) --");
-            for (InventoryLot lot : sortedLots) {
-                WarehouseBay bay = lotToBayMap.get(lot.getLotId());
-                System.out.println("Lot " + lot.getLotId() +
-                    " - ExpDate: " + (lot.getExpDate() != null ? lot.getExpDate() : "N/A") +
-                    " - ReceivedDate: " + lot.getReceivedDate() +
-                    " - Bay: " + (bay != null ? bay.getBayNo() : "N/A") +
-                    " - Qty: " + lot.getQty());
-            }
-            System.out.println("=== END DEBUG ===\n");
-        }
 
         return sortedLots;
     }
