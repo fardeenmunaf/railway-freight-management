@@ -11,21 +11,18 @@ import java.util.stream.Collectors;
  * Handles both STRICT and PARTIAL allocation modes while ensuring stock consistency.
  * <p>
  * Note: mode defaults to "STRICT" when null or blank.
- *
- * @author G113 2DK
- * @version 1.0
  */
 public class Allocation {
 
     private static final double EPS = 1e-9;
 
     /**
-     * Allocates inventory to orders using FEFO strategy.
+     * Allocates inventory to a list of orders using FEFO.
      *
-     * @param orders            List of orders to process
-     * @param inventoryBalances List of available inventory balances
-     * @param mode              Allocation mode: "STRICT" or "PARTIAL" (defaults to "STRICT" when null or blank)
-     * @return AllocationResult containing eligibility status and allocations
+     * @param orders            list of orders to process
+     * @param inventoryBalances list of available inventory balances
+     * @param mode              allocation mode: "STRICT" or "PARTIAL" (defaults to "STRICT" when null/blank)
+     * @return AllocationResult containing order line eligibilities and allocation records
      */
     public AllocationResult allocateOrders(List<Order> orders, List<InventoryBalance> inventoryBalances, String mode) {
         String effectiveMode = (mode == null || mode.isBlank()) ? "STRICT" : mode;
@@ -53,6 +50,9 @@ public class Allocation {
 
     /**
      * Builds an index map from lotId to WarehouseBay for fast lookup.
+     *
+     * @param balances inventory balances that contain lots and warehouse bay information
+     * @return map where key is lotId and value is the corresponding WarehouseBay
      */
     private Map<Integer, WarehouseBay> indexLotToBay(List<InventoryBalance> balances) {
         Map<Integer, WarehouseBay> map = new HashMap<>();
@@ -73,6 +73,14 @@ public class Allocation {
 
     /**
      * Processes a single order by allocating its order lines.
+     *
+     * @param order             order to process
+     * @param inventoryBalances available inventory balances
+     * @param availableStock    mutable map of available quantity per lotId
+     * @param mode              allocation mode ("STRICT" or "PARTIAL")
+     * @param eligibilities     accumulator list for order line eligibilities
+     * @param allocations       accumulator list for final allocation records
+     * @param lotToBay          precomputed map of lotId to WarehouseBay
      */
     private void processOrder(Order order, List<InventoryBalance> inventoryBalances,
                               Map<Integer, Double> availableStock, String mode,
@@ -87,7 +95,17 @@ public class Allocation {
     }
 
     /**
-     * Processes a single order line using FEFO allocation strategy.
+     * Processes a single order line using FEFO allocation:
+     * iterates available lots, allocates until requested quantity is satisfied,
+     * updates available stock and records temporary allocations which are committed or rolled back.
+     *
+     * @param line              order line to allocate
+     * @param inventoryBalances available inventory balances
+     * @param availableStock    mutable map of available quantity per lotId
+     * @param mode              allocation mode ("STRICT" or "PARTIAL")
+     * @param eligibilities     accumulator for order line eligibilities
+     * @param allocations       accumulator for final allocation records
+     * @param lotToBay          precomputed map of lotId to WarehouseBay
      */
     private void processOrderLine(OrderLine line, List<InventoryBalance> inventoryBalances,
                                   Map<Integer, Double> availableStock, String mode,
@@ -156,7 +174,10 @@ public class Allocation {
     }
 
     /**
-     * Creates a map of lot ID to available quantity from inventory balances.
+     * Creates a map of lotId to available quantity from inventory balances.
+     *
+     * @param inventoryBalances inventory balances containing lots
+     * @return map where key is lotId and value is available quantity as double
      */
     private Map<Integer, Double> createStockMap(List<InventoryBalance> inventoryBalances) {
         Map<Integer, Double> stockMap = new HashMap<>();
@@ -171,7 +192,14 @@ public class Allocation {
     }
 
     /**
-     * Gets available lots for a SKU sorted by FEFO (expDate ASC; nulls last) and then by receivedDate and lotId.
+     * Gets available lots for a SKU sorted by FEFO:
+     * expiration date ascending (nulls last), then received date, then lotId.
+     * Only lots with positive available quantity are returned.
+     *
+     * @param skuId             SKU identifier
+     * @param inventoryBalances inventory balances to search
+     * @param availableStock    map of available quantities by lotId
+     * @return sorted list of InventoryLot available for allocation
      */
     private List<InventoryLot> getAvailableLotsForSku(Integer skuId, List<InventoryBalance> inventoryBalances,
                                                       Map<Integer, Double> availableStock) {
@@ -235,7 +263,11 @@ public class Allocation {
     }
 
     /**
-     * Finds the warehouse bay where a lot is stored using precomputed map.
+     * Finds the WarehouseBay where a lot is stored using the precomputed map.
+     *
+     * @param lot      inventory lot
+     * @param lotToBay map of lotId to WarehouseBay
+     * @return WarehouseBay or null if not found
      */
     private WarehouseBay findBayForLot(InventoryLot lot, Map<Integer, WarehouseBay> lotToBay) {
         if (lot == null || lot.getLotId() == null) return null;
@@ -243,8 +275,13 @@ public class Allocation {
     }
 
     /**
-     * Determines the status of an order line based on allocated quantity and mode.
-     * Uses EPS tolerance for double comparison to avoid floating-point precision issues.
+     * Determines the status of an order line based on requested and allocated quantities and the mode.
+     * Uses EPS tolerance to avoid floating point precision issues.
+     *
+     * @param requestedQty requested quantity
+     * @param allocatedQty allocated quantity
+     * @param mode         allocation mode ("STRICT" or "PARTIAL")
+     * @return "ELIGIBLE" if fully allocated, "PARTIAL" if partially allocated and mode is PARTIAL, otherwise "UNDISPATCHABLE"
      */
     private String determineLineStatus(Double requestedQty, Double allocatedQty, String mode) {
         double req = requestedQty != null ? requestedQty : 0.0;
@@ -260,14 +297,20 @@ public class Allocation {
     }
 
     /**
-     * Determines if allocations should be kept based on line status.
+     * Returns whether allocations should be kept based on the line status.
+     *
+     * @param status one of "ELIGIBLE", "PARTIAL", "UNDISPATCHABLE"
+     * @return true when allocations should be retained
      */
     private boolean shouldKeepAllocations(String status) {
         return "ELIGIBLE".equals(status) || "PARTIAL".equals(status);
     }
 
     /**
-     * Rollbacks stock changes for allocations that won't be kept.
+     * Rolls back stock changes for allocations that are not kept by returning quantities to availableStock.
+     *
+     * @param allocations    list of allocation records to rollback
+     * @param availableStock mutable map of available quantities by lotId
      */
     private void rollbackStockChanges(List<AllocationRecord> allocations, Map<Integer, Double> availableStock) {
         for (AllocationRecord allocation : allocations) {
@@ -278,10 +321,12 @@ public class Allocation {
     }
 
     /**
-     * Gets order lines for an order sorted by orderLineId (serving as lineNo).
+     * Gets order lines for an order sorted by orderLineId (used as line number).
      * <p>
-     * Note: If OrderLine provides getLineNo(), the implementation will try to use it via reflection.
-     * If not present, getOrderLineId() is used and represents lineNo from the input order.
+     * Note: if OrderLine exposes getLineNo(), this method may be adapted to use it; currently it uses getOrderLineId().
+     *
+     * @param order order from which to retrieve lines
+     * @return sorted list of OrderLine or empty list if order is invalid
      */
     private List<OrderLine> getOrderLinesSorted(Order order) {
         if (order == null || order.getOrderId() == null) return Collections.emptyList();
@@ -294,24 +339,46 @@ public class Allocation {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Result of allocation operation containing eligibilities and allocation records.
+     */
     public static class AllocationResult {
         private List<OrderEligibility> eligibilities;
         private List<AllocationRecord> allocations;
 
+        /**
+         * Constructs an AllocationResult.
+         *
+         * @param eligibilities list of per-line eligibilities
+         * @param allocations   list of allocation records
+         */
         public AllocationResult(List<OrderEligibility> eligibilities, List<AllocationRecord> allocations) {
             this.eligibilities = eligibilities;
             this.allocations = allocations;
         }
 
+        /**
+         * Returns the list of order line eligibilities.
+         *
+         * @return list of OrderEligibility
+         */
         public List<OrderEligibility> getEligibilities() {
             return eligibilities;
         }
 
+        /**
+         * Returns the list of allocation records.
+         *
+         * @return list of AllocationRecord
+         */
         public List<AllocationRecord> getAllocations() {
             return allocations;
         }
     }
 
+    /**
+     * Represents the eligibility of an order line after allocation attempt.
+     */
     public static class OrderEligibility {
         private Integer orderId;
         private Integer lineNo;
@@ -320,6 +387,16 @@ public class Allocation {
         private Double allocatedQty;
         private String status;
 
+        /**
+         * Constructs an OrderEligibility.
+         *
+         * @param orderId      order identifier
+         * @param lineNo       line number (orderLineId)
+         * @param sku          SKU identifier
+         * @param requestedQty requested quantity
+         * @param allocatedQty allocated quantity
+         * @param status       resulting status ("ELIGIBLE", "PARTIAL", "UNDISPATCHABLE")
+         */
         public OrderEligibility(Integer orderId, Integer lineNo, Integer sku, Double requestedQty, Double allocatedQty, String status) {
             this.orderId = orderId;
             this.lineNo = lineNo;
@@ -329,31 +406,52 @@ public class Allocation {
             this.status = status;
         }
 
+        /**
+         * Returns order id.
+         */
         public Integer getOrderId() {
             return orderId;
         }
 
+        /**
+         * Returns line number.
+         */
         public Integer getLineNo() {
             return lineNo;
         }
 
+        /**
+         * Returns SKU id.
+         */
         public Integer getSku() {
             return sku;
         }
 
+        /**
+         * Returns requested quantity.
+         */
         public Double getRequestedQty() {
             return requestedQty;
         }
 
+        /**
+         * Returns allocated quantity.
+         */
         public Double getAllocatedQty() {
             return allocatedQty;
         }
 
+        /**
+         * Returns line status.
+         */
         public String getStatus() {
             return status;
         }
     }
 
+    /**
+     * Allocation record describing which quantity was taken from which lot for an order line.
+     */
     public static class AllocationRecord {
         private Integer orderId;
         private Integer lineNo;
@@ -363,6 +461,17 @@ public class Allocation {
         private String aisle;
         private Integer bay;
 
+        /**
+         * Constructs an AllocationRecord.
+         *
+         * @param orderId order identifier
+         * @param lineNo  line number (orderLineId)
+         * @param sku     SKU identifier
+         * @param qty     allocated quantity
+         * @param boxId   lot identifier (lotId)
+         * @param aisle   aisle code where the lot is stored
+         * @param bay     bay number where the lot is stored
+         */
         public AllocationRecord(Integer orderId, Integer lineNo, Integer sku, Double qty, Integer boxId, String aisle, Integer bay) {
             this.orderId = orderId;
             this.lineNo = lineNo;
@@ -373,30 +482,51 @@ public class Allocation {
             this.bay = bay;
         }
 
+        /**
+         * Returns order id.
+         */
         public Integer getOrderId() {
             return orderId;
         }
 
+        /**
+         * Returns line number.
+         */
         public Integer getLineNo() {
             return lineNo;
         }
 
+        /**
+         * Returns SKU id.
+         */
         public Integer getSku() {
             return sku;
         }
 
+        /**
+         * Returns allocated quantity.
+         */
         public Double getQty() {
             return qty;
         }
 
+        /**
+         * Returns the lot id (box id).
+         */
         public Integer getBoxId() {
             return boxId;
         }
 
+        /**
+         * Returns aisle code.
+         */
         public String getAisle() {
             return aisle;
         }
 
+        /**
+         * Returns bay number.
+         */
         public Integer getBay() {
             return bay;
         }
