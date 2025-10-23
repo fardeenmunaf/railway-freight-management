@@ -13,6 +13,8 @@ package app.model;
 public class Company {
     private Integer companyId;
     private String name;
+    private String shortName;
+    private String vat;
 
     /**
      * Default constructor that creates a Company with null values.
@@ -22,6 +24,8 @@ public class Company {
     public Company() {
         companyId = null;
         name = null;
+        shortName = null;
+        vat = null;
     }
 
     /**
@@ -29,11 +33,15 @@ public class Company {
      *
      * @param companyId the unique identifier for the company
      * @param name the name of the company
+     * @param shortName the short name of the company
+     * @param vat the VAT number of the company
      */
 
-    public Company(Integer companyId, String name) {
+    public Company(Integer companyId, String name, String shortName, String vat) {
         this.companyId = companyId;
         this.name = name;
+        this.shortName = shortName;
+        this.vat = vat;
     }
 
     /**
@@ -76,11 +84,53 @@ public class Company {
         this.name = name;
     }
 
+    /**
+     * Gets the short name of this company.
+     *
+     * @return the company short name as a String
+     */
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    /**
+     * Sets the short name of this company.
+     *
+     * @param shortName the company short name to set
+     */
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
+    }
+
+    /**
+     * Gets the VAT number of this company.
+     *
+     * @return the company VAT number as a String
+     */
+
+    public String getVat() {
+        return vat;
+    }
+
+    /**
+     * Sets the VAT number of this company.
+     *
+     * @param vat the company VAT number to set
+     */
+
+    public void setVat(String vat) {
+        this.vat = vat;
+    }
+
     @Override
     public String toString() {
         return "Company{" +
                 "companyId=" + companyId +
                 ", name='" + name + '\'' +
+                ", shortName='" + shortName + '\'' +
+                ", vat='" + vat + '\'' +
                 '}';
     }
 }

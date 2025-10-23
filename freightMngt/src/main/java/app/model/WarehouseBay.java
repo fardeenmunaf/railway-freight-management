@@ -123,4 +123,14 @@ public class WarehouseBay {
     public void setCapacityBox(Integer capacityBox) {
         this.capacityBox = capacityBox;
     }
+
+    @Override
+    public String toString() {
+        return "WarehouseBay{" +
+                "bayId=" + bayId +
+                ", aisle=" + aisle +
+                ", bayNo=" + bayNo +
+                ", capacityBox=" + capacityBox +
+                '}';
+    }
 }

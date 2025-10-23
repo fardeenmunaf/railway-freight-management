@@ -8,6 +8,12 @@ package app.model;
  *
  * @author G113 2DK
  * @version 1.0
+ *
+ * Facility type ID legend:
+ * 1 - Warehouse
+ * 2 - Station
+ * 3 - Terminal
+ * 4 - Depot
  */
 
 public class FacilityType {
@@ -75,5 +81,13 @@ public class FacilityType {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "FacilityType{" +
+                "facilityTypeId=" + facilityTypeId +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

@@ -1,9 +1,10 @@
 package app.controller;
 
 import app.model.InventoryLot;
-import java.util.ArrayList;
+import app.repositories.InventoryLotRepository;
+import app.repositories.Repositories;
+
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Controller class for managing InventoryLot entities.
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class InventoryLotController {
-    private List<InventoryLot> inventoryLots;
+    private final InventoryLotRepository repository;
 
     /**
-     * Default constructor that initializes the inventory lot list.
+     * Default constructor that initializes the controller with the inventory lot repository.
      */
     public InventoryLotController() {
-        this.inventoryLots = new ArrayList<>();
+        this.repository = Repositories.getInstance().getInventoryLotRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class InventoryLotController {
      */
     public InventoryLot createInventoryLot(InventoryLot inventoryLot) {
         if (inventoryLot != null) {
-            inventoryLots.add(inventoryLot);
+            repository.addInventoryLot(inventoryLot);
         }
         return inventoryLot;
     }
@@ -42,19 +43,17 @@ public class InventoryLotController {
      * @return a list of all InventoryLot objects
      */
     public List<InventoryLot> getAllInventoryLots() {
-        return new ArrayList<>(inventoryLots);
+        return repository.getAllInventoryLots();
     }
 
     /**
      * Retrieves an inventory lot by its unique identifier.
      *
      * @param lotId the unique identifier of the inventory lot
-     * @return an Optional containing the InventoryLot if found, or empty if not found
+     * @return the InventoryLot if found, or null if not found
      */
-    public Optional<InventoryLot> getInventoryLotById(String lotId) {
-        return inventoryLots.stream()
-                .filter(inventoryLot -> inventoryLot.getLotId().equals(lotId))
-                .findFirst();
+    public InventoryLot getInventoryLotById(Integer lotId) {
+        return repository.getInventoryLotById(lotId);
     }
 
     /**
@@ -64,14 +63,8 @@ public class InventoryLotController {
      * @param updatedInventoryLot the InventoryLot object with updated information
      * @return true if the inventory lot was updated successfully, false otherwise
      */
-    public boolean updateInventoryLot(String lotId, InventoryLot updatedInventoryLot) {
-        Optional<InventoryLot> existingInventoryLot = getInventoryLotById(lotId);
-        if (existingInventoryLot.isPresent()) {
-            int index = inventoryLots.indexOf(existingInventoryLot.get());
-            inventoryLots.set(index, updatedInventoryLot);
-            return true;
-        }
-        return false;
+    public boolean updateInventoryLot(Integer lotId, InventoryLot updatedInventoryLot) {
+        return repository.updateInventoryLot(lotId, updatedInventoryLot);
     }
 
     /**
@@ -80,7 +73,7 @@ public class InventoryLotController {
      * @param lotId the unique identifier of the inventory lot to delete
      * @return true if the inventory lot was deleted successfully, false otherwise
      */
-    public boolean deleteInventoryLot(String lotId) {
-        return inventoryLots.removeIf(inventoryLot -> inventoryLot.getLotId().equals(lotId));
+    public boolean deleteInventoryLot(Integer lotId) {
+        return repository.deleteInventoryLot(lotId);
     }
 }

@@ -2,9 +2,8 @@ package app.model;
 
 /**
  * Represents a railway wagon in the freight management system.
- * Each wagon contains detailed specifications including operator information,
- * wagon type, weight characteristics (tare and payload), and physical dimensions.
- * This class stores essential data for managing railway freight cars and their cargo capacity.
+ * Each wagon contains a reference to its model, operator, and service year.
+ * The detailed specifications such as type, weight, and dimensions are stored in the WagonModel.
  *
  * @author G113 2DK
  * @version 1.0
@@ -12,11 +11,9 @@ package app.model;
 
 public class Wagon {
     private Integer wagonId;
+    private WagonModel wagonModel;
     private User operator;
-    private WagonType wagonType;
-    private Double tareWeight;
-    private Double payloadWeight;
-    private Dimensions dimensions;
+    private Integer serviceYear;
 
     /**
      * Default constructor that creates a Wagon with null values.
@@ -30,20 +27,16 @@ public class Wagon {
      * Parameterized constructor that creates a Wagon with specified values.
      *
      * @param wagonId the unique identifier for this wagon
+     * @param wagonModel the model of the wagon containing specifications
      * @param operator the user or company operating this wagon
-     * @param wagonType the type of wagon
-     * @param tareWeight the tare weight (empty weight) in kilograms
-     * @param payloadWeight the maximum payload weight in kilograms
-     * @param dimensions the physical dimensions of the wagon
+     * @param serviceYear the year the wagon entered service
      */
 
-    public Wagon(Integer wagonId, User operator, WagonType wagonType, Double tareWeight, Double payloadWeight, Dimensions dimensions) {
+    public Wagon(Integer wagonId, WagonModel wagonModel, User operator, Integer serviceYear) {
         this.wagonId = wagonId;
+        this.wagonModel = wagonModel;
         this.operator = operator;
-        this.wagonType = wagonType;
-        this.tareWeight = tareWeight;
-        this.payloadWeight = payloadWeight;
-        this.dimensions = dimensions;
+        this.serviceYear = serviceYear;
     }
 
     /**
@@ -67,6 +60,26 @@ public class Wagon {
     }
 
     /**
+     * Gets the wagon model of this wagon.
+     *
+     * @return the wagon model as a WagonModel object
+     */
+
+    public WagonModel getWagonModel() {
+        return wagonModel;
+    }
+
+    /**
+     * Sets the wagon model of this wagon.
+     *
+     * @param wagonModel the wagon model to set
+     */
+
+    public void setWagonModel(WagonModel wagonModel) {
+        this.wagonModel = wagonModel;
+    }
+
+    /**
      * Gets the operator of this wagon.
      *
      * @return the operator as a User object
@@ -87,94 +100,32 @@ public class Wagon {
     }
 
     /**
-     * Gets the type of this wagon.
+     * Gets the service year of this wagon.
      *
-     * @return the wagon type as a WagonType object
+     * @return the service year as an Integer
      */
 
-    public WagonType getWagonType() {
-        return wagonType;
+    public Integer getServiceYear() {
+        return serviceYear;
     }
 
     /**
-     * Sets the type of this wagon.
+     * Sets the service year of this wagon.
      *
-     * @param wagonType the wagon type to set
+     * @param serviceYear the service year to set
      */
 
-    public void setWagonType(WagonType wagonType) {
-        this.wagonType = wagonType;
-    }
-
-    /**
-     * Gets the tare weight (empty weight) of this wagon.
-     *
-     * @return the tare weight as a Double in kilograms
-     */
-
-    public Double getTareWeight() {
-        return tareWeight;
-    }
-
-    /**
-     * Sets the tare weight (empty weight) of this wagon.
-     *
-     * @param tareWeight the tare weight to set in kilograms
-     */
-
-    public void setTareWeight(Double tareWeight) {
-        this.tareWeight = tareWeight;
-    }
-
-    /**
-     * Gets the maximum payload weight of this wagon.
-     *
-     * @return the payload weight as a Double in kilograms
-     */
-
-    public Double getPayloadWeight() {
-        return payloadWeight;
-    }
-
-    /**
-     * Sets the maximum payload weight of this wagon.
-     *
-     * @param payloadWeight the payload weight to set in kilograms
-     */
-
-    public void setPayloadWeight(Double payloadWeight) {
-        this.payloadWeight = payloadWeight;
-    }
-
-    /**
-     * Gets the physical dimensions of this wagon.
-     *
-     * @return the dimensions as a Dimensions object
-     */
-
-    public Dimensions getDimensions() {
-        return dimensions;
-    }
-
-    /**
-     * Sets the physical dimensions of this wagon.
-     *
-     * @param dimensions the dimensions to set
-     */
-
-    public void setDimensions(Dimensions dimensions) {
-        this.dimensions = dimensions;
+    public void setServiceYear(Integer serviceYear) {
+        this.serviceYear = serviceYear;
     }
 
     @Override
     public String toString() {
         return "Wagon{" +
                 "wagonId=" + wagonId +
+                ", wagonModel=" + wagonModel +
                 ", operator=" + operator +
-                ", wagonType=" + wagonType +
-                ", tareWeight=" + tareWeight +
-                ", payloadWeight=" + payloadWeight +
-                ", dimensions=" + dimensions +
+                ", serviceYear=" + serviceYear +
                 '}';
     }
 }

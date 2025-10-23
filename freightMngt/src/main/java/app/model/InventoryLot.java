@@ -1,6 +1,7 @@
 package app.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Represents an inventory lot in the freight management system.
@@ -14,11 +15,11 @@ import java.time.LocalDate;
 
 public class InventoryLot {
 
-    private String lotId;
-    private String sku;
-    private String boxCode;
-    private LocalDate expDate;
-    private LocalDate receivedDate;
+    private Integer lotId;
+    private Integer sku;
+    private Integer qty;
+    private LocalDateTime expDate;
+    private LocalDateTime receivedDate;
 
     /**
      * Default constructor that creates an InventoryLot with null/default values.
@@ -28,7 +29,7 @@ public class InventoryLot {
     public InventoryLot() {
         this.lotId = null;
         this.sku = null;
-        this.boxCode = null;
+        this.qty = null;
         this.expDate = null;
         this.receivedDate = null;
     }
@@ -38,15 +39,15 @@ public class InventoryLot {
      *
      * @param lotId the unique identifier for this inventory lot
      * @param sku the stock keeping unit identifier for the product
-     * @param boxCode the code identifying the box type or packaging
+     * @param qty the quantity of items in this lot
      * @param expDate the expiration date of the products in this lot
      * @param receivedDate the date when this lot was received in the warehouse
      */
 
-    public InventoryLot(String lotId, String sku, String boxCode, LocalDate expDate, LocalDate receivedDate) {
+    public InventoryLot(Integer lotId, Integer sku, Integer qty, LocalDateTime expDate, LocalDateTime receivedDate) {
         this.lotId = lotId;
         this.sku = sku;
-        this.boxCode = boxCode;
+        this.qty = qty;
         this.expDate = expDate;
         this.receivedDate = receivedDate;
     }
@@ -54,10 +55,10 @@ public class InventoryLot {
     /**
      * Gets the unique identifier of this inventory lot.
      *
-     * @return the lot identifier as a String
+     * @return the lot identifier as a Integer
      */
 
-    public String getLotId() {
+    public Integer getLotId() {
         return lotId;
     }
 
@@ -67,17 +68,17 @@ public class InventoryLot {
      * @param lotId the lot identifier to set
      */
 
-    public void setLotId(String lotId) {
+    public void setLotId(Integer lotId) {
         this.lotId = lotId;
     }
 
     /**
      * Gets the stock keeping unit identifier for the product.
      *
-     * @return the SKU as a String
+     * @return the SKU as a Integer
      */
 
-    public String getSku() {
+    public Integer getSku() {
         return sku;
     }
 
@@ -87,37 +88,38 @@ public class InventoryLot {
      * @param sku the SKU to set
      */
 
-    public void setSku(String sku) {
+    public void setSku(Integer sku) {
         this.sku = sku;
     }
 
     /**
-     * Gets the code identifying the box type or packaging.
+     * Gets the quantity of items in this lot.
      *
-     * @return the box code as a String
+     * @return the quantity as an Integer
      */
 
-    public String getBoxCode() {
-        return boxCode;
+    public Integer getQty() {
+        return qty;
     }
 
     /**
-     * Sets the box code identifying the box type or packaging.
+     * Sets the quantity of items in this lot.
      *
-     * @param boxCode the box code to set
+     * @param qty the quantity to set
+     *
      */
 
-    public void setBoxCode(String boxCode) {
-        this.boxCode = boxCode;
+    public void setQty(Integer qty) {
+        this.qty = qty;
     }
 
     /**
      * Gets the expiration date of the products in this lot.
      *
-     * @return the expiration date as a LocalDate
+     * @return the expiration date as a LocalDateTime
      */
 
-    public LocalDate getExpDate() {
+    public LocalDateTime getExpDate() {
         return expDate;
     }
 
@@ -127,17 +129,17 @@ public class InventoryLot {
      * @param expDate the expiration date to set
      */
 
-    public void setExpDate(LocalDate expDate) {
+    public void setExpDate(LocalDateTime expDate) {
         this.expDate = expDate;
     }
 
     /**
      * Gets the date when this lot was received in the warehouse.
      *
-     * @return the received date as a LocalDate
+     * @return the received date as a LocalDateTime
      */
 
-    public LocalDate getReceivedDate() {
+    public LocalDateTime getReceivedDate() {
         return receivedDate;
     }
 
@@ -147,7 +149,18 @@ public class InventoryLot {
      * @param receivedDate the received date to set
      */
 
-    public void setReceivedDate(LocalDate receivedDate) {
+    public void setReceivedDate(LocalDateTime receivedDate) {
         this.receivedDate = receivedDate;
+    }
+
+    @Override
+    public String toString() {
+        return "InventoryLot{" +
+                "lotId=" + lotId +
+                ", sku=" + sku +
+                ", qty=" + qty +
+                ", expDate=" + expDate +
+                ", receivedDate=" + receivedDate +
+                '}';
     }
 }

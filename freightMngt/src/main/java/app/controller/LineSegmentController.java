@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.LineSegment;
-import java.util.ArrayList;
+import app.repositories.LineSegmentRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class LineSegmentController {
-    private List<LineSegment> lineSegments;
+    private final LineSegmentRepository repository;
 
     /**
-     * Default constructor that initializes the line segment list.
+     * Default constructor that initializes the controller with the line segment repository.
      */
     public LineSegmentController() {
-        this.lineSegments = new ArrayList<>();
+        this.repository = Repositories.getInstance().getLineSegmentRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class LineSegmentController {
      */
     public LineSegment createLineSegment(LineSegment lineSegment) {
         if (lineSegment != null) {
-            lineSegments.add(lineSegment);
+            repository.addLineSegment(lineSegment);
         }
         return lineSegment;
     }
@@ -42,45 +43,54 @@ public class LineSegmentController {
      * @return a list of all LineSegment objects
      */
     public List<LineSegment> getAllLineSegments() {
-        return new ArrayList<>(lineSegments);
+        return repository.getAllLineSegments();
     }
 
     /**
      * Retrieves a line segment by its unique identifier.
      *
-     * @param segmentId the unique identifier of the line segment
+     * @param lineSegmentId the unique identifier of the line segment
      * @return an Optional containing the LineSegment if found, or empty if not found
      */
-    public Optional<LineSegment> getLineSegmentById(Integer segmentId) {
-        return lineSegments.stream()
-                .filter(lineSegment -> lineSegment.getSegmentId().equals(segmentId))
-                .findFirst();
+    public Optional<LineSegment> getLineSegmentById(Integer lineSegmentId) {
+        LineSegment lineSegment = repository.getLineSegmentById(lineSegmentId);
+        return Optional.ofNullable(lineSegment);
     }
 
     /**
      * Updates an existing line segment in the system.
      *
-     * @param segmentId the unique identifier of the line segment to update
+     * @param lineSegmentId the unique identifier of the line segment to update
      * @param updatedLineSegment the LineSegment object with updated information
      * @return true if the line segment was updated successfully, false otherwise
      */
-    public boolean updateLineSegment(Integer segmentId, LineSegment updatedLineSegment) {
-        Optional<LineSegment> existingLineSegment = getLineSegmentById(segmentId);
-        if (existingLineSegment.isPresent()) {
-            int index = lineSegments.indexOf(existingLineSegment.get());
-            lineSegments.set(index, updatedLineSegment);
-            return true;
-        }
-        return false;
+    public boolean updateLineSegment(Integer lineSegmentId, LineSegment updatedLineSegment) {
+        return repository.updateLineSegment(lineSegmentId, updatedLineSegment);
     }
 
     /**
      * Deletes a line segment from the system.
      *
-     * @param segmentId the unique identifier of the line segment to delete
+     * @param lineSegmentId the unique identifier of the line segment to delete
      * @return true if the line segment was deleted successfully, false otherwise
      */
-    public boolean deleteLineSegment(Integer segmentId) {
-        return lineSegments.removeIf(lineSegment -> lineSegment.getSegmentId().equals(segmentId));
+    public boolean deleteLineSegment(Integer lineSegmentId) {
+        return repository.deleteLineSegment(lineSegmentId);
+    }
+
+    /**
+     * Gets the next available line segment ID.
+     *
+     * @return the next line segment ID to be used
+     */
+    public Integer getNextLineSegmentId() {
+        return repository.getNextSegmentId();
+    }
+
+    /**
+     * Clears all line segments from the system.
+     */
+    public void clearAllLineSegments() {
+        repository.clear();
     }
 }

@@ -1,7 +1,8 @@
 package app.controller;
 
 import app.model.ParkingTrack;
-import java.util.ArrayList;
+import app.repositories.ParkingTrackRepository;
+import app.repositories.Repositories;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,13 +15,13 @@ import java.util.Optional;
  * @version 1.0
  */
 public class ParkingTrackController {
-    private List<ParkingTrack> parkingTracks;
+    private final ParkingTrackRepository repository;
 
     /**
-     * Default constructor that initializes the parking track list.
+     * Default constructor that initializes the controller with the parking track repository.
      */
     public ParkingTrackController() {
-        this.parkingTracks = new ArrayList<>();
+        this.repository = Repositories.getInstance().getParkingTrackRepository();
     }
 
     /**
@@ -31,7 +32,7 @@ public class ParkingTrackController {
      */
     public ParkingTrack createParkingTrack(ParkingTrack parkingTrack) {
         if (parkingTrack != null) {
-            parkingTracks.add(parkingTrack);
+            repository.addParkingTrack(parkingTrack);
         }
         return parkingTrack;
     }
@@ -42,7 +43,7 @@ public class ParkingTrackController {
      * @return a list of all ParkingTrack objects
      */
     public List<ParkingTrack> getAllParkingTracks() {
-        return new ArrayList<>(parkingTracks);
+        return repository.getAllParkingTracks();
     }
 
     /**
@@ -52,9 +53,8 @@ public class ParkingTrackController {
      * @return an Optional containing the ParkingTrack if found, or empty if not found
      */
     public Optional<ParkingTrack> getParkingTrackById(Integer parkingTrackId) {
-        return parkingTracks.stream()
-                .filter(parkingTrack -> parkingTrack.getParkingTrackId().equals(parkingTrackId))
-                .findFirst();
+        ParkingTrack parkingTrack = repository.getParkingTrackById(parkingTrackId);
+        return Optional.ofNullable(parkingTrack);
     }
 
     /**
@@ -65,13 +65,7 @@ public class ParkingTrackController {
      * @return true if the parking track was updated successfully, false otherwise
      */
     public boolean updateParkingTrack(Integer parkingTrackId, ParkingTrack updatedParkingTrack) {
-        Optional<ParkingTrack> existingParkingTrack = getParkingTrackById(parkingTrackId);
-        if (existingParkingTrack.isPresent()) {
-            int index = parkingTracks.indexOf(existingParkingTrack.get());
-            parkingTracks.set(index, updatedParkingTrack);
-            return true;
-        }
-        return false;
+        return repository.updateParkingTrack(parkingTrackId, updatedParkingTrack);
     }
 
     /**
@@ -81,7 +75,22 @@ public class ParkingTrackController {
      * @return true if the parking track was deleted successfully, false otherwise
      */
     public boolean deleteParkingTrack(Integer parkingTrackId) {
-        return parkingTracks.removeIf(parkingTrack -> parkingTrack.getParkingTrackId().equals(parkingTrackId));
+        return repository.deleteParkingTrack(parkingTrackId);
+    }
+
+    /**
+     * Gets the next available parking track ID.
+     *
+     * @return the next parking track ID to be used
+     */
+    public Integer getNextParkingTrackId() {
+        return repository.getNextTrackId();
+    }
+
+    /**
+     * Clears all parking tracks from the system.
+     */
+    public void clearAllParkingTracks() {
+        repository.clear();
     }
 }
-

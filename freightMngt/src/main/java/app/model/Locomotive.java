@@ -24,9 +24,13 @@ public class Locomotive {
     private Double acceleration; //in m/s^2
     private Dimension dimensions;
     private Double maxSpeed; //in Km/h
+    private Double operationalSpeed; //in Km/h
     private Double maxWeight; //in Kg
     private Double totalWeight; //in Kg
     private Integer maxBogies;
+    private String bogieType;
+    private String traction; //in kN
+
 
     /**
      * Default constructor that creates a Locomotive with null values.
@@ -44,9 +48,12 @@ public class Locomotive {
         this.acceleration = null;
         this.dimensions = null;
         this.maxSpeed = null;
+        this.operationalSpeed = null;
         this.maxWeight = null;
         this.totalWeight = null;
         this.maxBogies = null;
+        this.bogieType = null;
+        this.traction = null;
     }
 
     /**
@@ -62,12 +69,15 @@ public class Locomotive {
      * @param acceleration the acceleration capability in meters per second squared
      * @param dimensions the physical dimensions of the locomotive
      * @param maxSpeed the maximum speed in kilometers per hour
+     * @param operationalSpeed the operational speed in kilometers per hour
      * @param maxWeight the maximum weight capacity in kilograms
      * @param totalWeight the total weight of the locomotive in kilograms
      * @param maxBogies the maximum number of bogies
+     * @param bogieType the type of bogie
+     * @param traction the traction force in kilonewtons
      */
 
-    public Locomotive(Integer locomotiveId, User operator, LocomotiveType locomotiveType, String brand, String model, Integer year, Integer power, Double acceleration, Dimension dimensions, Double maxSpeed, Double maxWeight, Double totalWeight, Integer maxBogies) {
+    public Locomotive(Integer locomotiveId, User operator, LocomotiveType locomotiveType, String brand, String model, Integer year, Integer power, Double acceleration, Dimension dimensions, Double maxSpeed, Double operationalSpeed, Double maxWeight, Double totalWeight, Integer maxBogies, String bogieType, String traction) {
         this.locomotiveId = locomotiveId;
         this.operator = operator;
         this.locomotiveType = locomotiveType;
@@ -78,9 +88,12 @@ public class Locomotive {
         this.acceleration = acceleration;
         this.dimensions = dimensions;
         this.maxSpeed = maxSpeed;
+        this.operationalSpeed = operationalSpeed;
         this.maxWeight = maxWeight;
         this.totalWeight = totalWeight;
         this.maxBogies = maxBogies;
+        this.bogieType = bogieType;
+        this.traction = traction;
     }
 
     /**
@@ -284,6 +297,26 @@ public class Locomotive {
     }
 
     /**
+     * Gets the operational speed of this locomotive.
+     *
+     * @return the operational speed as a Double in kilometers per hour
+     */
+
+    public Double getOperationalSpeed() {
+        return operationalSpeed;
+    }
+
+    /**
+     * Sets the operational speed of this locomotive.
+     *
+     * @param operationalSpeed the operational speed to set in kilometers per hour
+     */
+
+    public void setOperationalSpeed(Double operationalSpeed) {
+        this.operationalSpeed = operationalSpeed;
+    }
+
+    /**
      * Gets the maximum weight capacity of this locomotive.
      *
      * @return the maximum weight as a Double in kilograms
@@ -343,6 +376,50 @@ public class Locomotive {
         this.maxBogies = maxBogies;
     }
 
+    /**
+     * Gets the bogie type of this locomotive.
+     *
+     * @return the bogie type as a String
+     */
+
+    public String getBogieType() {
+        return bogieType;
+    }
+
+    /**
+     * Sets the bogie type of this locomotive.
+     *
+     * @param bogieType the bogie type to set
+     */
+
+    public void setBogieType(String bogieType) {
+        this.bogieType = bogieType;
+    }
+
+    /**
+     * Gets the traction force of this locomotive.
+     *
+     * @return the traction as a String in kilonewtons
+     */
+
+    public String getTraction() {
+        return traction;
+    }
+
+    /**
+     * Sets the traction force of this locomotive.
+     *
+     * @param traction the traction to set in kilonewtons
+     */
+
+    public void setTraction(String traction) {
+        this.traction = traction;
+    }
+
+    public String getName() {
+        return brand + " " + model + " " + locomotiveId;
+    }
+
     @Override
     public String toString() {
         return "Locomotive{" +
@@ -356,9 +433,12 @@ public class Locomotive {
                 ", acceleration=" + acceleration +
                 ", dimensions=" + dimensions +
                 ", maxSpeed=" + maxSpeed +
+                ", operationalSpeed=" + operationalSpeed +
                 ", maxWeight=" + maxWeight +
                 ", totalWeight=" + totalWeight +
                 ", maxBogies=" + maxBogies +
+                ", bogieType='" + bogieType + '\'' +
+                ", traction='" + traction + '\'' +
                 '}';
     }
 }
