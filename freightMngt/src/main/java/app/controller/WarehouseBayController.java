@@ -69,6 +69,9 @@ public class WarehouseBayController {
      * @return true if the warehouse bay was updated successfully, false otherwise
      */
     public boolean updateWarehouseBay(Integer warehouseId, Integer aisleNo, Integer bayNo, WarehouseBay updatedWarehouseBay) {
+        if (updatedWarehouseBay == null) {
+            return false;
+        }
         return repository.updateWarehouseBay(warehouseId, aisleNo, bayNo, updatedWarehouseBay);
     }
 

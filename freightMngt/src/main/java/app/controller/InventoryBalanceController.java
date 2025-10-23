@@ -68,6 +68,9 @@ public class InventoryBalanceController {
      * @return true if the inventory balance was updated successfully, false otherwise
      */
     public boolean updateInventoryBalance(Integer balanceId, InventoryBalance updatedInventoryBalance) {
+        if (updatedInventoryBalance == null) {
+            return false;
+        }
         sortLotsInBalance(updatedInventoryBalance);
         return repository.updateInventoryBalance(balanceId, updatedInventoryBalance);
     }

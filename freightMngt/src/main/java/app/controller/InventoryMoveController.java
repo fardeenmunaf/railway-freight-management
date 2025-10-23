@@ -65,6 +65,9 @@ public class InventoryMoveController {
      * @return true if the inventory move was updated successfully, false otherwise
      */
     public boolean updateInventoryMove(Integer inventoryMoveId, InventoryMove updatedInventoryMove) {
+        if (updatedInventoryMove == null) {
+            return false;
+        }
         return repository.updateInventoryMove(inventoryMoveId, updatedInventoryMove);
     }
 
