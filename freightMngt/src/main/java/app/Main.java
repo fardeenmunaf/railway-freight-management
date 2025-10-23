@@ -191,22 +191,22 @@ public class Main {
                 "Strategy A (saves " + (totalDistanceStrategyB - totalDistanceStrategyA) + " steps)" :
                 "Strategy B (saves " + (totalDistanceStrategyA - totalDistanceStrategyB) + " steps)"));
 
-// ═══════════════════════════════════════════════════════════════
-// NOVA SECÇÃO: Rotas Detalhadas por Order (do zero)
-// ═══════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════
+        // NOVA SECÇÃO: Rotas Detalhadas por Order (do zero)
+        // ═══════════════════════════════════════════════════════════════
 
         System.out.println("\n\n╔════════════════════════════════════════════════════════════╗");
         System.out.println("║         DETAILED ROUTE ANALYSIS BY ORDER                   ║");
         System.out.println("╚════════════════════════════════════════════════════════════╝");
 
-// 1. Agrupar PickTasks por Order
+        // 1. Agrupar PickTasks por Order
         Map<Integer, List<PickTask>> tasksByOrder = new HashMap<>();
         for (PickTask pickTask : result.getPickTasks()) {
             Integer orderId = pickTask.getOrderLine().getOrder().getOrderId();
             tasksByOrder.computeIfAbsent(orderId, k -> new ArrayList<>()).add(pickTask);
         }
 
-// 2. Processar cada Order
+        // 2. Processar cada Order
         for (Map.Entry<Integer, List<PickTask>> entry : tasksByOrder.entrySet()) {
             Integer orderId = entry.getKey();
             List<PickTask> tasks = entry.getValue();
@@ -227,7 +227,7 @@ public class Main {
                         pickingPlan.getItemLocations(sku, orderId);
 
                 for (Allocation.AllocationRecord record : allocations) {
-                    String bayKey = "1-" + record.getBay();
+                    String bayKey = record.getAisle().split("-")[1].split("A")[1] + "-" + record.getBay();
 
                     // Guardar quantidade por SKU por bay
                     qtyBySkuByBay.computeIfAbsent(bayKey, k -> new HashMap<>())
@@ -236,7 +236,7 @@ public class Main {
                     // Criar BayLocation única
                     if (!uniqueBays.containsKey(bayKey)) {
                         uniqueBays.put(bayKey, new PickRouteOptimizationService.BayLocation(
-                                "1", record.getBay(), 0.0
+                                record.getAisle().split("-")[1].split("A")[1], record.getBay(), 0.0
                         ));
                     }
 
@@ -404,10 +404,8 @@ public class Main {
             }
         }
 
-
         System.out.println("\n\n\n");
 
         MainMenu.display();
     }
 }
-
