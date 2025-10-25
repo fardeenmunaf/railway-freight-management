@@ -42,6 +42,7 @@ public class MainMenu {
                         case 2:
                             break;
                         case 3:
+                            RelocateStock.display(scanner);
                             break;
                         case 4:
                             break;
