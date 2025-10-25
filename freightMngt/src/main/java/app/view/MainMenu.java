@@ -15,41 +15,37 @@ public class MainMenu {
 
         //Some menu options to example
         while (true) {
-            System.out.println("--------------------------------");
-            System.out.println("|   Please select an option:   |");
-            System.out.println("| 1. Manage Trains             |");
-            System.out.println("| 2. Manage Wagons             |");
-            System.out.println("| 3. Manage Train Services     |");
-            System.out.println("| 4. Calculate Travel Time     |");
-            System.out.println("| 5. Exit                      |");
-            System.out.println("--------------------------------");
-            System.out.print("Enter your choice (1-5): ");
+            System.out.println("----------------------------------");
+            System.out.println("|   Please select an option:     |");
+            System.out.println("| 1. Calculate Travel Time       |");
+            System.out.println("| 2. Dispatch Stock              |");
+            System.out.println("| 3. Relocate Stock              |");
+            System.out.println("| 4. Inventory Orders Pick       |");
+            System.out.println("| 5. Returned Orders Quarantine  |");
+            System.out.println("| 6. Exit                        |");
+            System.out.println("----------------------------------");
+            System.out.print("Enter your choice (1-6): ");
 
             String input = scanner.nextLine();
             try {
                 choice = Integer.parseInt(input);
-                if (choice < 1 || choice > 5) {
+                if (choice < 1 || choice > 6) {
                     System.out.println("Invalid choice. Please enter a number between 1 and 4.");
-                } else if (choice == 5) {
+                } else if (choice == 6) {
                     System.out.println("Exiting the system. Goodbye!");
                     System.exit(0);
                 } else {
-                    // Handle choices 1-4
                     switch (choice) {
                         case 1:
-                            System.out.println("Manage Trains selected.");
-                            // TODO: Call appropriate train management method
+                            TravelTimeFeature.calculateTravelTimeFromUserInput(scanner);
                             break;
                         case 2:
-                            System.out.println("Manage wagons selected.");
-                            // TODO: Call appropriate wagon management method
                             break;
                         case 3:
-                            System.out.println("Manage Train Services selected.");
-                            // TODO: Call appropriate train services management method
                             break;
                         case 4:
-                            TravelTimeFeature.calculateTravelTimeFromUserInput(scanner);
+                            break;
+                        case 5:
                             break;
                     }
                     System.out.println(); // Add a blank line for better readability
