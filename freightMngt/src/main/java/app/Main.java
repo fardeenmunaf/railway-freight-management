@@ -69,7 +69,7 @@ public class Main {
 //        System.out.println(pickingPlan.calculateTripsNeeded(pickingPlan.getAllCarts().get(0), pickingPlan.getAllOrderLines().get(0)));
 //        System.out.println("Wagons unloaded and bays filled successfully.\n\n");
 
-        // --- Demo - STRICT MODE ---
+        // --- Demo Picking Plans - STRICT MODE ---
 //        System.out.println("Running allocation planner (STRICT mode)...");
 //        app.service.Allocation.AllocationResult result = pickingPlan.planAllocations("STRICT");
 //

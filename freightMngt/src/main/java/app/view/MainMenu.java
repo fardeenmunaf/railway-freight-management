@@ -46,6 +46,7 @@ public class MainMenu {
                             RelocateStock.display(scanner);
                             break;
                         case 4:
+                            PickingPlanView.display(scanner);
                             break;
                         case 5:
                             break;
