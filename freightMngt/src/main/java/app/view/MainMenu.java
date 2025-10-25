@@ -15,14 +15,15 @@ public class MainMenu {
 
         //Some menu options to example
         while (true) {
-            System.out.println("--------------------------------");
-            System.out.println("|   Please select an option:   |");
-            System.out.println("| 1. Calculate Travel Time     |");
-            System.out.println("| 1.      |");
-            System.out.println("| 1. Calculate Travel Time     |");
-            System.out.println("| 1. Calculate Travel Time     |");
-            System.out.println("| 5. Exit                      |");
-            System.out.println("--------------------------------");
+            System.out.println("----------------------------------");
+            System.out.println("|   Please select an option:     |");
+            System.out.println("| 1. Calculate Travel Time       |");
+            System.out.println("| 2. Dispatch Stock              |");
+            System.out.println("| 3. Relocate Stock              |");
+            System.out.println("| 4. Inventory Orders Pick       |");
+            System.out.println("| 5. Returned Orders Quarantine  |");
+            System.out.println("| 5. Exit                        |");
+            System.out.println("----------------------------------");
             System.out.print("Enter your choice (1-5): ");
 
             String input = scanner.nextLine();
