@@ -43,6 +43,7 @@ public class MainMenu {
                             InventoryDispatch.display(scanner);
                             break;
                         case 3:
+                            RelocateStock.display(scanner);
                             break;
                         case 4:
                             break;
