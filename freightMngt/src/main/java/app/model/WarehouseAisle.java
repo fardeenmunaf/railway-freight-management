@@ -43,6 +43,11 @@ public class WarehouseAisle {
         this.uniqueCode = uniqueCode;
     }
 
+    public WarehouseAisle(int i, Object o) {
+    }
+
+
+
     /**
      * Gets the unique identifier of this aisle.
      *
@@ -121,15 +126,5 @@ public class WarehouseAisle {
 
     public void setUniqueCode(String uniqueCode) {
         this.uniqueCode = uniqueCode;
-    }
-
-    @Override
-    public String toString() {
-        return "WarehouseAisle{" +
-                "aisleId=" + aisleId +
-                ", warehouse=" + warehouse +
-                ", aisleNo=" + aisleNo +
-                ", uniqueCode='" + uniqueCode + '\'' +
-                '}';
     }
 }

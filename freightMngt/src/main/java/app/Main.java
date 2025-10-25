@@ -1,5 +1,6 @@
 package app;
 
+import app.controller.PickRouteController;
 import app.model.PickTask;
 import app.model.PickWave;
 import app.model.InventoryBalance;
@@ -7,20 +8,10 @@ import app.controller.InventoryBalanceController;
 import app.model.ReturnLine;
 import app.model.ReturnOrder;
 import app.repositories.*;
-import app.service.ReturnService;
-import app.service.TravelTimeFeature;
-import app.service.Allocation;
-import app.service.PickingPlan;
-import app.service.WagonsUnloading;
+import app.service.*;
 import app.view.MainMenu;
 
-import java.util.List;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -217,26 +208,273 @@ public class Main {
 
 
 //        // Test planPickingTask
-        System.out.println("\n=== Testing Pick Task Planning ===");
-        PickingPlan.PickingPlanResult result = pickingPlan.planPickingTask();
-
-        System.out.println("\n=== Pick Tasks List ===");
-        for (PickTask task : result.getPickTasks()) {
-            System.out.println("PickTask " + task.getPickTaskId() +
-                    " - Waves: " + task.getPickWaves().size());
-        }
-
-        System.out.println("\n=== Pick Waves List ===");
-        for (PickWave wave : result.getPickWaves()) {
-            System.out.println("PickWave " + wave.getPickWaveId() +
-                    " - Cart: " + wave.getCart().getCartId() +
-                    " - Status: " + wave.getStatus());
-        }
-
+//        System.out.println("\n=== Testing Pick Task Planning ===");
+//        PickingPlan.PickingPlanResult result = pickingPlan.planPickingTask();
+//
+//        System.out.println("\n=== Pick Tasks List ===");
+//        for (PickTask task : result.getPickTasks()) {
+//            System.out.println("PickTask " + task.getPickTaskId() +
+//                    " - Waves: " + task.getPickWaves().size());
+//        }
+//
+//        System.out.println("\n=== Pick Waves List ===");
+//        for (PickWave wave : result.getPickWaves()) {
+//            System.out.println("PickWave " + wave.getPickWaveId() +
+//                    " - Cart: " + wave.getCart().getCartId() +
+//                    " - Status: " + wave.getStatus());
+//        }
+//
+//        // Calculate routes for all pick tasks
+//        PickRouteController routeController = new PickRouteController();
+//        System.out.println("\n=== Calculating Optimal Routes ===");
+//        Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> allRoutes =
+//                routeController.calculateRoutesForPickTasks(result);
+//
+//        // Display results
+//        for (Map.Entry<Integer, Map<String, PickRouteOptimizationService.RouteResult>> entry : allRoutes.entrySet()) {
+//            System.out.println("\nPickTask " + entry.getKey() + ":");
+//            for (Map.Entry<String, PickRouteOptimizationService.RouteResult> routeEntry : entry.getValue().entrySet()) {
+//                System.out.println("  " + routeEntry.getValue());
+//            }
+//        }
+//
+//        // Calculate and display total distance for all pick tasks
+//        System.out.println("\n=== Total Distance Summary ===");
+//        int totalDistanceStrategyA = 0;
+//        int totalDistanceStrategyB = 0;
+//
+//        for (Map.Entry<Integer, Map<String, PickRouteOptimizationService.RouteResult>> entry : allRoutes.entrySet()) {
+//            Map<String, PickRouteOptimizationService.RouteResult> strategies = entry.getValue();
+//
+//            if (strategies.containsKey("strategyA")) {
+//                totalDistanceStrategyA += strategies.get("strategyA").getTotalDistance();
+//            }
+//            if (strategies.containsKey("strategyB")) {
+//                totalDistanceStrategyB += strategies.get("strategyB").getTotalDistance();
+//            }
+//        }
+//
+//        System.out.println("Total Distance (Strategy A - Deterministic Sweep): " + totalDistanceStrategyA);
+//        System.out.println("Total Distance (Strategy B - Nearest Neighbour): " + totalDistanceStrategyB);
+//        System.out.println("Best Strategy: " + (totalDistanceStrategyA <= totalDistanceStrategyB ?
+//                "Strategy A (saves " + (totalDistanceStrategyB - totalDistanceStrategyA) + " steps)" :
+//                "Strategy B (saves " + (totalDistanceStrategyA - totalDistanceStrategyB) + " steps)"));
+//
+//        // ═══════════════════════════════════════════════════════════════
+//        // NOVA SECÇÃO: Rotas Detalhadas por Order (do zero)
+//        // ═══════════════════════════════════════════════════════════════
+//
+//        System.out.println("\n\n╔════════════════════════════════════════════════════════════╗");
+//        System.out.println("║         DETAILED ROUTE ANALYSIS BY ORDER                   ║");
+//        System.out.println("╚════════════════════════════════════════════════════════════╝");
+//
+//        // 1. Agrupar PickTasks por Order
+//        Map<Integer, List<PickTask>> tasksByOrder = new HashMap<>();
+//        for (PickTask pickTask : result.getPickTasks()) {
+//            Integer orderId = pickTask.getOrderLine().getOrder().getOrderId();
+//            tasksByOrder.computeIfAbsent(orderId, k -> new ArrayList<>()).add(pickTask);
+//        }
+//
+//        // 2. Processar cada Order
+//        for (Map.Entry<Integer, List<PickTask>> entry : tasksByOrder.entrySet()) {
+//            Integer orderId = entry.getKey();
+//            List<PickTask> tasks = entry.getValue();
+//
+//            System.out.println("\n╔════════════════════════════════════════════════════════════╗");
+//            System.out.println("║  ORDER " + String.format("%5d", orderId) + " - Route Comparison                         ║");
+//            System.out.println("╚════════════════════════════════════════════════════════════╝");
+//
+//            // 2.1 Coletar todas as bays únicas desta order
+//            Map<String, PickRouteOptimizationService.BayLocation> uniqueBays = new LinkedHashMap<>();
+//            Map<String, Map<Integer, Double>> qtyBySkuByBay = new HashMap<>();
+//
+//            for (PickTask pickTask : tasks) {
+//                Integer sku = pickTask.getOrderLine().getSku().getItemId();
+//                Double requestedQty = pickTask.getOrderLine().getQty();
+//
+//                List<Allocation.AllocationRecord> allocations =
+//                        pickingPlan.getItemLocations(sku, orderId);
+//
+//                for (Allocation.AllocationRecord record : allocations) {
+//                    String bayKey = record.getAisle().split("-")[1].split("A")[1] + "-" + record.getBay();
+//
+//                    // Guardar quantidade por SKU por bay
+//                    qtyBySkuByBay.computeIfAbsent(bayKey, k -> new HashMap<>())
+//                            .merge(sku, record.getQty(), Double::sum);
+//
+//                    // Criar BayLocation única
+//                    if (!uniqueBays.containsKey(bayKey)) {
+//                        uniqueBays.put(bayKey, new PickRouteOptimizationService.BayLocation(
+//                                record.getAisle().split("-")[1].split("A")[1], record.getBay(), 0.0
+//                        ));
+//                    }
+//
+//                    // Atualizar quantidade total da bay
+//                    double totalQty = qtyBySkuByBay.get(bayKey).values().stream()
+//                            .mapToDouble(Double::doubleValue).sum();
+//                    uniqueBays.get(bayKey).setQuantity(totalQty);
+//                }
+//            }
+//
+//            // 2.2 Calcular rotas para as bays únicas
+//            if (uniqueBays.isEmpty()) {
+//                System.out.println("  ⚠️  No inventory available for this order");
+//                continue;
+//            }
+//
+//            List<PickRouteOptimizationService.BayLocation> orderBays =
+//                    new ArrayList<>(uniqueBays.values());
+//
+//            Map<String, PickRouteOptimizationService.RouteResult> orderRoutes =
+//                    routeController.optimizeRoute(orderBays);
+//
+//            // ═══════════════════════════════════════════════════════════════
+//            // STRATEGY A - Deterministic Sweep (Ascending)
+//            // ═══════════════════════════════════════════════════════════════
+//
+//            if (orderRoutes.containsKey("strategyA")) {
+//                PickRouteOptimizationService.RouteResult routeA = orderRoutes.get("strategyA");
+//
+//                System.out.println("\n▶ Strategy A (Deterministic Sweep - Ascending)");
+//                System.out.println("  Total Distance: " + routeA.getTotalDistance() + " steps\n");
+//
+//                int currentAisle = 0;
+//                int currentBay = 0;
+//                int stepCount = 0;
+//
+//                System.out.println("  Step | From     → To       | Distance | Cumulative | Items Picked");
+//                System.out.println("  ─────┼──────────┼──────────┼──────────┼────────────┼────────────────────────");
+//
+//                for (int i = 0; i < routeA.getPath().size(); i++) {
+//                    PickRouteOptimizationService.BayLocation bay = routeA.getPath().get(i);
+//                    int nextAisle = Integer.parseInt(bay.getAisle());
+//                    int nextBay = bay.getBay();
+//
+//                    // Calcular distância
+//                    int distance = 0;
+//                    if (currentAisle == nextAisle) {
+//                        distance = Math.abs(currentBay - nextBay);
+//                    } else {
+//                        distance = currentBay + Math.abs(currentAisle - nextAisle) * 3 + nextBay;
+//                    }
+//
+//                    stepCount += distance;
+//
+//                    // Buscar SKUs nesta bay
+//                    String bayKey = nextAisle + "-" + nextBay;
+//                    Map<Integer, Double> skusInBay = qtyBySkuByBay.getOrDefault(bayKey, new HashMap<>());
+//
+//                    // Formatar SKUs
+//                    StringBuilder skuDetails = new StringBuilder();
+//                    for (Map.Entry<Integer, Double> skuEntry : skusInBay.entrySet()) {
+//                        skuDetails.append("SKU").append(skuEntry.getKey())
+//                                .append("(").append(String.format("%.0f", skuEntry.getValue())).append(") ");
+//                    }
+//
+//                    // Mostrar passo
+//                    System.out.printf("  %4d │ (%d,%2d) → (%d,%2d) │ %8d │ %10d │ %s%n",
+//                            i + 1,
+//                            currentAisle, currentBay,
+//                            nextAisle, nextBay,
+//                            distance,
+//                            stepCount,
+//                            skuDetails.toString().trim()
+//                    );
+//
+//                    currentAisle = nextAisle;
+//                    currentBay = nextBay;
+//                }
+//
+//                System.out.println("  ─────┴──────────┴──────────┴──────────┴────────────┴────────────────────────");
+//                System.out.println("  Final Position: (" + currentAisle + "," + currentBay + ")");
+//            }
+//
+//            // ═══════════════════════════════════════════════════════════════
+//            // STRATEGY B - Nearest Neighbour
+//            // ═══════════════════════════════════════════════════════════════
+//
+//            if (orderRoutes.containsKey("strategyB")) {
+//                PickRouteOptimizationService.RouteResult routeB = orderRoutes.get("strategyB");
+//
+//                System.out.println("\n▶ Strategy B (Nearest Neighbour)");
+//                System.out.println("  Total Distance: " + routeB.getTotalDistance() + " steps\n");
+//
+//                int currentAisle = 0;
+//                int currentBay = 0;
+//                int stepCount = 0;
+//
+//                System.out.println("  Step | From     → To       | Distance | Cumulative | Items Picked");
+//                System.out.println("  ─────┼──────────┼──────────┼──────────┼────────────┼────────────────────────");
+//
+//                for (int i = 0; i < routeB.getPath().size(); i++) {
+//                    PickRouteOptimizationService.BayLocation bay = routeB.getPath().get(i);
+//                    int nextAisle = Integer.parseInt(bay.getAisle());
+//                    int nextBay = bay.getBay();
+//
+//                    int distance = 0;
+//                    if (currentAisle == nextAisle) {
+//                        distance = Math.abs(currentBay - nextBay);
+//                    } else {
+//                        distance = currentBay + Math.abs(currentAisle - nextAisle) * 3 + nextBay;
+//                    }
+//
+//                    stepCount += distance;
+//
+//                    String bayKey = nextAisle + "-" + nextBay;
+//                    Map<Integer, Double> skusInBay = qtyBySkuByBay.getOrDefault(bayKey, new HashMap<>());
+//
+//                    StringBuilder skuDetails = new StringBuilder();
+//                    for (Map.Entry<Integer, Double> skuEntry : skusInBay.entrySet()) {
+//                        skuDetails.append("SKU").append(skuEntry.getKey())
+//                                .append("(").append(String.format("%.0f", skuEntry.getValue())).append(") ");
+//                    }
+//
+//                    System.out.printf("  %4d │ (%d,%2d) → (%d,%2d) │ %8d │ %10d │ %s%n",
+//                            i + 1,
+//                            currentAisle, currentBay,
+//                            nextAisle, nextBay,
+//                            distance,
+//                            stepCount,
+//                            skuDetails.toString().trim()
+//                    );
+//
+//                    currentAisle = nextAisle;
+//                    currentBay = nextBay;
+//                }
+//
+//                System.out.println("  ─────┴──────────┴──────────┴──────────┴────────────┴────────────────────────");
+//                System.out.println("  Final Position: (" + currentAisle + "," + currentBay + ")");
+//            }
+//
+//            // ═══════════════════════════════════════════════════════════════
+//            // COMPARAÇÃO
+//            // ═══════════════════════════════════════════════════════════════
+//
+//            if (orderRoutes.containsKey("strategyA") && orderRoutes.containsKey("strategyB")) {
+//                int distA = orderRoutes.get("strategyA").getTotalDistance();
+//                int distB = orderRoutes.get("strategyB").getTotalDistance();
+//
+//                System.out.println("\n  ╔════════════════════════════════════════════════════════════╗");
+//                System.out.println("  ║  COMPARISON                                                ║");
+//                System.out.println("  ╠════════════════════════════════════════════════════════════╣");
+//                System.out.printf("  ║  Strategy A: %4d steps                                      ║%n", distA);
+//                System.out.printf("  ║  Strategy B: %4d steps                                      ║%n", distB);
+//                System.out.println("  ╠════════════════════════════════════════════════════════════╣");
+//
+//                if (distA < distB) {
+//                    System.out.printf("  ║  ✓ Best: Strategy A (saves %d steps)                       ║%n", distB - distA);
+//                } else if (distB < distA) {
+//                    System.out.printf("  ║  ✓ Best: Strategy B (saves %d steps)                       ║%n", distA - distB);
+//                } else {
+//                    System.out.println("  ║  ✓ Both strategies are equal                              ║");
+//                }
+//
+//                System.out.println("  ╚════════════════════════════════════════════════════════════╝");
+//            }
+//        }
 
         System.out.println("\n\n\n");
 
         MainMenu.display();
     }
 }
-
