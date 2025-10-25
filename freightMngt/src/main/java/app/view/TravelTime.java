@@ -11,7 +11,35 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * View class responsible for handling the travel time calculation user interface.
+ * This class provides a console-based interface for users to calculate travel time
+ * between two directly connected railway stations using a selected locomotive.
+ * <p>
+ * Features include:
+ * - Display of available stations and locomotives
+ * - Input validation for station and locomotive IDs
+ * - Travel time calculation and results display
+ * - Error handling with user-friendly messages
+ * - Option to return to main menu at any time
+ */
 public class TravelTime {
+
+    /**
+     * Displays the travel time calculation interface and handles user interaction.
+     * This method provides a complete workflow for calculating travel time between stations:
+     * <p>
+     * 1. Shows available stations (facility type 2 only)
+     * 2. Shows available locomotives with their specifications
+     * 3. Prompts user for origin station, destination station, and locomotive
+     * 4. Validates inputs and calculates travel time
+     * 5. Displays detailed results including distance, speed, and travel time
+     * 6. Handles various error conditions with appropriate messages
+     * <p>
+     * The user can type 'b' at any input prompt to return to the main menu.
+     *
+     * @param scanner the Scanner object used for reading user input
+     */
     public static void display(Scanner scanner) {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("           CALCULATE TRAVEL TIME");
