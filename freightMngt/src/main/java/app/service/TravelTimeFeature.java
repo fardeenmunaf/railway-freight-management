@@ -39,43 +39,59 @@ public class TravelTimeFeature {
      * @param scanner scanner para entrada do utilizador
      */
     public static void calculateTravelTimeFromUserInput(Scanner scanner) {
-        System.out.println("\n=== Calcular Tempo de Viagem ===");
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("           CALCULATE TRAVEL TIME");
+        System.out.println("=".repeat(50));
+        System.out.println("Type 'b' at any time to return to menu.\n");
 
         Repositories repositories = Repositories.getInstance();
         FacilityRepository facilityRepo = repositories.getFacilityRepository();
         LocomotiveRepository locomotiveRepo = repositories.getLocomotiveRepository();
 
-        System.out.println("\nEstações disponíveis:");
+        System.out.println("AVAILABLE STATIONS:");
+        System.out.println("-".repeat(30));
         List<Facility> facilities = facilityRepo.getAllFacilities();
         if (facilities != null && !facilities.isEmpty()) {
             facilities.stream()
                     .filter(f -> f != null && f.getFacilityType() != null
                             && Integer.valueOf(2).equals(f.getFacilityType().getFacilityTypeId()))
                     .sorted(Comparator.comparing(f -> f.getFacilityId() == null ? Integer.MAX_VALUE : f.getFacilityId()))
-                    .forEach(f -> System.out.println(f.getFacilityId() + " - " + (f.getName() != null ? f.getName() : "(sem nome)")));
+                    .forEach(f -> System.out.printf("   %d - %s%n",
+                            f.getFacilityId(),
+                            f.getName() != null ? f.getName() : "(no name)"));
         } else {
-            System.out.println("(nenhuma estação encontrada)");
+            System.out.println("   (no stations found)");
         }
 
-        System.out.println("\nLocomotivas disponíveis:");
+        System.out.println("\nAVAILABLE LOCOMOTIVES:");
+        System.out.println("-".repeat(30));
         List<Locomotive> locos = locomotiveRepo.getAllLocomotives();
         if (locos != null && !locos.isEmpty()) {
             locos.stream()
                     .sorted(Comparator.comparing(l -> l.getLocomotiveId() == null ? Integer.MAX_VALUE : l.getLocomotiveId()))
-                    .forEach(l -> System.out.println(l.getLocomotiveId() + " - " + (l.getName() != null ? l.getName() : "(sem nome)")));
+                    .forEach(l -> System.out.printf("   %d - %s (Max Speed: %.0f km/h)%n",
+                            l.getLocomotiveId(),
+                            l.getName() != null ? l.getName() : "(no name)",
+                            l.getMaxSpeed() != null ? l.getMaxSpeed() : 0.0));
         } else {
-            System.out.println("(nenhuma locomotiva encontrada)");
+            System.out.println("   (no locomotives found)");
         }
 
         try {
-            System.out.print("Digite o nr da estação de origem: ");
-            int originId = Integer.parseInt(scanner.nextLine().trim());
+            System.out.print("\nEnter origin station ID: ");
+            String originInput = scanner.nextLine().trim();
+            if ("b".equalsIgnoreCase(originInput)) return;
+            int originId = Integer.parseInt(originInput);
 
-            System.out.print("Digite o nr da estação de destino: ");
-            int destinationId = Integer.parseInt(scanner.nextLine().trim());
+            System.out.print("Enter destination station ID: ");
+            String destInput = scanner.nextLine().trim();
+            if ("b".equalsIgnoreCase(destInput)) return;
+            int destinationId = Integer.parseInt(destInput);
 
-            System.out.print("Digite o nr da locomotiva: ");
-            int locomotiveId = Integer.parseInt(scanner.nextLine().trim());
+            System.out.print("Enter locomotive ID: ");
+            String locoInput = scanner.nextLine().trim();
+            if ("b".equalsIgnoreCase(locoInput)) return;
+            int locomotiveId = Integer.parseInt(locoInput);
 
             TravelTimeCalculator calculator = TravelTimeFeature.create(
                     repositories.getFacilityRepository(),
@@ -86,21 +102,38 @@ public class TravelTimeFeature {
 
             double travelTime = calculator.calculateTravelTimeMinutes(originId, destinationId, locomotiveId);
 
-            System.out.println("\n--- Detalhes da Viagem ---");
-            System.out.println("Distância: " + String.format("%.2f", calculator.getDistanceKm()) + " km");
-            System.out.println("Velocidade Efetiva: " + String.format("%.2f", calculator.getEffectiveSpeedKmh()) + " km/h");
-            System.out.println("Tempo Estimado: " + String.format("%.2f", travelTime) + " minutos");
-            System.out.println("--------------------------\n");
+            Facility origin = facilityRepo.getFacilityById(originId);
+            Facility destination = facilityRepo.getFacilityById(destinationId);
+            Locomotive locomotive = locomotiveRepo.getLocomotiveById(locomotiveId);
+
+            System.out.println("\n" + "=".repeat(50));
+            System.out.println("              JOURNEY RESULTS");
+            System.out.println("=".repeat(50));
+            System.out.printf("Locomotive: %s (ID: %d)%n",
+                    locomotive.getName() != null ? locomotive.getName() : "(no name)", locomotiveId);
+            System.out.printf("Origin: %s (ID: %d)%n", origin.getName(), originId);
+            System.out.printf("Destination: %s (ID: %d)%n", destination.getName(), destinationId);
+            System.out.println("-".repeat(50));
+            System.out.printf("Distance: %.2f km%n", calculator.getDistanceKm());
+            System.out.printf("Speed: %.2f km/h%n", calculator.getEffectiveSpeedKmh());
+            System.out.printf("Travel Time: %.2f minutes (%.0fh %.0fm)%n",
+                    travelTime,
+                    Math.floor(travelTime / 60.0),
+                    travelTime % 60.0);
+            System.out.println("=".repeat(50));
 
         } catch (NumberFormatException e) {
-            System.out.println("Erro: introduza IDs numéricos válidos.");
+            System.out.println("Error: please enter valid numeric IDs.");
         } catch (NoDirectConnectionException e) {
-            System.out.println("Erro: " + e.getMessage());
+            System.out.println("Connection Error: " + e.getMessage());
         } catch (InvalidSpeedException e) {
-            System.out.println("Erro: " + e.getMessage());
+            System.out.println("Speed Error: " + e.getMessage());
         } catch (Exception e) {
-            System.out.println("Erro inesperado: " + e.getMessage());
+            System.out.println("Unexpected error: " + e.getMessage());
         }
+
+        System.out.println("\nPress Enter to return to main menu...");
+        scanner.nextLine();
     }
 
     public static class TravelTimeCalculator {
