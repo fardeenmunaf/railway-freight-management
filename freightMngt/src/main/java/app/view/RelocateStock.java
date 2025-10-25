@@ -50,7 +50,11 @@ public class RelocateStock {
         Repositories repositories = Repositories.getInstance();
         InventoryRelocation relocationService = new InventoryRelocation();
 
+        // Display available inventory lots
         displayInventoryLots(repositories);
+
+        // Display available warehouse bays
+        displayWarehouseBays(repositories);
 
         try {
             System.out.print("\nEnter lot ID to relocate: ");
@@ -58,9 +62,7 @@ public class RelocateStock {
             if ("b".equalsIgnoreCase(lotInput)) return;
             int lotId = Integer.parseInt(lotInput);
 
-            displayWarehouseBays(repositories);
-
-            System.out.print("\nEnter target bay ID: ");
+            System.out.print("Enter target bay ID: ");
             String bayInput = scanner.nextLine().trim();
             if ("b".equalsIgnoreCase(bayInput)) return;
             int targetBayId = Integer.parseInt(bayInput);
@@ -74,6 +76,7 @@ public class RelocateStock {
                 return;
             }
 
+            // Execute the relocation
             boolean success = relocationService.relocateLot(lotId, targetBayId, reason);
 
             System.out.println("\n" + "=".repeat(60));
