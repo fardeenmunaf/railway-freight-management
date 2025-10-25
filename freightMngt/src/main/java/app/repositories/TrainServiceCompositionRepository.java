@@ -46,7 +46,7 @@ public class TrainServiceCompositionRepository {
             boolean matchesWagon = wagonId == null ||
                                   (composition.getWagon() != null &&
                                    wagonId.equals(composition.getWagon().getWagonId()));
-            return matchesService && (matchesLocomotive || matchesWagon);
+            return matchesService && matchesLocomotive && matchesWagon;
         });
     }
 

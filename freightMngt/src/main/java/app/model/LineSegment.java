@@ -246,7 +246,7 @@ public class LineSegment {
      */
 
     public void setTrackNumber(Integer trackNumber) {
-        this.trackNumber = LineSegment.this.trackNumber;
+        this.trackNumber = trackNumber;
     }
 
     /**

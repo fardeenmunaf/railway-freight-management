@@ -64,6 +64,9 @@ public class InventoryLotController {
      * @return true if the inventory lot was updated successfully, false otherwise
      */
     public boolean updateInventoryLot(Integer lotId, InventoryLot updatedInventoryLot) {
+        if (updatedInventoryLot == null) {
+            return false;
+        }
         return repository.updateInventoryLot(lotId, updatedInventoryLot);
     }
 
