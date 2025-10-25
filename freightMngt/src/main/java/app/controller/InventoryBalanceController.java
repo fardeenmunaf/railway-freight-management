@@ -5,6 +5,7 @@ import app.model.InventoryLot;
 import app.repositories.InventoryBalanceRepository;
 import app.repositories.Repositories;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -93,6 +94,7 @@ public class InventoryBalanceController {
 
     /**
      * Sorts the lots within a balance according to FEFO/FIFO rules with tie-breaking.
+     * Also removes expired lots from the balance.
      * Sorting criteria (in order):
      * 1. Lots with expiryDate come first (sorted by expiry date - FEFO)
      * 2. Lots without expiryDate come after (sorted by receivedAt - FIFO)
@@ -104,6 +106,12 @@ public class InventoryBalanceController {
     private void sortLotsInBalance(InventoryBalance balance) {
         if (balance != null && !balance.getLots().isEmpty()) {
             List<InventoryLot> sortedLots = new ArrayList<>(balance.getLots());
+
+            // Remove expired lots (expDate before current date/time)
+            LocalDateTime now = LocalDateTime.now();
+            sortedLots.removeIf(lot ->
+                lot.getExpDate() != null && lot.getExpDate().isBefore(now)
+            );
 
             sortedLots.sort((lot1, lot2) -> {
                 boolean lot1HasExpiry = lot1.getExpDate() != null;

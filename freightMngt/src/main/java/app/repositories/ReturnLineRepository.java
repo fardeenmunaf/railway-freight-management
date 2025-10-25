@@ -22,6 +22,18 @@ public class ReturnLineRepository {
         }
     }
 
+    public List<ReturnLine> getReturnLinesByReturnId(Integer returnId) {
+        List<ReturnLine> result = new ArrayList<>();
+        for (ReturnLine returnLine : returnLines) {
+            if (returnLine.getReturnOrder() != null &&
+                    returnId.equals(returnLine.getReturnOrder().getReturnId())) {
+                result.add(returnLine);
+            }
+        }
+        return result;
+    }
+
+
     public List<ReturnLine> getAllReturnLines() {
         return new ArrayList<>(returnLines);
     }
