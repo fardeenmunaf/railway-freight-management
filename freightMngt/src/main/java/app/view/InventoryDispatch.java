@@ -59,6 +59,9 @@ public class InventoryDispatch {
             System.out.printf("SKU %s: %s%n", skuInput,
                     success ? "Dispatched successfully" : "Dispatch failed - insufficient stock");
 
+            if (success) {
+                showBaysAfterDispatch(dispatchService, skuNum, skuInput);
+            }
         } catch (NumberFormatException e) {
             System.out.println("Error: Invalid number format.");
         } catch (Exception e) {
@@ -127,4 +130,36 @@ public class InventoryDispatch {
 
         return lotCount;
     }
+
+    /**
+     * Shows the state of bays after dispatch operation.
+     */
+    private static void showBaysAfterDispatch(app.service.InventoryDispatch dispatchService,
+                                              Integer skuNum, String skuInput) {
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("           BAYS STATE AFTER DISPATCH");
+        System.out.println("=".repeat(50));
+        System.out.printf("SKU %s remaining stock:%n", skuInput);
+
+        List<InventoryBalance> remainingBalances = dispatchService.getBalancesWithSku(skuNum);
+
+        if (remainingBalances.isEmpty()) {
+            System.out.println("   No remaining stock - all bays cleared for this SKU");
+            return;
+        }
+
+        int totalRemaining = 0;
+        for (InventoryBalance balance : remainingBalances) {
+            totalRemaining += balance.getQty();
+
+            System.out.printf("   Bay %d: %d units in %d lots%n",
+                    balance.getBay().getBayId(),
+                    balance.getQty(),
+                    balance.getLots().size());
+        }
+
+        System.out.printf("   Total remaining: %d units across %d bays%n",
+                totalRemaining, remainingBalances.size());
+    }
+
 }
