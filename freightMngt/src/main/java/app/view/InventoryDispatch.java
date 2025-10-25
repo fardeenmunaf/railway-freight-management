@@ -40,7 +40,14 @@ public class InventoryDispatch {
             Integer skuNum = Integer.parseInt(skuInput.substring(3)); // SKU00001 -> 1
             Integer quantity = Integer.parseInt(qtyInput);
 
-            showAllocationPreview(dispatchService, skuNum, quantity, skuInput);
+            boolean hasStock = showAllocationPreview(dispatchService, skuNum, quantity, skuInput);
+
+            if (!hasStock) {
+                System.out.println("\nCannot proceed - no stock available for this SKU.");
+                System.out.println("Press Enter to return to main menu...");
+                scanner.nextLine();
+                return;
+            }
 
             System.out.print("\nProceed with dispatch? (y/n): ");
             String confirm = scanner.nextLine().trim();
@@ -74,8 +81,9 @@ public class InventoryDispatch {
 
     /**
      * Shows allocation preview before dispatch confirmation.
+     * @return true if stock is available, false otherwise
      */
-    private static void showAllocationPreview(app.service.InventoryDispatch dispatchService,
+    private static boolean showAllocationPreview(app.service.InventoryDispatch dispatchService,
                                               Integer skuNum, Integer quantity, String skuInput) {
 
         System.out.println("\n" + "=".repeat(50));
@@ -87,7 +95,7 @@ public class InventoryDispatch {
 
         if (balances.isEmpty()) {
             System.out.println("   No stock available for this SKU");
-            return;
+            return false;
         }
 
         int totalAvailable = 0;
@@ -113,6 +121,8 @@ public class InventoryDispatch {
         } else {
             System.out.printf("   Full allocation: %d units%n", quantity);
         }
+
+        return true;
     }
 
     /**
