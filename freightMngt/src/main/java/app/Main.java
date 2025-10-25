@@ -38,17 +38,16 @@ public class Main {
         appInitializer.run();
 
 //        System.out.println(itemCategoryRepository.getAllCategories().stream().limit(3).toList());
-//        System.out.println(itemRepository.getAllItems().stream().limit(3).toList());
-        System.out.println(orderRepository.getAllOrders().stream().limit(3).toList());
+//        System.out.println(itemRepository.getAllItems().stream().limit(3).toList());//       System.out.println(orderRepository.getAllOrders().stream().limit(3).toList());
 //        System.out.println(warehouseRepository.getAllWarehouses().stream().limit(3).toList());
 //        System.out.println(warehouseAisleRepository.getAllAisles().stream().limit(3).toList());
 //        System.out.println(warehouseBayRepository.getAllWarehouseBays().stream().limit(3).toList());
-        System.out.println(orderLineRepository.getAllOrderLines().stream().limit(3).toList());
+//        System.out.println(orderLineRepository.getAllOrderLines().stream().limit(3).toList());
 //        System.out.println(returnOrderRepository.getAllReturnOrders().stream().limit(3).toList());
         System.out.println("Dataset initialized successfully.\n\n");
 
 
-        System.out.println("Unloading wagons and fill bays with items...");
+        // System.out.println("Unloading wagons and fill bays with items...");
         WagonsUnloading wagonsUnloading = new WagonsUnloading();
         wagonsUnloading.unloadAllWagons();
 
