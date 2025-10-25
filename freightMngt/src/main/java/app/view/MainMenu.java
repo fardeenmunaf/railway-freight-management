@@ -40,6 +40,7 @@ public class MainMenu {
                             TravelTime.display(scanner);
                             break;
                         case 2:
+                            InventoryDispatch.display(scanner);
                             break;
                         case 3:
                             break;
