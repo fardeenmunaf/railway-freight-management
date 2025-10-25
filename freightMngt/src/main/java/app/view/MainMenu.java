@@ -49,6 +49,7 @@ public class MainMenu {
                             PickingPlanView.display(scanner);
                             break;
                         case 5:
+                            ReturnProcessing.display(scanner);
                             break;
                     }
                     System.out.println(); // Add a blank line for better readability
