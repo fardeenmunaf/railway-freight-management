@@ -76,6 +76,9 @@ public class UserController {
      * @return true if the user was updated successfully, false otherwise
      */
     public boolean updateUser(Integer userId, User updatedUser) {
+        if (updatedUser == null) {
+            return false;
+        }
         return repository.updateUser(userId, updatedUser);
     }
 

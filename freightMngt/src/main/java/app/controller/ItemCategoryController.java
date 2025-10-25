@@ -65,6 +65,9 @@ public class ItemCategoryController {
      * @return true if the item category was updated successfully, false otherwise
      */
     public boolean updateItemCategory(Integer categoryId, ItemCategory updatedItemCategory) {
+        if (updatedItemCategory == null) {
+            return false;
+        }
         return repository.updateItemCategory(categoryId, updatedItemCategory);
     }
 

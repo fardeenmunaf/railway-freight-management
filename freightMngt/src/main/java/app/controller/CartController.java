@@ -66,6 +66,9 @@ public class CartController {
      * @return true if the cart was updated successfully, false otherwise
      */
     public boolean updateCart(Integer cartId, Cart updatedCart) {
+        if (updatedCart == null) {
+            return false;
+        }
         return cartRepository.updateCart(cartId, updatedCart);
     }
 

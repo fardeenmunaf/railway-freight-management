@@ -76,6 +76,9 @@ public class WarehouseController {
      * @return true if the warehouse was updated successfully, false otherwise
      */
     public boolean updateWarehouse(Integer warehouseId, Warehouse updatedWarehouse) {
+        if (updatedWarehouse == null) {
+            return false;
+        }
         return repository.updateWarehouse(warehouseId, updatedWarehouse);
     }
 

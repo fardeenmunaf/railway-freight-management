@@ -76,6 +76,9 @@ public class ItemController {
      * @return true if the item was updated successfully, false otherwise
      */
     public boolean updateItem(Integer itemId, Item updatedItem) {
+        if (updatedItem == null) {
+            return false;
+        }
         return repository.updateItem(itemId, updatedItem);
     }
 

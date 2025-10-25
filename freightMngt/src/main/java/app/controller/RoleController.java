@@ -76,6 +76,9 @@ public class RoleController {
      * @return true if the role was updated successfully, false otherwise
      */
     public boolean updateRole(Integer roleId, Role updatedRole) {
+        if (updatedRole == null) {
+            return false;
+        }
         return repository.updateRole(roleId, updatedRole);
     }
 

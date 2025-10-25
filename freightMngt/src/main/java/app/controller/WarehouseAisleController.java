@@ -67,6 +67,9 @@ public class WarehouseAisleController {
      * @return true if the warehouse aisle was updated successfully, false otherwise
      */
     public boolean updateWarehouseAisle(Integer warehouseId, Integer aisleNo, WarehouseAisle updatedWarehouseAisle) {
+        if (updatedWarehouseAisle == null) {
+            return false;
+        }
         return repository.updateWarehouseAisle(warehouseId, aisleNo, updatedWarehouseAisle);
     }
 
