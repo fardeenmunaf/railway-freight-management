@@ -37,7 +37,7 @@ public class MainMenu {
                 } else {
                     switch (choice) {
                         case 1:
-                            TravelTimeFeature.calculateTravelTimeFromUserInput(scanner);
+                            TravelTime.display(scanner);
                             break;
                         case 2:
                             break;
