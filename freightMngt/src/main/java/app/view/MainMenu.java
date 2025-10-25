@@ -46,6 +46,7 @@ public class MainMenu {
                         case 4:
                             break;
                         case 5:
+                            ReturnProcessing.display(scanner);
                             break;
                     }
                     System.out.println(); // Add a blank line for better readability
