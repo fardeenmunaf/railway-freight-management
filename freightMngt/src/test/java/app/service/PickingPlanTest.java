@@ -49,6 +49,9 @@ public class PickingPlanTest {
         app.repositories.Repositories.getInstance().getPickWaveRepository().clear();
         app.repositories.Repositories.getInstance().getPickTaskRepository().clear();
 
+        // Reset shared allocation to prevent test interference
+        PickingPlan.resetSharedAllocation();
+
         pickingPlan = new PickingPlan();
     }
 
@@ -745,4 +748,3 @@ public class PickingPlanTest {
                 result.getPickTasks().size() > 0 || result.getPickWaves().size() > 0);
     }
 }
-
