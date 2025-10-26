@@ -5,7 +5,6 @@ import app.repositories.*;
 import app.service.TravelTimeFeature.TravelTimeCalculator;
 import app.service.TravelTimeFeature.NoDirectConnectionException;
 import app.service.TravelTimeFeature.InvalidSpeedException;
-import app.view.TravelTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -951,14 +950,14 @@ public class TravelTimeFeatureTest {
      */
     @Test
     public void testCalculateTravelTimeFromUserInput_InvalidNumberFormat() {
-        // Create mock scanner with invalid input
-        String invalidInput = "abc\n";
+        // Create mock scanner with invalid input followed by 'b' to exit
+        String invalidInput = "abc\nb\n";
         java.util.Scanner scanner = new java.util.Scanner(invalidInput);
 
         // This should handle NumberFormatException and print error message
         // We're just testing that the method exists and handles exceptions
         try {
-            TravelTime.display(scanner);            // Method should handle exception internally and not throw
+            app.view.TravelTime.display(scanner);
             assertTrue("Method should handle exception gracefully", true);
         } catch (Exception e) {
             fail("Method should not throw exception: " + e.getMessage());
@@ -968,7 +967,7 @@ public class TravelTimeFeatureTest {
     }
 
     /**
-     * Test calculateTravelTimeFromUserInput with valid input (successful calculation).
+     * Test TravelTime.display with valid input (successful calculation).
      */
     @Test
     public void testCalculateTravelTimeFromUserInput_ValidInput() {
@@ -982,13 +981,13 @@ public class TravelTimeFeatureTest {
 
         createLocomotive(120.0);
 
-        // Create scanner with valid input: station1=1, station2=2, locomotive=1
-        String validInput = "1\n2\n1\n";
+        // Create scanner with valid input: station1=1, station2=2, locomotive=1, then Enter to return
+        String validInput = "1\n2\n1\n\n";
         java.util.Scanner scanner = new java.util.Scanner(validInput);
 
         // Execute - should complete without throwing exceptions
         try {
-            TravelTime.display(scanner);
+            app.view.TravelTime.display(scanner);
             assertTrue("Method should execute successfully", true);
         } catch (Exception e) {
             fail("Method should not throw exception with valid input: " + e.getMessage());
@@ -998,17 +997,17 @@ public class TravelTimeFeatureTest {
     }
 
     /**
-     * Test calculateTravelTimeFromUserInput method exists and is accessible.
+     * Test TravelTime.display method exists and is accessible.
      */
     @Test
     public void testCalculateTravelTimeFromUserInput_MethodExists() throws NoSuchMethodException {
-        // Verify the method exists with correct signature
-        java.lang.reflect.Method method = TravelTimeFeature.class.getDeclaredMethod(
-            "calculateTravelTimeFromUserInput",
+        // Verify the TravelTime.display method exists with correct signature
+        java.lang.reflect.Method method = app.view.TravelTime.class.getDeclaredMethod(
+            "display",
             java.util.Scanner.class
         );
 
-        assertNotNull("calculateTravelTimeFromUserInput method should exist", method);
+        assertNotNull("TravelTime.display method should exist", method);
         assertTrue("Method should be static", java.lang.reflect.Modifier.isStatic(method.getModifiers()));
         assertTrue("Method should be public", java.lang.reflect.Modifier.isPublic(method.getModifiers()));
         assertEquals("Method should return void", void.class, method.getReturnType());
