@@ -110,8 +110,8 @@ public class PickRouteControllerTest {
         // Inject fake PickingPlan with duplicate bay allocations for same order
         FakePickingPlan fakePlan = new FakePickingPlan();
         List<Allocation.AllocationRecord> orderAllocations = Arrays.asList(
-                new Allocation.AllocationRecord(100, 1, 123, 1.0, 1000, "A1", 12),
-                new Allocation.AllocationRecord(100, 1, 123, 2.0, 1001, "A2", 12)
+                new Allocation.AllocationRecord(100, 1, 123, 1.0, 1000, "W1-A1", 12),
+                new Allocation.AllocationRecord(100, 1, 123, 2.0, 1001, "W1-A1", 12)
         );
         fakePlan.whenGetItemLocationsForOrder(100, orderAllocations);
         setPrivateField(controller, "pickingPlan", fakePlan);
@@ -135,8 +135,8 @@ public class PickRouteControllerTest {
 
         FakePickingPlan fakePlan = new FakePickingPlan();
         List<Allocation.AllocationRecord> sku555 = Arrays.asList(
-                new Allocation.AllocationRecord(200, 10, 555, 1.0, 2000, "A1", 5),
-                new Allocation.AllocationRecord(200, 11, 555, 2.0, 2001, "A1", 8)
+                new Allocation.AllocationRecord(200, 10, 555, 1.0, 2000, "W1-A1", 5),
+                new Allocation.AllocationRecord(200, 11, 555, 2.0, 2001, "W1-A1", 8)
         );
         fakePlan.whenGetItemLocationsForSku(555, sku555);
         fakePlan.whenGetItemLocationsForSku(777, Collections.emptyList());
@@ -161,10 +161,10 @@ public class PickRouteControllerTest {
         // Fake PickingPlan returning allocations per SKU
         FakePickingPlan fakePlan = new FakePickingPlan();
         fakePlan.whenGetItemLocationsForSku(42, Collections.singletonList(
-                new Allocation.AllocationRecord(1, 1, 42, 1.0, 3000, "A1", 3)
+                new Allocation.AllocationRecord(1, 1, 42, 1.0, 3000, "W1-A1", 3)
         ));
         fakePlan.whenGetItemLocationsForSku(43, Collections.singletonList(
-                new Allocation.AllocationRecord(1, 2, 43, 2.0, 3001, "A1", 9)
+                new Allocation.AllocationRecord(1, 2, 43, 2.0, 3001, "W1-A1", 9)
         ));
         setPrivateField(controller, "pickingPlan", fakePlan);
 
@@ -222,4 +222,3 @@ public class PickRouteControllerTest {
         assertTrue(results.get(1003).containsKey("fake"));
     }
 }
-
