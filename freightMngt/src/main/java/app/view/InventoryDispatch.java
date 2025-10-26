@@ -108,8 +108,8 @@ public class InventoryDispatch {
                 int balanceContribution = Math.min(balance.getQty(), remaining);
                 int lotCount = calculateLotsNeeded(balance.getLots(), balanceContribution);
 
-                System.out.printf("   Bay %d: %d units from %d lots%n",
-                        balance.getBay().getBayId(), balanceContribution, lotCount);
+                System.out.printf("   Bay %s: %d units from %d lots%n",
+                        ("(" + balance.getBay().getAisle().getAisleNo() + "-" +balance.getBay().getBayNo() + ")"), balanceContribution, lotCount);
 
                 remaining -= balanceContribution;
             }
