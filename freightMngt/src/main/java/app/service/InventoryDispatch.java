@@ -117,7 +117,7 @@ public class InventoryDispatch {
      * @param sku the SKU identifier to search for
      * @return a list of InventoryBalance objects ordered by FEFO/FIFO rules
      */
-    private List<InventoryBalance> getBalancesWithSku(Integer sku) {
+    public List<InventoryBalance> getBalancesWithSku(Integer sku) {
         List<InventoryBalance> allBalances = balanceController.getAllInventoryBalances();
         List<InventoryBalance> result = new ArrayList<>();
 
@@ -190,5 +190,4 @@ public class InventoryDispatch {
         return b1.getBalanceId() > b2.getBalanceId();
     }
 }
-
 

@@ -5,6 +5,7 @@ import app.repositories.*;
 import app.service.TravelTimeFeature.TravelTimeCalculator;
 import app.service.TravelTimeFeature.NoDirectConnectionException;
 import app.service.TravelTimeFeature.InvalidSpeedException;
+import app.view.TravelTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -957,8 +958,7 @@ public class TravelTimeFeatureTest {
         // This should handle NumberFormatException and print error message
         // We're just testing that the method exists and handles exceptions
         try {
-            TravelTimeFeature.calculateTravelTimeFromUserInput(scanner);
-            // Method should handle exception internally and not throw
+            TravelTime.display(scanner);            // Method should handle exception internally and not throw
             assertTrue("Method should handle exception gracefully", true);
         } catch (Exception e) {
             fail("Method should not throw exception: " + e.getMessage());
@@ -988,7 +988,7 @@ public class TravelTimeFeatureTest {
 
         // Execute - should complete without throwing exceptions
         try {
-            TravelTimeFeature.calculateTravelTimeFromUserInput(scanner);
+            TravelTime.display(scanner);
             assertTrue("Method should execute successfully", true);
         } catch (Exception e) {
             fail("Method should not throw exception with valid input: " + e.getMessage());
