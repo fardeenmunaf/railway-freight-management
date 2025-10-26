@@ -99,12 +99,13 @@ public class PickRouteController {
 
         for (Allocation.AllocationRecord record : allocations) {
             // bay() já retorna Integer diretamente (ex: 12, 15)
+            String aisle = record.getAisle();
             Integer bayNumber = record.getBay();
             Double quantity = record.getQty();
 
             // Assumindo que todos são da mesma aisle ou você tem como obter
             // Se precisar da aisle, adicione um método record.aisle()
-            String key = "1-" + bayNumber; // ou use aisle correto
+            String key = aisle.split("-")[1].replace("A", "") + "-" + bayNumber; // ou use aisle correto
             bayQuantities.merge(key, quantity, Double::sum);
         }
 
