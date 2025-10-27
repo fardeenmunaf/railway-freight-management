@@ -1,0 +1,813 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+' --- User and Company Management ---
+class Company {
+    -companyId
+    -name
+    +getCompanyId()
+    +setCompanyId()
+    +getName()
+    +setName()
+}
+
+class User {
+    -userId
+    -username
+    -email
+    -password
+    -companyId
+    -isActive
+    -createdAt
+    +getUserId()
+    +setUserId()
+    +getUsername()
+    +setUsername()
+    +getEmail()
+    +setEmail()
+    +getPassword()
+    +setPassword()
+    +getCompanyId()
+    +setCompanyId()
+    +getIsActive()
+    +setIsActive()
+    +getCreatedAt()
+    +setCreatedAt()
+}
+
+class Role {
+    -roleId
+    -name
+    +getRoleId()
+    +setRoleId()
+    +getName()
+    +setName()
+}
+
+class UserRole {
+    -userId
+    -roleId
+    +getUserId()
+    +setUserId()
+    +getRoleId()
+    +setRoleId()
+}
+
+Company -- User
+User -- UserRole
+Role -- UserRole
+
+' --- Railway Infrastructure ---
+class Gauge {
+    -gaugeId
+    -name
+    -sizeMm
+    +getGaugeId()
+    +setGaugeId()
+    +getName()
+    +setName()
+    +getSizeMm()
+    +setSizeMm()
+}
+
+class Line {
+    -lineId
+    -ownerId
+    +getLineId()
+    +setLineId()
+    +getOwnerId()
+    +setOwnerId()
+}
+
+class LineSegment {
+    -segmentId
+    -lineId
+    -lengthKm
+    -trackTypeId
+    -electrifTypeId
+    -gaugeId
+    -maxWeightKgM
+    -speedLimitKmh
+    -singleTrack
+    -position
+    +getSegmentId()
+    +setSegmentId()
+    +getLineId()
+    +setLineId()
+    +getLengthKm()
+    +setLengthKm()
+    +getTrackTypeId()
+    +setTrackTypeId()
+    +getElectrifTypeId()
+    +setElectrifTypeId()
+    +getGaugeId()
+    +setGaugeId()
+    +getMaxWeightKgM()
+    +setMaxWeightKgM()
+    +getSpeedLimitKmh()
+    +setSpeedLimitKmh()
+    +getSingleTrack()
+    +setSingleTrack()
+    +getPosition()
+    +setPosition()
+}
+
+class TrackType {
+    -trackTypeId
+    -name
+    +getTrackTypeId()
+    +setTrackTypeId()
+    +getName()
+    +setName()
+}
+
+class Facility {
+    -facilityId
+    -name
+    -facilityTypeId
+    -lat
+    -lon
+    -isIntermodal
+    +getFacilityId()
+    +setFacilityId()
+    +getName()
+    +setName()
+    +getFacilityTypeId()
+    +setFacilityTypeId()
+    +getLat()
+    +setLat()
+    +getLon()
+    +setLon()
+    +getIsIntermodal()
+    +setIsIntermodal()
+}
+
+class FacilityType {
+    -facilityTypeId
+    -name
+    +getFacilityTypeId()
+    +setFacilityTypeId()
+    +getName()
+    +setName()
+}
+
+class FacilityFeature {
+    -facilityId
+    -featureId
+    +getFacilityId()
+    +setFacilityId()
+    +getFeatureId()
+    +setFeatureId()
+}
+
+class FacilityFeatureType {
+    -featureId
+    -name
+    +getFeatureId()
+    +setFeatureId()
+    +getName()
+    +setName()
+}
+
+class ParkingTrack {
+    -parkingTrackId
+    -lineId
+    -facilityId
+    -name
+    -capacityWagons
+    +getParkingTrackId()
+    +setParkingTrackId()
+    +getLineId()
+    +setLineId()
+    +getFacilityId()
+    +setFacilityId()
+    +getName()
+    +setName()
+    +getCapacityWagons()
+    +setCapacityWagons()
+}
+
+class LineSegmentFacility {
+    -segmentFacilityId
+    -lineSegmentId
+    -facilityId
+    +getSegmentFacilityId()
+    +setSegmentFacilityId()
+    +getLineSegmentId()
+    +setLineSegmentId()
+    +getFacilityId()
+    +setFacilityId()
+}
+
+Company -- Line
+Line *-- LineSegment
+Line -- ParkingTrack
+LineSegment -- TrackType
+LineSegment -- Gauge
+LineSegment *-- LineSegmentFacility
+LineSegmentFacility -- Facility
+Facility -- FacilityType
+Facility -- FacilityFeature
+FacilityFeature -- FacilityFeatureType
+Facility -- ParkingTrack
+
+' --- Rolling Stock ---
+class Locomotive {
+    -locomotiveId
+    -operatorId
+    -locomotiveType
+    -brand
+    -model
+    -year
+    -powerKw
+    -accelerationMs2
+    -lengthM
+    -widthM
+    -heightM
+    -maxWeightT
+    -totalWeightT
+    -numBogies
+    -createdAt
+    -updatedAt
+    +getLocomotiveId()
+    +setLocomotiveId()
+    +getOperatorId()
+    +setOperatorId()
+    +getLocomotiveType()
+    +setLocomotiveType()
+    +getBrand()
+    +setBrand()
+    +getModel()
+    +setModel()
+    +getYear()
+    +setYear()
+    +getPowerKw()
+    +setPowerKw()
+    +getAccelerationMs2()
+    +setAccelerationMs2()
+    +getLengthM()
+    +setLengthM()
+    +getWidthM()
+    +setWidthM()
+    +getHeightM()
+    +setHeightM()
+    +getMaxWeightT()
+    +setMaxWeightT()
+    +getTotalWeightT()
+    +setTotalWeightT()
+    +getNumBogies()
+    +setNumBogies()
+    +getCreatedAt()
+    +setCreatedAt()
+    +getUpdatedAt()
+    +setUpdatedAt()
+}
+
+class LocomotiveType {
+    -locomotiveTypeId
+    -name
+    -createdAt
+    -updatedAt
+    +getLocomotiveTypeId()
+    +setLocomotiveTypeId()
+    +getName()
+    +setName()
+    +getCreatedAt()
+    +setCreatedAt()
+    +getUpdatedAt()
+    +setUpdatedAt()
+}
+
+class LocomotiveDiesel {
+    -locomotiveId
+    -fuelCapacityL
+    +getLocomotiveId()
+    +setLocomotiveId()
+    +getFuelCapacityL()
+    +setFuelCapacityL()
+}
+
+class LocomotiveGauge {
+    -locomotiveId
+    -gaugeId
+    +getLocomotiveId()
+    +setLocomotiveId()
+    +getGaugeId()
+    +setGaugeId()
+}
+
+class Wagon {
+    -wagonId
+    -operatorId
+    -wagonType
+    -tareT
+    -payloadT
+    -volumeM3
+    -lengthM
+    -widthM
+    -heightM
+    -createdAt
+    -updatedAt
+    +getWagonId()
+    +setWagonId()
+    +getOperatorId()
+    +setOperatorId()
+    +getWagonType()
+    +setWagonType()
+    +getTareT()
+    +setTareT()
+    +getPayloadT()
+    +setPayloadT()
+    +getVolumeM3()
+    +setVolumeM3()
+    +getLengthM()
+    +setLengthM()
+    +getWidthM()
+    +setWidthM()
+    +getHeightM()
+    +setHeightM()
+    +getCreatedAt()
+    +setCreatedAt()
+    +getUpdatedAt()
+    +setUpdatedAt()
+}
+
+class WagonType {
+    -wagonTypeId
+    -name
+    -createdAt
+    -updatedAt
+    +getWagonTypeId()
+    +setWagonTypeId()
+    +getName()
+    +setName()
+    +getCreatedAt()
+    +setCreatedAt()
+    +getUpdatedAt()
+    +setUpdatedAt()
+}
+
+class WagonGauge {
+    -wagonId
+    -gaugeId
+    +getWagonId()
+    +setWagonId()
+    +getGaugeId()
+    +setGaugeId()
+}
+
+class ParkingQueue {
+    -parkingQueueId
+    -parkingTrackId
+    -wagonId
+    -positionNo
+    -status
+    +getParkingQueueId()
+    +setParkingQueueId()
+    +getParkingTrackId()
+    +setParkingTrackId()
+    +getWagonId()
+    +setWagonId()
+    +getPositionNo()
+    +setPositionNo()
+    +getStatus()
+    +setStatus()
+}
+
+User -- Locomotive
+User -- Wagon
+Locomotive -- LocomotiveType
+Locomotive ..> LocomotiveDiesel
+Locomotive -- LocomotiveGauge
+Wagon -- WagonType
+Wagon -- WagonGauge
+Gauge -- LocomotiveGauge
+Gauge -- WagonGauge
+ParkingTrack *-- ParkingQueue
+ParkingQueue ..> Wagon
+
+' --- Train Operations ---
+class Train {
+    -trainId
+    -code
+    -departure
+    -destination
+    -operatorId
+    +getTrainId()
+    +setTrainId()
+    +getCode()
+    +setCode()
+    +getDeparture()
+    +setDeparture()
+    +getDestination()
+    +setDestination()
+    +getOperatorId()
+    +setOperatorId()
+}
+
+class TrainService {
+    -serviceId
+    -trainId
+    -departureDate
+    -arrivalDate
+    -trainDriverId
+    -status
+    +getServiceId()
+    +setServiceId()
+    +getTrainId()
+    +setTrainId()
+    +getDepartureDate()
+    +setDepartureDate()
+    +getArrivalDate()
+    +setArrivalDate()
+    +getTrainDriverId()
+    +setTrainDriverId()
+    +getStatus()
+    +setStatus()
+}
+
+class ServiceLocomotive {
+    -serviceLocomotiveId
+    -serviceId
+    -locomotiveId
+    -positionNo
+    +getServiceLocomotiveId()
+    +setServiceLocomotiveId()
+    +getServiceId()
+    +setServiceId()
+    +getLocomotiveId()
+    +setLocomotiveId()
+    +getPositionNo()
+    +setPositionNo()
+}
+
+class TrainServiceComposition {
+    -trainServiceId
+    -serviceLocomotiveId
+    -wagonId
+    +getTrainServiceId()
+    +setTrainServiceId()
+    +getServiceLocomotiveId()
+    +setServiceLocomotiveId()
+    +getWagonId()
+    +setWagonId()
+}
+
+class TrainStop {
+    -trainStopId
+    -serviceId
+    -facilityId
+    -parkingTrack
+    -position
+    -schedArr
+    -schedDep
+    -plannedStopTime
+    -actArr
+    -actDep
+    -actStopTime
+    +getTrainStopId()
+    +setTrainStopId()
+    +getServiceId()
+    +setServiceId()
+    +getFacilityId()
+    +setFacilityId()
+    +getParkingTrack()
+    +setParkingTrack()
+    +getPosition()
+    +setPosition()
+    +getSchedArr()
+    +setSchedArr()
+    +getSchedDep()
+    +setSchedDep()
+    +getPlannedStopTime()
+    +setPlannedStopTime()
+    +getActArr()
+    +setActArr()
+    +getActDep()
+    +setActDep()
+    +getActStopTime()
+    +setActStopTime()
+}
+
+Train ..> User
+Train *-- TrainService
+TrainService *-- ServiceLocomotive
+TrainService *-- TrainStop
+ServiceLocomotive ..> Locomotive
+ServiceLocomotive *-- TrainServiceComposition
+TrainServiceComposition ..> Wagon
+TrainStop ..> Facility
+TrainStop ..> ParkingTrack
+
+' --- Items and Inventory ---
+class Item {
+    -itemId
+    -itemCategoryId
+    -sku
+    -name
+    -uom
+    -volume
+    -unitWeight
+    +getItemId()
+    +setItemId()
+    +getItemCategoryId()
+    +setItemCategoryId()
+    +getSku()
+    +setSku()
+    +getName()
+    +setName()
+    +getUom()
+    +setUom()
+    +getVolume()
+    +setVolume()
+    +getUnitWeight()
+    +setUnitWeight()
+}
+
+class ItemCategory {
+    -categoryId
+    -name
+    +getCategoryId()
+    +setCategoryId()
+    +getName()
+    +setName()
+}
+
+class InventoryLot {
+    -lotId
+    -sku
+    -boxCode
+    -expDate
+    -receivedDate
+    +getLotId()
+    +setLotId()
+    +getSku()
+    +setSku()
+    +getBoxCode()
+    +setBoxCode()
+    +getExpDate()
+    +setExpDate()
+    +getReceivedDate()
+    +setReceivedDate()
+}
+
+class InventoryBalance {
+    -balanceId
+    -bayId
+    -lotId
+    -qty
+    +getBalanceId()
+    +setBalanceId()
+    +getBayId()
+    +setBayId()
+    +getLotId()
+    +setLotId()
+    +getQty()
+    +setQty()
+}
+
+class InventoryMove {
+    -moveId
+    -lotId
+    -fromBayId
+    -toBayId
+    -qty
+    -reason
+    -createdAt
+    +getMoveId()
+    +setMoveId()
+    +getLotId()
+    +setLotId()
+    +getFromBayId()
+    +setFromBayId()
+    +getToBayId()
+    +setToBayId()
+    +getQty()
+    +setQty()
+    +getReason()
+    +setReason()
+    +getCreatedAt()
+    +setCreatedAt()
+}
+
+Item -- ItemCategory
+Item *-- InventoryLot
+InventoryLot *-- InventoryBalance
+InventoryLot *-- InventoryMove
+
+' --- Warehouse ---
+class Warehouse {
+    -warehouseId
+    -facilityId
+    -name
+    +getWarehouseId()
+    +setWarehouseId()
+    +getFacilityId()
+    +setFacilityId()
+    +getName()
+    +setName()
+}
+
+class WarehouseAisle {
+    -aisleId
+    -warehouseId
+    -aisleNo
+    -uniqueCode
+    +getAisleId()
+    +setAisleId()
+    +getWarehouseId()
+    +setWarehouseId()
+    +getAisleNo()
+    +setAisleNo()
+    +getUniqueCode()
+    +setUniqueCode()
+}
+
+class WarehouseBay {
+    -bayId
+    -aisleId
+    -bayNo
+    -capacityBox
+    +getBayId()
+    +setBayId()
+    +getAisleId()
+    +setAisleId()
+    +getBayNo()
+    +setBayNo()
+    +getCapacityBox()
+    +setCapacityBox()
+}
+
+Facility *-- Warehouse
+Warehouse *-- WarehouseAisle
+WarehouseAisle *-- WarehouseBay
+InventoryBalance ..> WarehouseBay
+
+' --- Orders ---
+class Order {
+    -orderId
+    -status
+    -priority
+    -dueDate
+    -createdAt
+    +getOrderId()
+    +setOrderId()
+    +getStatus()
+    +setStatus()
+    +getPriority()
+    +setPriority()
+    +getDueDate()
+    +setDueDate()
+    +getCreatedAt()
+    +setCreatedAt()
+}
+
+class OrderLine {
+    -orderLineId
+    -orderId
+    -sku
+    -qty
+    +getOrderLineId()
+    +setOrderLineId()
+    +getOrderId()
+    +setOrderId()
+    +getSku()
+    +setSku()
+    +getQty()
+    +setQty()
+}
+
+class ReturnOrder {
+    -returnId
+    -origOrderId
+    -reason
+    -status
+    -receivedAt
+    +getReturnId()
+    +setReturnId()
+    +getOrigOrderId()
+    +setOrigOrderId()
+    +getReason()
+    +setReason()
+    +getStatus()
+    +setStatus()
+    +getReceivedAt()
+    +setReceivedAt()
+}
+
+class ReturnLine {
+    -returnLineId
+    -returnId
+    -sku
+    -qty
+    -condition
+    +getReturnLineId()
+    +setReturnLineId()
+    +getReturnId()
+    +setReturnId()
+    +getSku()
+    +setSku()
+    +getQty()
+    +setQty()
+    +getCondition()
+    +setCondition()
+}
+
+class QuarantineHold {
+    -qholdId
+    -returnId
+    -status
+    -createdAt
+    -releasedAt
+    +getQholdId()
+    +setQholdId()
+    +getReturnId()
+    +setReturnId()
+    +getStatus()
+    +setStatus()
+    +getCreatedAt()
+    +setCreatedAt()
+    +getReleasedAt()
+    +setReleasedAt()
+}
+
+class QaInspection {
+    -qaId
+    -returnLineId
+    -status
+    -inspectedAt
+    +getQaId()
+    +setQaId()
+    +getReturnLineId()
+    +setReturnLineId()
+    +getStatus()
+    +setStatus()
+    +getInspectedAt()
+    +setInspectedAt()
+}
+
+Order *-- OrderLine
+OrderLine ..> Item
+ReturnOrder *-- ReturnLine
+ReturnLine ..> Item
+ReturnOrder ..> QuarantineHold
+ReturnLine ..> QaInspection
+
+' --- Picking Operations ---
+class Cart {
+    -cartId
+    -nome
+    -maxWeight
+    +getCartId()
+    +setCartId()
+    +getNome()
+    +setNome()
+    +getMaxWeight()
+    +setMaxWeight()
+}
+
+class PickWave {
+    -waveId
+    -cartId
+    -strategy
+    -status
+    -createdAt
+    +getWaveId()
+    +setWaveId()
+    +getCartId()
+    +setCartId()
+    +getStrategy()
+    +setStrategy()
+    +getStatus()
+    +setStatus()
+    +getCreatedAt()
+    +setCreatedAt()
+}
+
+class PickTask {
+    -pickId
+    -waveId
+    -orderLineId
+    -balanceId
+    -qty
+    -posSeq
+    +getPickId()
+    +setPickId()
+    +getWaveId()
+    +setWaveId()
+    +getOrderLineId()
+    +setOrderLineId()
+    +getBalanceId()
+    +setBalanceId()
+    +getQty()
+    +setQty()
+    +getPosSeq()
+    +setPosSeq()
+}
+
+Cart *-- PickWave
+PickWave *-- PickTask
+PickTask ..> OrderLine
+PickTask ..> InventoryBalance
+
+@enduml
