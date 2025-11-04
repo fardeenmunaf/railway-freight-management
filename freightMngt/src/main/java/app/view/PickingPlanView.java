@@ -103,7 +103,7 @@ public class PickingPlanView {
             }
 
             // Display allocation information
-//            displayAllocationInfo(pickingPlan);
+            displayAllocationInfo(pickingPlan);
 
         } catch (NumberFormatException e) {
             System.out.println("Error: Please enter valid numeric values.");
