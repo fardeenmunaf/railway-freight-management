@@ -1,7 +1,9 @@
 package app.service;
 
+import app.controller.StationController;
 import app.model.FacilityType;
 import app.model.Station;
+import app.repositories.Repositories;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -9,130 +11,146 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-/**
- * Test class for StationService.
- * Tests station search and indexing operations.
- */
 public class StationServiceTest {
 
-    private StationService stationService;
+    private StationService service;
+    private StationController controller;
+    private FacilityType facilityType;
 
     @Before
     public void setUp() {
-        stationService = new StationService();
-        stationService.buildIndexes();
-    }
+        Repositories.getInstance().getFacilityRepository().clear();
 
-    @Test
-    public void testBuildIndexes() {
-        int count = stationService.getStationCount();
-        assertTrue("Should have loaded stations", count > 0);
-    }
+        controller = new StationController();
+        service = new StationService();
+        facilityType = new FacilityType(1, "Railway Station");
 
-    @Test
-    public void testSearchByCountry() {
-        List<Station> portugueseStations = stationService.searchByCountry("pt");
-        assertFalse("Should find Portuguese stations", portugueseStations.isEmpty());
+        // Criar estações de teste
+        controller.createStation(new Station(
+                100, "Lisbon Santa Apolónia", facilityType,
+                38.7126, -9.1281, false,
+                "PT", "Europe/Lisbon", "WET/GMT",
+                false, true, false
+        ));
 
-        for (Station station : portugueseStations) {
-            assertEquals("Station should be in Portugal", "pt", station.getCountry().toLowerCase());
-        }
+        controller.createStation(new Station(
+                101, "Porto Campanhã", facilityType,
+                41.1496, -8.5850, false,
+                "PT", "Europe/Lisbon", "WET/GMT",
+                false, true, false
+        ));
+
+        controller.createStation(new Station(
+                102, "Madrid Atocha", facilityType,
+                40.4064, -3.6910, false,
+                "ES", "Europe/Madrid", "CET",
+                false, true, false
+        ));
+
+        controller.createStation(new Station(
+                103, "Paris Gare du Nord", facilityType,
+                48.8808, 2.3550, false,
+                "FR", "Europe/Paris", "CET",
+                false, true, false
+        ));
+
+        service.buildIndexes();
     }
 
     @Test
     public void testSearchByName() {
-        List<Station> stations = stationService.searchByName("lisboa");
+        List<Station> results = service.searchByName("Lisbon Santa Apolónia");
 
-        for (Station station : stations) {
-            assertTrue("Station name should contain 'lisboa'",
-                    station.getName().toLowerCase().contains("lisboa"));
-        }
-    }
-
-    @Test
-    public void testSearchByTimeZone() {
-        List<Station> stations = stationService.searchByTimeZone("Europe/Lisbon");
-
-        for (Station station : stations) {
-            assertEquals("Station should be in Europe/Lisbon timezone",
-                    "Europe/Lisbon", station.getTimeZone());
-        }
-    }
-
-    @Test
-    public void testGetMainStations() {
-        List<Station> mainStations = stationService.getMainStations();
-
-        for (Station station : mainStations) {
-            assertTrue("Station should be main station",
-                    Boolean.TRUE.equals(station.getIsMainStation()));
-        }
-    }
-
-    @Test
-    public void testGetAirportStations() {
-        List<Station> airports = stationService.getAirportStations();
-
-        for (Station station : airports) {
-            assertTrue("Station should be airport",
-                    Boolean.TRUE.equals(station.getIsAirport()));
-        }
-    }
-
-    @Test
-    public void testGetAllStationsSortedByName() {
-        List<Station> sorted = stationService.getAllStationsSortedByName();
-
-        for (int i = 1; i < sorted.size(); i++) {
-            String prev = sorted.get(i - 1).getName().toLowerCase();
-            String curr = sorted.get(i).getName().toLowerCase();
-            assertTrue("Stations should be sorted by name", prev.compareTo(curr) <= 0);
-        }
-    }
-
-    @Test
-    public void testSearchNonExistentCountry() {
-        List<Station> stations = stationService.searchByCountry("zz");
-        assertTrue("Should return empty list for non-existent country", stations.isEmpty());
-    }
-
-    @Test
-    public void testSearchWithNullInput() {
-        List<Station> stations = stationService.searchByName(null);
-        assertTrue("Should handle null input gracefully", stations.isEmpty());
-    }
-
-    @Test
-    public void testSearchWithEmptyInput() {
-        List<Station> stations = stationService.searchByName("");
-        assertTrue("Should handle empty input gracefully", stations.isEmpty());
-    }
-
-    @Test
-    public void testSearchByCountryCaseInsensitive() {
-        List<Station> lower = stationService.searchByCountry("pt");
-        List<Station> upper = stationService.searchByCountry("PT");
-
-        assertEquals("Search should be case insensitive", lower.size(), upper.size());
+        assertFalse("Should find station by name", results.isEmpty());
+        assertEquals("lisbon santa apolónia", results.get(0).getName().toLowerCase());
     }
 
     @Test
     public void testSearchByNameCaseInsensitive() {
-        List<Station> lower = stationService.searchByName("lisboa");
-        List<Station> upper = stationService.searchByName("LISBOA");
+        List<Station> results = service.searchByName("LISBON SANTA APOLÓNIA");
 
-        assertEquals("Search should be case insensitive", lower.size(), upper.size());
+        assertFalse("Should find station regardless of case", results.isEmpty());
     }
 
     @Test
-    public void testSearchByTimeZoneRange() {
-        List<Station> stations = stationService.searchByTimeZoneRange("Europe/Dublin", "Europe/Paris");
+    public void testSearchByCountry() {
+        List<Station> results = service.searchByCountry("PT");
 
-        for (Station station : stations) {
-            assertNotNull("Station should have timezone", station.getTimeZone());
-            assertTrue("Station timezone should be in range",
-                    station.getTimeZone().compareTo("Europe/Dublin") >= 0 &&
-                            station.getTimeZone().compareTo("Europe/Paris") <= 0);
-        }
+        assertEquals(2, results.size());
+        assertTrue(results.stream().allMatch(s -> "PT".equalsIgnoreCase(s.getCountry())));
+    }
+
+    @Test
+    public void testSearchByTimeZone() {
+        List<Station> results = service.searchByTimeZone("Europe/Lisbon");
+
+        assertEquals(2, results.size());
+        assertTrue(results.stream().allMatch(s -> "europe/lisbon".equals(s.getTimeZone().toLowerCase())));
+    }
+
+    @Test
+    public void testSearchByTimeZoneGroupOrderedByCountry() {
+        List<Station> results = service.searchByTimeZoneGroupOrderedByCountry("CET");
+
+        assertEquals(2, results.size());
+
+        // Validar ordenação por país (ES < FR)
+        assertEquals("ES", results.get(0).getCountry());
+        assertEquals("FR", results.get(1).getCountry());
+
+        // Validar que todas pertencem ao grupo CET
+        assertTrue(results.stream().allMatch(s -> "CET".equals(s.getTimeZoneGroup())));
+    }
+
+    @Test
+    public void testSearchByTimeZoneGroupRange() {
+        List<Station> results = service.searchByTimeZoneGroupRange("CET", "WET/GMT");
+
+        assertEquals(4, results.size());
+    }
+
+    @Test
+    public void testSearchByCoordinates() {
+        List<Station> results = service.searchByCoordinates(38.7126, -9.1281);
+
+        assertFalse("Should find station at coordinates", results.isEmpty());
+        assertEquals(38.7126, results.get(0).getLat(), 0.0001);
+        assertEquals(-9.1281, results.get(0).getLon(), 0.0001);
+    }
+
+    @Test
+    public void testSearchByLatitudeRange() {
+        List<Station> results = service.searchByLatitudeRange(38.0, 42.0);
+
+        assertEquals(3, results.size());
+    }
+
+    @Test
+    public void testGetMainStations() {
+        List<Station> results = service.getMainStations();
+
+        assertEquals(4, results.size());
+        assertTrue(results.stream().allMatch(s -> Boolean.TRUE.equals(s.getIsMainStation())));
+    }
+
+    @Test
+    public void testGetStationCount() {
+        int count = service.getStationCount();
+
+        assertEquals(4, count);
+    }
+
+    @Test
+    public void testSearchByNameWithNull() {
+        List<Station> results = service.searchByName(null);
+
+        assertTrue("Should return empty list for null input", results.isEmpty());
+    }
+
+    @Test
+    public void testSearchByNameWithBlank() {
+        List<Station> results = service.searchByName("   ");
+
+        assertTrue("Should return empty list for blank input", results.isEmpty());
     }
 }

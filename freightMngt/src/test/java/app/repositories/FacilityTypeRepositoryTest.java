@@ -176,5 +176,42 @@ public class FacilityTypeRepositoryTest {
         assertNotNull(newRepository);
         assertNotNull(newRepository.getAllFacilityTypes());
     }
+
+    @Test
+    public void testGetFacilityTypeByName() {
+        repository.addFacilityType(facilityType1);
+        repository.addFacilityType(facilityType2);
+
+        FacilityType result = repository.getFacilityTypeByName("Warehouse");
+
+        assertNotNull(result);
+        assertEquals(facilityType1, result);
+    }
+
+    @Test
+    public void testGetFacilityTypeByNameCaseInsensitive() {
+        repository.addFacilityType(facilityType1);
+
+        FacilityType result = repository.getFacilityTypeByName("WAREHOUSE");
+
+        assertNotNull(result);
+        assertEquals("Warehouse", result.getName());
+    }
+
+    @Test
+    public void testGetFacilityTypeByNameNotFound() {
+        repository.addFacilityType(facilityType1);
+
+        FacilityType result = repository.getFacilityTypeByName("Nonexistent");
+
+        assertNull(result);
+    }
+
+    @Test
+    public void testGetFacilityTypeByNameWithNull() {
+        FacilityType result = repository.getFacilityTypeByName(null);
+
+        assertNull(result);
+    }
 }
 
