@@ -137,7 +137,7 @@ No terminal:
 * sudo dmesg | grep tty
   * password é guest
   
-* cat /dev/ttyACM0
+* cat /dev/ttyXXX (ler o que aparece no grep acima)
 
 
 Deverá ver mensagens como:
