@@ -42,14 +42,18 @@ Após o primeiro upload, o modo BOOTSEL será reconhecido automaticamente.
 
 ```
 void setup() {
-pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  Serial.begin(9600);  // inicializa a comunicação serial
+  Serial.println("Pico W ligado!");
 }
 
 void loop() {
-digitalWrite(LED_BUILTIN, HIGH);
-delay(1000);
-digitalWrite(LED_BUILTIN, LOW);
-delay(1000);
+  digitalWrite(LED_BUILTIN, HIGH);
+  Serial.println("LED ON");
+  delay(1000);
+  digitalWrite(LED_BUILTIN, LOW);
+  Serial.println("LED OFF");
+  delay(1000);
 }
 ```
 
