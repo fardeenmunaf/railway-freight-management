@@ -130,30 +130,21 @@ public class InventoryDispatch {
             }
         }
 
-        // Sort by FEFO/FIFO rules (manual bubble sort)
-        for (int i = 0; i < result.size() - 1; i++) {
-            for (int j = 0; j < result.size() - i - 1; j++) {
-                if (shouldSwap(result.get(j), result.get(j + 1))) {
-                    // Swap
-                    InventoryBalance temp = result.get(j);
-                    result.set(j, result.get(j + 1));
-                    result.set(j + 1, temp);
-                }
-            }
-        }
+        // Sort by FEFO/FIFO rules using Comparator (more efficient than bubble sort)
+        result.sort(this::compareBalances);
 
         return result;
     }
 
     /**
-     * Determines if two balances should be swapped during sorting.
+     * Compares two balances for sorting based on FEFO/FIFO rules.
      * Applies FEFO/FIFO rules based on the first lot in each balance.
      *
      * @param b1 the first balance to compare
      * @param b2 the second balance to compare
-     * @return true if b1 should come after b2 (swap needed), false otherwise
+     * @return negative if b1 comes before b2, positive if b1 comes after b2, 0 if equal
      */
-    private boolean shouldSwap(InventoryBalance b1, InventoryBalance b2) {
+    private int compareBalances(InventoryBalance b1, InventoryBalance b2) {
         InventoryLot firstLot1 = b1.getLots().get(0);
         InventoryLot firstLot2 = b2.getLots().get(0);
 
@@ -164,30 +155,28 @@ public class InventoryDispatch {
         if (b1HasExpiry && b2HasExpiry) {
             int expComparison = firstLot1.getExpDate().compareTo(firstLot2.getExpDate());
             if (expComparison != 0) {
-                return expComparison > 0; // Swap if b1 expires later than b2
+                return expComparison;
             }
             // Tie-break by balanceId ASC
-            return b1.getBalanceId() > b2.getBalanceId();
+            return b1.getBalanceId().compareTo(b2.getBalanceId());
         }
 
-        // Balances with expiry date come first (b1 has expiry, b2 doesn't - no swap)
+        // Balances with expiry date come first
         if (b1HasExpiry) {
-            return false; // b1 stays before b2
+            return -1; // b1 comes before b2
         }
 
-        // b2 has expiry, b1 doesn't - swap so b2 comes first
         if (b2HasExpiry) {
-            return true;
+            return 1; // b2 comes before b1
         }
 
         // Both have no expiry date - sort by receivedDate ASC (FIFO - oldest first)
         int receivedComparison = firstLot1.getReceivedDate().compareTo(firstLot2.getReceivedDate());
         if (receivedComparison != 0) {
-            return receivedComparison > 0; // Swap if b1 received later than b2
+            return receivedComparison;
         }
 
         // Tie-break by balanceId ASC
-        return b1.getBalanceId() > b2.getBalanceId();
+        return b1.getBalanceId().compareTo(b2.getBalanceId());
     }
 }
-
