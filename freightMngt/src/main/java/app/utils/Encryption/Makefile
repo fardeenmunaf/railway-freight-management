@@ -5,7 +5,7 @@ ARCHFLAGS = -march=rv32imd -mabi=ilp32d
 LIBRV32 = ${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
 # Ficheiros do projeto
-OBJS = main.o encrypt_data.o decrypt_data.o
+OBJS = main.o encrypt.o decrypt.o
 TARGET = program.elf
 
 # -------------------------------------------------------------------
@@ -18,11 +18,11 @@ $(TARGET): $(OBJS)
 main.o: main.c
 	$(CC) $(CFLAGS) $(ARCHFLAGS) -c main.c -o main.o
 
-encrypt_data.o: encrypt_data.S
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c encrypt_data.S -o encrypt_data.o
+encrypt.o: encrypt.S
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c encrypt.S -o encrypt.o
 
-decrypt_data.o: decrypt_data.S
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c decrypt_data.S -o decrypt_data.o
+decrypt.o: decrypt.S
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c decrypt.S -o decrypt.o
 
 # -------------------------------------------------------------------
 # Limpeza
