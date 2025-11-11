@@ -1,13 +1,10 @@
 package app.view;
 
+import app.repositories.Repositories;
 import app.utils.Balanced2DTreeBuilder.Balanced2DTree;
 import app.utils.Balanced2DTreeBuilder.Station;
 import app.utils.Balanced2DTreeBuilder.TemporalComplexity;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -21,13 +18,11 @@ import java.util.Scanner;
  */
 public class Balanced2DTreeView {
 
-    private static final String CSV_PATH = "C:\\Users\\farde\\OneDrive\\Ambiente de Trabalho\\sem3-pi-25-26-g113-repo\\freightMngt\\src\\main\\java\\app\\sampleDataset\\train_stations_europe.csv";
-
     public static void display(Scanner scanner) {
-        Balanced2DTree tree = loadTreeFromCSV();
+        Balanced2DTree tree = loadTreeFromRepository();
 
         if (tree == null) {
-            displayError("Failed to load station data from CSV file.");
+            displayError("Failed to load station data from repository.");
             System.out.println("\nPress Enter to return to Main Menu...");
             scanner.nextLine();
             return;
@@ -67,49 +62,52 @@ public class Balanced2DTreeView {
     }
 
     /**
-     * Loads tree from CSV file.
+     * Loads tree from repository using stations already loaded by AppInitializer.
      */
-    private static Balanced2DTree loadTreeFromCSV() {
-        List<Station> stations = new ArrayList<>();
+    private static Balanced2DTree loadTreeFromRepository() {
+        Repositories repositories = Repositories.getInstance();
+        List<app.model.Station> modelStations = new ArrayList<>();
 
-        try (BufferedReader br = new BufferedReader(new FileReader(CSV_PATH))) {
-            String line;
-            boolean isFirstLine = true;
-
-            while ((line = br.readLine()) != null) {
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue; // Skip header
-                }
-
-                String[] parts = line.split(",");
-                if (parts.length >= 3) {
-                    try {
-                        double latitude = Double.parseDouble(parts[0].trim());
-                        double longitude = Double.parseDouble(parts[1].trim());
-                        String name = parts[2].trim();
-
-                        if (!name.isEmpty()) {
-                            stations.add(new Station(latitude, longitude, name));
-                        }
-                    } catch (NumberFormatException e) {
-                        // Skip invalid rows
-                    }
-                }
+        // Filter only Station objects from all facilities
+        for (var facility : repositories.getFacilityRepository().getAllFacilities()) {
+            if (facility instanceof app.model.Station) {
+                modelStations.add((app.model.Station) facility);
             }
+        }
 
-            if (stations.isEmpty()) {
-                return null;
-            }
-
-            Balanced2DTree tree = new Balanced2DTree();
-            tree.bulkBuild(stations);
-            return tree;
-
-        } catch (IOException e) {
-            System.err.println("Error reading CSV file: " + e.getMessage());
+        if (modelStations.isEmpty()) {
+            System.err.println("⚠ No stations found in repository.");
+            System.err.println("⚠ Make sure AppInitializer.loadStations() has been executed.");
             return null;
         }
+
+        System.out.println("📂 Loading stations from repository...");
+        System.out.println("✓ Found " + modelStations.size() + " stations in repository");
+
+        // Convert model.Station to Balanced2DTreeBuilder.Station
+        List<Station> treeStations = new ArrayList<>();
+        for (app.model.Station modelStation : modelStations) {
+            if (modelStation.getLat() != null && modelStation.getLon() != null) {
+                treeStations.add(new Station(
+                        modelStation.getLat(),
+                        modelStation.getLon(),
+                        modelStation.getName()
+                ));
+            }
+        }
+
+        if (treeStations.isEmpty()) {
+            System.err.println("⚠ No valid station coordinates found.");
+            return null;
+        }
+
+        System.out.println("✓ Converting " + treeStations.size() + " stations with valid coordinates");
+
+        Balanced2DTree tree = new Balanced2DTree();
+        tree.bulkBuild(treeStations);
+        System.out.println("✓ Tree built successfully\n");
+
+        return tree;
     }
 
     /**
@@ -117,7 +115,7 @@ public class Balanced2DTreeView {
      */
     private static void displayHeader() {
         System.out.println("\n" + "═".repeat(70));
-        System.out.println("║" + " ".repeat(15) + "BALANCED 2D-TREE VISUALIZATION" + " ".repeat(24) + "║");
+        System.out.println("║" + " ".repeat(15) + "BALANCED 2D-TREE VISUALIZATION" + " ".repeat(23) + "║");
         System.out.println("║" + " ".repeat(10) + "Spatial Indexing for Station Management" + " ".repeat(19) + "║");
         System.out.println("═".repeat(70));
     }
@@ -126,16 +124,16 @@ public class Balanced2DTreeView {
      * Displays the interactive menu.
      */
     private static void displayMenu() {
-        System.out.println("\n┌────────────────────────────────────────────────────────────────────┐");
-        System.out.println("│                        MENU OPTIONS                                │");
-        System.out.println("├────────────────────────────────────────────────────────────────────┤");
+        System.out.println("\n┌───────────────────────────────────────────────────────────────────┐");
+        System.out.println("│                        MENU OPTIONS                               │");
+        System.out.println("├───────────────────────────────────────────────────────────────────┤");
         System.out.println("│  1. View Tree Structure Information                               │");
         System.out.println("│  2. Display Bucket Sizes                                          │");
         System.out.println("│  3. Show Temporal Complexity Analysis                             │");
         System.out.println("│  4. Complete Tree Summary                                         │");
         System.out.println("│  5. View Sample Stations (First 20)                               │");
         System.out.println("│  6. Exit to Main Menu                                             │");
-        System.out.println("└────────────────────────────────────────────────────────────────────┘");
+        System.out.println("└───────────────────────────────────────────────────────────────────┘");
         System.out.print("\nEnter your choice (1-6) or 'b' to go back: ");
     }
 
