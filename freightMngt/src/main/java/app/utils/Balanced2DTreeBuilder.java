@@ -83,6 +83,7 @@ public class Balanced2DTreeBuilder {
         public final String buildComplexity;
         public final String searchComplexity;
         public final String rangeSearchComplexity;
+        public final String nearestNeighborComplexity;
         public final int totalNodes;
         public final int expectedHeight;
 
@@ -92,6 +93,7 @@ public class Balanced2DTreeBuilder {
             this.buildComplexity = "O(N log N) where N = " + size;
             this.searchComplexity = "O(log N) ≈ O(" + expectedHeight + ")";
             this.rangeSearchComplexity = "O(√N + k) where k = results";
+            this.nearestNeighborComplexity = "O(log N) average, O(N) worst case";
         }
 
         @Override
@@ -101,10 +103,11 @@ public class Balanced2DTreeBuilder {
                             "  Build: %s%n" +
                             "  Point Search: %s%n" +
                             "  Range Search: %s%n" +
+                            "  Nearest Neighbor: %s%n" +
                             "  Total Nodes: %d%n" +
                             "  Expected Height: %d",
                     buildComplexity, searchComplexity, rangeSearchComplexity,
-                    totalNodes, expectedHeight
+                    nearestNeighborComplexity, totalNodes, expectedHeight
             );
         }
     }
@@ -254,6 +257,124 @@ public class Balanced2DTreeBuilder {
             collectAllStations(node.left, stations);
             stations.addAll(node.bucket.stations);
             collectAllStations(node.right, stations);
+        }
+
+        /**
+         * Result wrapper for a station with its distance from query point.
+         */
+        public static class StationWithDistance implements Comparable<StationWithDistance> {
+            public final Station station;
+            public final double distance;
+
+            public StationWithDistance(Station station, double distance) {
+                this.station = station;
+                this.distance = distance;
+            }
+
+            @Override
+            public int compareTo(StationWithDistance other) {
+                int cmp = Double.compare(this.distance, other.distance);
+                if (cmp != 0) return cmp;
+                // If distances are equal, sort by name
+                return this.station.name.compareTo(other.station.name);
+            }
+        }
+
+        /**
+         * Finds the N nearest stations to a given coordinate using Haversine distance.
+         *
+         * Algorithm:
+         * 1. Uses KD-tree pruning to avoid checking all stations
+         * 2. Maintains a max-heap of N best candidates
+         * 3. Prunes branches that cannot contain closer stations
+         * 4. Returns results sorted by distance ASC
+         *
+         * Temporal Complexity: O(log N) average case, O(N) worst case
+         *
+         * @param targetLat Target latitude in degrees
+         * @param targetLon Target longitude in degrees
+         * @param n Number of nearest neighbors to find
+         * @return List of N nearest stations with distances, sorted by distance ASC
+         */
+        public List<StationWithDistance> findNearestStations(double targetLat, double targetLon, int n) {
+            if (root == null || n <= 0) {
+                return new ArrayList<>();
+            }
+
+            // Use a list to maintain best N candidates
+            List<StationWithDistance> bestCandidates = new ArrayList<>();
+
+            // Start recursive search
+            findNearestRecursive(root, targetLat, targetLon, n, bestCandidates);
+
+            // Sort by distance ascending
+            Collections.sort(bestCandidates);
+
+            return bestCandidates;
+        }
+
+        /**
+         * Recursive helper for nearest neighbor search.
+         * Uses branch pruning to avoid checking irrelevant subtrees.
+         */
+        private void findNearestRecursive(Node2D node, double targetLat, double targetLon,
+                                         int n, List<StationWithDistance> bestCandidates) {
+            if (node == null) return;
+
+            // Calculate distance to all stations in current bucket
+            for (Station station : node.bucket.stations) {
+                double distance = HaversineDistance.calculate(
+                    targetLat, targetLon, station.latitude, station.longitude);
+
+                StationWithDistance candidate = new StationWithDistance(station, distance);
+
+                // Add to candidates
+                if (bestCandidates.size() < n) {
+                    bestCandidates.add(candidate);
+                    Collections.sort(bestCandidates);
+                } else if (distance < bestCandidates.get(bestCandidates.size() - 1).distance) {
+                    // Replace worst candidate if this one is better
+                    bestCandidates.set(bestCandidates.size() - 1, candidate);
+                    Collections.sort(bestCandidates);
+                }
+            }
+
+            // Determine which subtree to search first
+            double targetValue = node.isLatitude ? targetLat : targetLon;
+            boolean goLeft = targetValue < node.key;
+
+            Node2D firstChild = goLeft ? node.left : node.right;
+            Node2D secondChild = goLeft ? node.right : node.left;
+
+            // Search the closer subtree first
+            findNearestRecursive(firstChild, targetLat, targetLon, n, bestCandidates);
+
+            // Check if we need to search the other subtree
+            // Calculate the distance to the splitting plane
+            double planeDistance = Math.abs(targetValue - node.key);
+
+            // Convert to approximate km (rough estimate for pruning)
+            // At equator, 1 degree ≈ 111 km
+            double planeDistanceKm = planeDistance * 111.0;
+
+            // Only search other side if it could contain closer points
+            if (bestCandidates.size() < n ||
+                planeDistanceKm < bestCandidates.get(bestCandidates.size() - 1).distance) {
+                findNearestRecursive(secondChild, targetLat, targetLon, n, bestCandidates);
+            }
+        }
+
+        /**
+         * Finds the single nearest station to a given coordinate.
+         * Convenience method that calls findNearestStations with n=1.
+         *
+         * @param targetLat Target latitude in degrees
+         * @param targetLon Target longitude in degrees
+         * @return The nearest station with distance, or null if tree is empty
+         */
+        public StationWithDistance findNearestStation(double targetLat, double targetLon) {
+            List<StationWithDistance> results = findNearestStations(targetLat, targetLon, 1);
+            return results.isEmpty() ? null : results.get(0);
         }
     }
 }
