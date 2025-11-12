@@ -3,7 +3,6 @@ package app.view;
 import app.controller.PickRouteController;
 import app.model.Order;
 import app.model.PickTask;
-import app.model.PickWave;
 import app.repositories.Repositories;
 import app.service.PickingPlan;
 import app.service.Allocation;
@@ -81,8 +80,9 @@ public class PickingPlanView {
                 // Step 2: Optimize routes
                 System.out.println("\n=== Step 2: Optimizing routes ===");
                 Map<String, PickRouteOptimizationService.RouteResult> routes =
-                    routeController.calculateRouteForOrder(orderId);
-                displayRouteOptimizationResults(routes, "Order " + orderId);
+                        routeController.calculateRouteForOrder(orderId);
+                displayRouteOptimizationResults(routes, "Order " + orderId, routeController);
+
 
             } else if (option == 2) {
                 // Process all orders
@@ -95,15 +95,14 @@ public class PickingPlanView {
                 System.out.println("\n=== Step 2: Optimizing routes for all pick tasks ===");
                 Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> allRoutes =
                         routeController.calculateRoutesForPickTasks(result);
-                displayAllTasksRouteResults(allRoutes, result);
-
+                displayAllTasksRouteResults(allRoutes, result, routeController);
             } else {
                 System.out.println("Invalid option. Please select 1 or 2.");
                 return;
             }
 
             // Display allocation information
-            displayAllocationInfo(pickingPlan);
+            displayAllocationInfo(result);
 
         } catch (NumberFormatException e) {
             System.out.println("Error: Please enter valid numeric values.");
@@ -283,11 +282,12 @@ public class PickingPlanView {
     /**
      * Displays allocation information including eligibilities and strategies.
      */
-    private static void displayAllocationInfo(PickingPlan pickingPlan) {
+    private static void displayAllocationInfo(PickingPlan.PickingPlanResult result) {
         System.out.println("\n" + "=".repeat(60));
         System.out.println("             ALLOCATION STRATEGIES & ELIGIBILITIES");
         System.out.println("=".repeat(60));
 
+        PickingPlan pickingPlan = new PickingPlan();
         List<Allocation.OrderEligibility> eligibilities = pickingPlan.getOrderEligibilities();
 
         System.out.println("\nORDER ELIGIBILITIES:");
@@ -305,14 +305,25 @@ public class PickingPlanView {
                         eligibility.getAllocatedQty(),
                         eligibility.getStatus());
             });
+
+            // Display strategy summary
+            System.out.println("\nALLOCATION STRATEGY SUMMARY:");
+            System.out.println("-".repeat(40));
+
+            AllocationSummary summary = calculateAllocationSummary(eligibilities);
+            System.out.println("Fully Eligible Orders: " + summary.eligibleCount);
+            System.out.println("Partially Eligible Orders: " + summary.partialCount);
+            System.out.println("Ineligible Orders: " + summary.ineligibleCount);
+            System.out.println("Total Orders Processed: " + eligibilities.size());
         } else {
             System.out.println("   (no eligibility information available)");
         }
+    }
 
-        // Display strategy summary
-        System.out.println("\nALLOCATION STRATEGY SUMMARY:");
-        System.out.println("-".repeat(40));
-
+    /**
+     * Calculates allocation summary statistics.
+     */
+    private static AllocationSummary calculateAllocationSummary(List<Allocation.OrderEligibility> eligibilities) {
         long eligibleCount = eligibilities.stream()
                 .filter(e -> "ELIGIBLE".equals(e.getStatus()))
                 .count();
@@ -323,16 +334,32 @@ public class PickingPlanView {
                 .filter(e -> "INELIGIBLE".equals(e.getStatus()))
                 .count();
 
-        System.out.println("Fully Eligible Orders: " + eligibleCount);
-        System.out.println("Partially Eligible Orders: " + partialCount);
-        System.out.println("Ineligible Orders: " + ineligibleCount);
-        System.out.println("Total Orders Processed: " + eligibilities.size());
+        return new AllocationSummary(eligibleCount, partialCount, ineligibleCount);
+    }
+
+    /**
+     * Inner class to hold allocation summary data.
+     */
+    private static class AllocationSummary {
+        final long eligibleCount;
+        final long partialCount;
+        final long ineligibleCount;
+
+        AllocationSummary(long eligibleCount, long partialCount, long ineligibleCount) {
+            this.eligibleCount = eligibleCount;
+            this.partialCount = partialCount;
+            this.ineligibleCount = ineligibleCount;
+        }
     }
 
     /**
      * Displays route optimization results for a single set of routes.
      */
-    private static void displayRouteOptimizationResults(Map<String, PickRouteOptimizationService.RouteResult> routes, String scope) {
+    private static void displayRouteOptimizationResults(
+            Map<String, PickRouteOptimizationService.RouteResult> routes,
+            String scope,
+            PickRouteController routeController) {
+
         System.out.println("\n"+ "=".repeat(50));
         System.out.println("ROUTE OPTIMIZATION RESULTS - " + scope + ":");
         System.out.println("=".repeat(50));
@@ -360,20 +387,17 @@ public class PickingPlanView {
             System.out.println("Route: " + strategyB.getPath());
         }
 
-        // Compare strategies
-        if (strategyA != null && strategyB != null) {
+        // Compare strategies using controller logic
+        PickRouteController.RouteComparison comparison = routeController.compareStrategies(strategyA, strategyB);
+        if (comparison != null) {
             System.out.println("\nSTRATEGY COMPARISON:");
             System.out.println("-".repeat(40));
 
-            int distanceA = strategyA.getTotalDistance();
-            int distanceB = strategyB.getTotalDistance();
-
-            if (distanceA < distanceB) {
-                System.out.println("✓ Strategy A is BETTER (saves " + (distanceB - distanceA) + " steps)");
-            } else if (distanceB < distanceA) {
-                System.out.println("✓ Strategy B is BETTER (saves " + (distanceA - distanceB) + " steps)");
-            } else {
+            if (comparison.isEqual()) {
                 System.out.println("✓ Both strategies are EQUAL in efficiency");
+            } else {
+                System.out.println("✓ " + comparison.getBetterStrategy() +
+                        " is BETTER (saves " + comparison.getSavedSteps() + " steps)");
             }
         }
     }
@@ -383,7 +407,9 @@ public class PickingPlanView {
      */
     private static void displayAllTasksRouteResults(
             Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> allRoutes,
-            PickingPlan.PickingPlanResult planResult) {
+            PickingPlan.PickingPlanResult planResult,
+            PickRouteController routeController) {
+
         System.out.println("\n"+ "=".repeat(50));
         System.out.println("ROUTE OPTIMIZATION RESULTS - ALL TASKS:");
         System.out.println("=".repeat(50));
@@ -415,31 +441,21 @@ public class PickingPlanView {
             }
         }
 
-        // Calculate totals
+        // Get totals from controller
+        PickRouteController.TotalDistanceSummary summary = routeController.calculateTotalDistances(allRoutes);
+
         System.out.println("\nTOTAL DISTANCE SUMMARY:");
         System.out.println("=".repeat(40));
+        System.out.println("Total Distance (Strategy A): " + summary.getTotalDistanceA() + " steps");
+        System.out.println("Total Distance (Strategy B): " + summary.getTotalDistanceB() + " steps");
 
-        int totalDistanceA = 0;
-        int totalDistanceB = 0;
-
-        for (Map<String, PickRouteOptimizationService.RouteResult> taskRoutes : allRoutes.values()) {
-            PickRouteOptimizationService.RouteResult strategyA = taskRoutes.get("strategyA");
-            PickRouteOptimizationService.RouteResult strategyB = taskRoutes.get("strategyB");
-
-            if (strategyA != null) totalDistanceA += strategyA.getTotalDistance();
-            if (strategyB != null) totalDistanceB += strategyB.getTotalDistance();
-        }
-
-        System.out.println("Total Distance (Strategy A): " + totalDistanceA + " steps");
-        System.out.println("Total Distance (Strategy B): " + totalDistanceB + " steps");
-
-        if (totalDistanceA != 0 && totalDistanceB != 0) {
-            if (totalDistanceA < totalDistanceB) {
-                System.out.println("✓ Strategy A is OVERALL BETTER (saves " + (totalDistanceB - totalDistanceA) + " steps)");
-            } else if (totalDistanceB < totalDistanceA) {
-                System.out.println("✓ Strategy B is OVERALL BETTER (saves " + (totalDistanceA - totalDistanceB) + " steps)");
-            } else {
+        PickRouteController.RouteComparison comparison = summary.getComparison();
+        if (comparison != null) {
+            if (comparison.isEqual()) {
                 System.out.println("✓ Both strategies are EQUAL in total efficiency");
+            } else {
+                System.out.println("✓ " + comparison.getBetterStrategy() +
+                        " is OVERALL BETTER (saves " + comparison.getSavedSteps() + " steps)");
             }
         }
     }
