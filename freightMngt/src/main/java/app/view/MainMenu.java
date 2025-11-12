@@ -24,16 +24,17 @@ public class MainMenu {
             System.out.println("| 5. Inventory Orders Pick       |");
             System.out.println("| 6. Returned Orders Quarantine  |");
             System.out.println("| 7. Station                     |");
-            System.out.println("| 8. Exit                        |");
+            System.out.println("| 8. 2DTree                      |");
+            System.out.println("| 9. Exit                        |");
             System.out.println("----------------------------------");
-            System.out.print("Enter your choice (1-8): ");
+            System.out.print("Enter your choice (1-9): ");
 
             String input = scanner.nextLine();
             try {
                 choice = Integer.parseInt(input);
-                if (choice < 1 || choice > 8) {
-                    System.out.println("Invalid choice. Please enter a number between 1 and 7.");
-                } else if (choice == 8) {
+                if (choice < 1 || choice > 9) {
+                    System.out.println("Invalid choice. Please enter a number between 1 and 8.");
+                } else if (choice == 9) {
                     System.out.println("Exiting the system. Goodbye!");
                     System.exit(0);
                 } else {
@@ -58,6 +59,9 @@ public class MainMenu {
                             break;
                         case 7:
                             StationSearchView.display(scanner);
+                            break;
+                        case  8:
+                            Balanced2DTreeView.display(scanner);
                             break;
                         default:
                             System.out.println("Option not implemented yet.");
