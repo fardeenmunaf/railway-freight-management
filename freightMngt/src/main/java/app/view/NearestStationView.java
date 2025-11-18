@@ -1,7 +1,7 @@
 package app.view;
 
 import app.model.Station;
-import app.service.StationService;
+import app.service.sprint2.StationService;
 import app.utils.Balanced2DTreeBuilder;
 
 import java.util.List;
