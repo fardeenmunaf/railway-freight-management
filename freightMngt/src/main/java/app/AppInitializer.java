@@ -23,6 +23,7 @@ public class AppInitializer implements Runnable {
     private static final String WAGONS_CSV = "src/main/java/app/sampleDataset/wagons.csv";
     private static final String ORDER_LINES_CSV = "src/main/java/app/sampleDataset/order_lines.csv";
     private static final String RETURNS_CSV = "src/main/java/app/sampleDataset/returns.csv";
+    private static final String STATIONS_CSV = "src/main/java/app/sampleDataset/train_stations_europe.csv";
 
     private int aisleIdCounter = 1;
 
@@ -37,6 +38,7 @@ public class AppInitializer implements Runnable {
         loadReturns(repositories);
         loadTravelTimeData(repositories);
         loadMockedData();
+        loadStations(repositories);
     }
 
     private void loadBays(Repositories repositories) {
@@ -372,4 +374,91 @@ public class AppInitializer implements Runnable {
         repositories.getLocomotiveRepository().addLocomotive(loco2);
     }
 
+    private void loadStations(Repositories repositories) {
+        List<Map<String, String>> data = CsvReader.readCsv(STATIONS_CSV, ",");
+        int stationIdCounter = 100;
+        int rejectedCount = 0;
+
+        FacilityType stationType = repositories.getFacilityTypeRepository()
+                .getFacilityTypeByName("Station");
+        if (stationType == null) {
+            stationType = new FacilityType(2, "Station");
+            repositories.getFacilityTypeRepository().addFacilityType(stationType);
+        }
+
+        for (Map<String, String> row : data) {
+            String country = row.get("country");
+            String timeZone = sanitizeTimeZone(row.get("time_zone"));
+            String timeZoneGroup = row.get("time_zone_group");
+            String name = row.get("station");
+            Double latitude = parseDouble(row.get("latitude"));
+            Double longitude = parseDouble(row.get("longitude"));
+            Boolean isCity = parseBoolean(row.get("is_city"));
+            Boolean isMainStation = parseBoolean(row.get("is_main_station"));
+            Boolean isAirport = parseBoolean(row.get("is_airport"));
+
+            if (!isValidStation(name, country, timeZoneGroup, latitude, longitude)) {
+                System.err.printf("REJECTED: Station='%s', Country='%s', TZ='%s', Lat=%s, Lon=%s%n",
+                        name, country, timeZoneGroup, latitude, longitude);
+                rejectedCount++;
+                continue;
+            }
+
+            Station station = new Station(
+                    stationIdCounter,
+                    name,
+                    stationType,
+                    latitude,
+                    longitude,
+                    false,
+                    country,
+                    timeZone,
+                    timeZoneGroup,
+                    isCity,
+                    isMainStation,
+                    isAirport
+            );
+
+            repositories.getFacilityRepository().addFacility(station);
+            stationIdCounter++;
+        }
+
+        System.out.printf("✅ Stations loaded: %d | ❌ Rejected: %d%n",
+                stationIdCounter - 100, rejectedCount);
+    }
+
+    private boolean isValidStation(String name, String country, String timeZoneGroup,
+                                   Double lat, Double lon) {
+        if (name == null || name.trim().isEmpty()) return false;
+        if (country == null || country.trim().isEmpty()) return false;
+        if (timeZoneGroup == null || timeZoneGroup.trim().isEmpty()) return false;
+        if (lat == null || lat < -90.0 || lat > 90.0) return false;
+        if (lon == null || lon < -180.0 || lon > 180.0) return false;
+        return true;
+    }
+
+    private static Double parseDouble(String value) {
+        if (value == null || value.trim().isEmpty()) return null;
+        try {
+            return Double.parseDouble(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static Boolean parseBoolean(String value) {
+        if (value == null || value.trim().isEmpty()) return null;
+        String v = value.trim();
+        return "True".equals(v) || "true".equalsIgnoreCase(v) || "1".equals(v);
+    }
+
+    private String sanitizeTimeZone(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return null;
+        }
+
+        String cleaned = raw.replaceAll("[()'\",]", "").trim();
+        String[] parts = cleaned.split("\\s+");
+        return parts[0];
+    }
 }

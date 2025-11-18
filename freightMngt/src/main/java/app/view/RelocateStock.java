@@ -4,7 +4,7 @@ import app.model.InventoryBalance;
 import app.model.InventoryLot;
 import app.model.WarehouseBay;
 import app.repositories.Repositories;
-import app.service.InventoryRelocation;
+import app.service.sprint1.InventoryRelocation;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;

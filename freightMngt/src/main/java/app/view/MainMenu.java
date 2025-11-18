@@ -1,7 +1,5 @@
 package app.view;
 
-import app.service.TravelTimeFeature;
-
 import java.util.Scanner;
 
 public class MainMenu {
@@ -23,16 +21,19 @@ public class MainMenu {
             System.out.println("| 4. Relocate Stock              |");
             System.out.println("| 5. Inventory Orders Pick       |");
             System.out.println("| 6. Returned Orders Quarantine  |");
-            System.out.println("| 7. Exit                        |");
+            System.out.println("| 7. Station                     |");
+            System.out.println("| 8. 2DTree                      |");
+            System.out.println("| 9. Nearest Station Search      |");
+            System.out.println("| 0. Exit                        |");
             System.out.println("----------------------------------");
-            System.out.print("Enter your choice (1-7): ");
+            System.out.print("Enter your choice (0-9): ");
 
             String input = scanner.nextLine();
             try {
                 choice = Integer.parseInt(input);
-                if (choice < 1 || choice > 7) {
-                    System.out.println("Invalid choice. Please enter a number between 1 and 7.");
-                } else if (choice == 7) {
+                if (choice < 0 || choice > 9) {
+                    System.out.println("Invalid choice. Please enter a number between 0 and 9.");
+                } else if (choice == 0) {
                     System.out.println("Exiting the system. Goodbye!");
                     System.exit(0);
                 } else {
@@ -54,6 +55,15 @@ public class MainMenu {
                             break;
                         case 6:
                             ReturnProcessing.display(scanner);
+                            break;
+                        case 7:
+                            StationSearchView.display(scanner);
+                            break;
+                        case 8:
+                            Balanced2DTreeView.display(scanner);
+                            break;
+                        case 9:
+                            NearestStationView.display(scanner);
                             break;
                         default:
                             System.out.println("Option not implemented yet.");

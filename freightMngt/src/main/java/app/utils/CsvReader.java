@@ -37,10 +37,10 @@ public class CsvReader {
                 line = line.substring(1);
             }
 
-            String[] headers = line.split(delimiter);
+            String[] headers = parseCsvLine(line, delimiter);
 
             while ((line = br.readLine()) != null) {
-                String[] values = line.split(delimiter);
+                String[] values = parseCsvLine(line, delimiter);
                 Map<String, String> record = new HashMap<>();
                 for (int i = 0; i < headers.length && i < values.length; i++) {
                     record.put(headers[i].trim(), values[i].trim());
@@ -51,5 +51,34 @@ public class CsvReader {
             e.printStackTrace();
         }
         return records;
+    }
+
+    /**
+     * Parses a CSV line respecting quoted fields.
+     *
+     * @param line the CSV line to parse
+     * @param delimiter the delimiter character
+     * @return array of field values
+     */
+    private static String[] parseCsvLine(String line, String delimiter) {
+        List<String> result = new ArrayList<>();
+        StringBuilder currentField = new StringBuilder();
+        boolean insideQuotes = false;
+
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+
+            if (c == '"') {
+                insideQuotes = !insideQuotes;
+            } else if (c == delimiter.charAt(0) && !insideQuotes) {
+                result.add(currentField.toString());
+                currentField = new StringBuilder();
+            } else {
+                currentField.append(c);
+            }
+        }
+        result.add(currentField.toString());
+
+        return result.toArray(new String[0]);
     }
 }
