@@ -3,13 +3,18 @@ package app.service.sprint2;
 import app.model.Station;
 import app.controller.StationController;
 import app.utils.AVLTree;
+import app.utils.Balanced2DTreeBuilder;
+import app.utils.HaversineDistance;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
  * Service class responsible for efficient station search operations.
  * Uses AVL Tree indexing for optimized queries by name, country, and time zone.
+ * Uses 2D-tree for spatial nearest neighbor searches.
  *
  * @author G113 2DK
  * @version 1.0
@@ -23,6 +28,7 @@ public class StationService {
     private AVLTree<String, Station> stationsByLatitude;
     private AVLTree<String, Station> stationsByLongitude;
     private AVLTree<String, Station> stationsByCoordinates;
+    private Balanced2DTreeBuilder.Balanced2DTree spatial2DTree;
 
     public StationService() {
         this.stationController = new StationController();
@@ -36,7 +42,7 @@ public class StationService {
     }
 
     /**
-     * Builds all search indexes from the database.
+     * Builds all search indexes from the database, including the 2D-tree for spatial searches.
      * Must be called after stations are loaded.
      */
     public void buildIndexes() {
@@ -45,6 +51,31 @@ public class StationService {
         for (Station station : allStations) {
             indexStation(station);
         }
+
+        // Build 2D-tree for spatial searches
+        build2DTree();
+    }
+
+    /**
+     * Builds the 2D-tree index for spatial nearest neighbor searches.
+     * Complexity: O(N log N) where N is the number of stations.
+     */
+    private void build2DTree() {
+        List<Station> allStations = stationController.getAllStations();
+        List<Balanced2DTreeBuilder.Station> treeStations = new ArrayList<>();
+
+        for (Station station : allStations) {
+            if (station.getLat() != null && station.getLon() != null) {
+                treeStations.add(new Balanced2DTreeBuilder.Station(
+                    station.getLat(),
+                    station.getLon(),
+                    station.getName()
+                ));
+            }
+        }
+
+        spatial2DTree = new Balanced2DTreeBuilder.Balanced2DTree();
+        spatial2DTree.bulkBuild(treeStations);
     }
 
     /**
@@ -181,5 +212,181 @@ public class StationService {
      */
     public int getStationCount() {
         return stationController.getAllStations().size();
+    }
+
+    /**
+     * Result wrapper for a station with its distance from query point.
+     */
+    public static class StationDistance {
+        public final Station station;
+        public final double distanceKm;
+
+        public StationDistance(Station station, double distanceKm) {
+            this.station = station;
+            this.distanceKm = distanceKm;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s (%.2f km)", station.getName(), distanceKm);
+        }
+    }
+
+    /**
+     * Finds the N nearest stations to a given coordinate using Haversine distance.
+     *
+     * Uses KD-tree for efficient spatial search with branch pruning.
+     * Results are ordered by distance ascending.
+     *
+     * Temporal Complexity: O(log N) average case, O(N) worst case
+     * where N is the total number of stations in the tree.
+     *
+     * @param latitude Target latitude in degrees
+     * @param longitude Target longitude in degrees
+     * @param n Number of nearest neighbors to find
+     * @return List of N nearest stations with distances, sorted by distance ASC
+     */
+    public List<StationDistance> findNearestStations(double latitude, double longitude, int n) {
+        if (spatial2DTree == null) {
+            build2DTree();
+        }
+
+        List<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> results =
+            spatial2DTree.findNearestStations(latitude, longitude, n);
+
+        // Convert to StationDistance with full Station objects
+        List<StationDistance> stationDistances = new ArrayList<>();
+        for (Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance result : results) {
+            // Find the full Station object by name and coordinates
+            Station station = findStationByNameAndCoordinates(
+                result.station.name,
+                result.station.latitude,
+                result.station.longitude
+            );
+            if (station != null) {
+                stationDistances.add(new StationDistance(station, result.distance));
+            }
+        }
+
+        return stationDistances;
+    }
+
+    /**
+     * Finds the N nearest stations to a given coordinate with optional time-zone group filter.
+     *
+     * If timeZoneGroup is provided, only stations in that time-zone group are returned.
+     * Results are ordered by distance ascending.
+     *
+     * Temporal Complexity: O(log N) average case for spatial search,
+     * plus O(k) for filtering where k is the number of candidates.
+     *
+     * @param latitude Target latitude in degrees
+     * @param longitude Target longitude in degrees
+     * @param n Number of nearest neighbors to find
+     * @param timeZoneGroup Optional time-zone group filter (null for no filter)
+     * @return List of N nearest stations with distances, sorted by distance ASC
+     */
+    public List<StationDistance> findNearestStations(double latitude, double longitude,
+                                                     int n, String timeZoneGroup) {
+        if (timeZoneGroup == null || timeZoneGroup.isBlank()) {
+            return findNearestStations(latitude, longitude, n);
+        }
+
+        if (spatial2DTree == null) {
+            build2DTree();
+        }
+
+        // Get more candidates than needed to account for filtering
+        int candidateMultiplier = 5;
+        int maxCandidates = Math.min(n * candidateMultiplier, spatial2DTree.getSize());
+
+        List<StationDistance> filteredResults = new ArrayList<>();
+        int candidatesChecked = n;
+
+        // Keep searching until we have enough results or checked all stations
+        while (filteredResults.size() < n && candidatesChecked <= spatial2DTree.getSize()) {
+            List<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> results =
+                spatial2DTree.findNearestStations(latitude, longitude, candidatesChecked);
+
+            filteredResults.clear();
+
+            // Filter by time-zone group
+            for (Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance result : results) {
+                Station station = findStationByNameAndCoordinates(
+                    result.station.name,
+                    result.station.latitude,
+                    result.station.longitude
+                );
+
+                if (station != null && timeZoneGroup.equals(station.getTimeZoneGroup())) {
+                    filteredResults.add(new StationDistance(station, result.distance));
+                    if (filteredResults.size() >= n) {
+                        break;
+                    }
+                }
+            }
+
+            // Increase candidates if we didn't find enough
+            if (filteredResults.size() < n) {
+                candidatesChecked = Math.min(candidatesChecked * 2, spatial2DTree.getSize());
+            }
+        }
+
+        // Return only the requested number
+        return filteredResults.size() > n ?
+            filteredResults.subList(0, n) : filteredResults;
+    }
+
+    /**
+     * Finds the single nearest station to a given coordinate.
+     *
+     * @param latitude Target latitude in degrees
+     * @param longitude Target longitude in degrees
+     * @return The nearest station with distance, or null if no stations available
+     */
+    public StationDistance findNearestStation(double latitude, double longitude) {
+        List<StationDistance> results = findNearestStations(latitude, longitude, 1);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    /**
+     * Finds the single nearest station with time-zone group filter.
+     *
+     * @param latitude Target latitude in degrees
+     * @param longitude Target longitude in degrees
+     * @param timeZoneGroup Time-zone group filter
+     * @return The nearest station with distance, or null if no matching stations
+     */
+    public StationDistance findNearestStation(double latitude, double longitude, String timeZoneGroup) {
+        List<StationDistance> results = findNearestStations(latitude, longitude, 1, timeZoneGroup);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    /**
+     * Helper method to find a Station object by name and coordinates.
+     */
+    private Station findStationByNameAndCoordinates(String name, double lat, double lon) {
+        List<Station> candidates = stationsByName.search(name.toLowerCase());
+
+        for (Station station : candidates) {
+            if (station.getLat() != null && station.getLon() != null) {
+                if (Math.abs(station.getLat() - lat) < 0.0001 &&
+                    Math.abs(station.getLon() - lon) < 0.0001) {
+                    return station;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns temporal complexity analysis for the 2D-tree.
+     */
+    public Balanced2DTreeBuilder.TemporalComplexity get2DTreeComplexity() {
+        if (spatial2DTree == null) {
+            build2DTree();
+        }
+        return spatial2DTree.getTemporalComplexity();
     }
 }
