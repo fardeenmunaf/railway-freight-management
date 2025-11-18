@@ -1,7 +1,5 @@
 package app.view;
 
-import app.service.TravelTimeFeature;
-
 import java.util.Scanner;
 
 public class MainMenu {

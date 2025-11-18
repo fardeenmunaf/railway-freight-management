@@ -1,4 +1,4 @@
-package app.service;
+package app.service.sprint2;
 
 import app.controller.StationController;
 import app.model.FacilityType;

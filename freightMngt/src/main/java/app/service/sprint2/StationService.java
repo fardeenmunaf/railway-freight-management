@@ -1,4 +1,4 @@
-package app.service;
+package app.service.sprint2;
 
 import app.model.Station;
 import app.controller.StationController;
@@ -6,7 +6,6 @@ import app.utils.AVLTree;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Service class responsible for efficient station search operations.

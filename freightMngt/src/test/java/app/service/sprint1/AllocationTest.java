@@ -1,4 +1,4 @@
-package app.service;
+package app.service.sprint1;
 
 import app.controller.InventoryBalanceController;
 import app.controller.InventoryLotController;
@@ -6,9 +6,9 @@ import app.controller.OrderController;
 import app.controller.OrderLineController;
 import app.controller.WarehouseBayController;
 import app.model.*;
-import app.service.Allocation.AllocationResult;
-import app.service.Allocation.OrderEligibility;
-import app.service.Allocation.AllocationRecord;
+import app.service.sprint1.Allocation.AllocationResult;
+import app.service.sprint1.Allocation.OrderEligibility;
+import app.service.sprint1.Allocation.AllocationRecord;
 import org.junit.Before;
 import org.junit.Test;
 
