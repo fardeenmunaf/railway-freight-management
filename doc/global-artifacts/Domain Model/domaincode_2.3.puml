@@ -4,12 +4,12 @@ skinparam packageStyle rectangle
 skinparam shadowing false
 hide circle
 hide methods
-title "FreightMngt - Modelo de Domínio (v2.4 - Sem Repositórios)"
+title "FreightMngt - Domain Model v2.3"
 
 ' =========================
 ' CATALOG / ITEMS (BDDAD)
 ' =========================
-package "Catálogo / Item" {
+package "Catalog / Item" {
   class Item {
     +Long id
     +String sku
@@ -23,13 +23,13 @@ package "Catálogo / Item" {
     +Long id
     +String name
   }
-  Item " * " -- " 1 " ItemCategory : pertenceA
+  Item " * " -- " 1 " ItemCategory : belongsTo
 }
 
 ' =========================
-' SEGURANÇA / USUÁRIOS
+' SECURITY / USERS
 ' =========================
-package "Segurança / Usuários" {
+package "Security / Users" {
   class User {
     +Long id
     +String username
@@ -44,14 +44,14 @@ package "Segurança / Usuários" {
     +Long id
     +String name
   }
-  User "*" -- "*" Role : tem
-  Role "*" -- "*" Permission : concede
+  User "*" -- "*" Role : has
+  Role "*" -- "*" Permission : grants
 }
 
 ' =========================
-' PEDIDOS / VENDAS
+' ORDERS / SALES
 ' =========================
-package "Pedidos / Vendas" {
+package "Orders / Sales" {
   class Order {
     +Long id
     +Date createdAt
@@ -66,14 +66,14 @@ package "Pedidos / Vendas" {
     +BigDecimal unitPrice
     +String sku
   }
-  Order "1" *-- "*" OrderLine : contém
-  OrderLine "*" -- "1" Item : refere
+  Order "1" *-- "*" OrderLine : contains
+  OrderLine "*" -- "1" Item : refersTo
 }
 
 ' =========================
-' ESTOQUE / INVENTÁRIO (ESINF / BDDAD)
+' STOCK / INVENTORY (ESINF / BDDAD)
 ' =========================
-package "Estoque / Inventário" {
+package "Stock / Inventory" {
   class InventoryBalance {
     +Long id
     +BigDecimal quantity
@@ -99,10 +99,10 @@ package "Estoque / Inventário" {
     +Long srcLotId
     +Long dstLotId
   }
-  InventoryBalance "1" -- "1" Item : saldoDe
-  InventoryLot "*" -- "1" Item : loteDe
-  InventoryMove "*" -- "*" InventoryLot : movimenta
-  InventoryMove "*" -- "*" InventoryBalance : ajusta
+  InventoryBalance "1" -- "1" Item : balanceOf
+  InventoryLot "*" -- "1" Item : lotOf
+  InventoryMove "*" -- "*" InventoryLot : moves
+  InventoryMove "*" -- "*" InventoryBalance : adjusts
 }
 
 ' =========================
@@ -136,19 +136,14 @@ package "Warehouse" {
     +Long id
     +BigDecimal capacityKg
   }
-  enum PackingHeuristic {
-    FF
-    FFD
-    BFD
-  }
-  Warehouse "1" -- "*" Aisle : possui
-  Aisle "1" -- "*" Bay : contém
-  Bay "*" -- "*" Box : armazena
-  Box "*" -- "1" InventoryLot : representa
+  Warehouse "1" -- "*" Aisle : has
+  Aisle "1" -- "*" Bay : contains
+  Bay "*" -- "*" Box : stores
+  Box "*" -- "1" InventoryLot : represents
 }
 
 ' =========================
-' PICK / OPERAÇÕES DE SEPARAÇÃO (ESINF)
+' PICKING / OPERATIONS (ESINF)
 ' =========================
 package "Picking" {
   class PickWave {
@@ -181,17 +176,17 @@ package "Picking" {
     +int aisle
     +int bay
   }
-  PickWave "1" -- "*" PickTask : agrupa
-  PickTask "*" -- "1" OrderLine : atende
-  PickRoute "1" -- "*" PickTask : roteiriza
-  PickingPlan "1" -- "*" AllocationRow : gera
-  Trolley "0..*" -- "0..*" PickWave : usadoEm
+  PickWave "1" -- "*" PickTask : groups
+  PickTask "*" -- "1" OrderLine : serves
+  PickRoute "1" -- "*" PickTask : routes
+  PickingPlan "1" -- "*" AllocationRow : generates
+  Trolley "0..*" -- "0..*" PickWave : usedIn
 }
 
 ' =========================
-' QA / RETENÇÃO / RETURNS (ESINF)
+' QA / HOLD / RETURNS
 ' =========================
-package "Qualidade / Retenção / Retornos" {
+package "Quality / Hold / Returns" {
   class QaInspection {
     +Long id
     +String result
@@ -215,16 +210,16 @@ package "Qualidade / Retenção / Retornos" {
     +Date expiryDate
     +Date timestamp
   }
-  QaInspection "*" -- "1" InventoryLot : inspeciona
-  QuarantineHold "*" -- "1" InventoryLot : retém
-  ReturnOrder "1" -- "*" ReturnLine : contém
-  ReturnOrder "*" -- "1" Order : referencia
+  QaInspection "*" -- "1" InventoryLot : inspects
+  QuarantineHold "*" -- "1" InventoryLot : holds
+  ReturnOrder "1" -- "*" ReturnLine : contains
+  ReturnOrder "*" -- "1" Order : references
 }
 
 ' =========================
-' LOGÍSTICA / LINHAS (BDDAD)
+' LOGISTICS / LINES (BDDAD)
 ' =========================
-package "Logística / Linhas" {
+package "Logistics / Lines" {
   class Line {
     +Long id
     +String name
@@ -251,17 +246,17 @@ package "Logística / Linhas" {
     +Long id
     +String name
   }
-  Line "1" -- "*" LineSegment : compõe
-  LineSegment "1" -- "*" LineSegmentFacility : passaPor
-  LineSegmentFacility "*" -- "1" Facility : localDe
-  LineSegment "*" -- "1" Gauge : possui
-  Line "1" -- "1" Owner : pertenceA
+  Line "1" -- "*" LineSegment : composes
+  LineSegment "1" -- "*" LineSegmentFacility : passesThrough
+  LineSegmentFacility "*" -- "1" Facility : placeOf
+  LineSegment "*" -- "1" Gauge : has
+  Line "1" -- "1" Owner : ownedBy
 }
 
 ' =========================
-' ESTAÇÕES / INSTALAÇÕES (ARQCP / BDDAD)
+' FACILITIES / STATIONS (ARQCP / BDDAD)
 ' =========================
-package "Instalações / Estações" {
+package "Facilities / Stations" {
   class Facility {
     +Long id
     +String name
@@ -285,11 +280,11 @@ package "Instalações / Estações" {
     +int maxTracks
     +String timeZoneGroup
   }
-  Facility "*" -- "1" FacilityType : classificadoComo
-  Facility "*" -- "*" FacilityFeatureType : possuiFeature
-  Facility "*" -- "*" Warehouse : contém
-  Facility "*" -- "*" Station : disponibiliza
-  Station "*" -- "0..99" Track : possui
+  Facility "*" -- "1" FacilityType : classifiedAs
+  Facility "*" -- "*" FacilityFeatureType : hasFeature
+  Facility "*" -- "*" Warehouse : contains
+  Facility "*" -- "*" Station : provides
+  Station "*" -- "0..99" Track : has
 }
 
 ' =========================
@@ -328,19 +323,19 @@ package "ARQCP - Station Management" {
     +String actor
     +String action
   }
-  Station "1" -- "*" Track : possui
-  Track "1" -- "1" LightSign : sinaliza
-  Station "1" -- "*" Sensor : tem
-  Station "1" -- "1" SynopticBoard : tem
-  StationManager "1" -- "1" SynopticBoard : opera
+  Station "1" -- "*" Track : has
+  Track "1" -- "1" LightSign : signals
+  Station "1" -- "*" Sensor : has
+  Station "1" -- "1" SynopticBoard : has
+  StationManager "1" -- "1" SynopticBoard : operates
   StationManager "1" -- "*" OperationLog : logs
   OperationLog "*" -- "1" User : actor
 }
 
 ' =========================
-' FROTA / LOCOMOTIVAS E WAGONS (BDDAD)
+' FLEET / LOCOMOTIVES & WAGONS (BDDAD)
 ' =========================
-package "Frota / Veículos" {
+package "Fleet / Vehicles" {
   class Locomotive {
     +Long id
     +String serial
@@ -379,19 +374,19 @@ package "Frota / Veículos" {
     +String name
   }
 
-  Locomotive "1" -- "1" LocomotiveType : tipo
-  Locomotive "*" -- "1" LocomotiveGauge : bitola
-  Wagon "*" -- "1" WagonGauge : bitola
-  Wagon "1" -- "1" WagonModel : modelo
-  Wagon "*" -- "1" WagonType : classificadoComo
-  Locomotive "*" -- "1" Owner : pertenceA
-  Wagon "*" -- "1" Owner : pertenceA
+  Locomotive "1" -- "1" LocomotiveType : type
+  Locomotive "*" -- "1" LocomotiveGauge : gauge
+  Wagon "*" -- "1" WagonGauge : gauge
+  Wagon "1" -- "1" WagonModel : model
+  Wagon "*" -- "1" WagonType : classifiedAs
+  Locomotive "*" -- "1" Owner : ownedBy
+  Wagon "*" -- "1" Owner : ownedBy
 }
 
 ' =========================
-' SERVIÇO DE TRENS E PARADAS (LAPR3 / BDDAD)
+' TRAIN SERVICE / OPERATIONS (LAPR3 / BDDAD)
 ' =========================
-package "Serviço de Trem / Operações" {
+package "Train Service / Operations" {
   class Train {
     +Long id
     +String code
@@ -429,18 +424,18 @@ package "Serviço de Trem / Operações" {
     +Date estimatedArrival
     +Date estimatedDeparture
   }
-  Train "1" -- "*" TrainStop : paraEm
-  TrainService "1" -- "*" Train : opera
-  TrainServiceComposition "*" -- "*" Train : compõe
+  Train "1" -- "*" TrainStop : stopsAt
+  TrainService "1" -- "*" Train : operates
+  TrainServiceComposition "*" -- "*" Train : composes
   Train "1" -- "1" TrainComposition : composition
-  TrainComposition "1" -- "*" CompositionUnit : contém
-  Train "1" -- "*" ScheduleEntry : tem
+  TrainComposition "1" -- "*" CompositionUnit : contains
+  Train "1" -- "*" ScheduleEntry : has
 }
 
 ' =========================
 ' MAINTENANCE / PARKING
 ' =========================
-package "Manutenção / Estacionamento" {
+package "Maintenance / Parking" {
   class ServiceLocomotive {
     +Long id
     +String description
@@ -452,9 +447,9 @@ package "Manutenção / Estacionamento" {
   class ParkingTrack {
     +Long id
   }
-  ServiceLocomotive "*" -- "1" Locomotive : executaEm
-  ParkingQueue "*" -- "*" ParkingTrack : controla
-  ParkingTrack "*" -- "*" Train : recebe
+  ServiceLocomotive "*" -- "1" Locomotive : performedOn
+  ParkingQueue "*" -- "*" ParkingTrack : controls
+  ParkingTrack "*" -- "*" Train : receives
 }
 
 ' =========================
@@ -486,10 +481,10 @@ package "Scheduler / Dispatcher (LAPR3)" {
     +Long facilityId
     +Date eta
   }
-  RoutePlan "1" -- "*" RouteSegment : compõe
-  RoutePlan "1" -- "*" CrossingOperation : necessita
-  Train "1" -- "1" RoutePlan : tem
-  Train "*" -- "*" EstimatedPassage : tem
+  RoutePlan "1" -- "*" RouteSegment : composes
+  RoutePlan "1" -- "*" CrossingOperation : requires
+  Train "1" -- "1" RoutePlan : has
+  Train "*" -- "*" EstimatedPassage : has
 }
 
 ' =========================
@@ -513,10 +508,10 @@ package "Spatial Indexes / ESINF" {
     +Long id
     +String queryType  -- {range, nearest, radius}
   }
-  StationDataset "1" -- "*" Facility : contém
-  TimeZoneIndex "*" -- "*" Station : indexa
+  StationDataset "1" -- "*" Facility : contains
+  TimeZoneIndex "*" -- "*" Station : indexes
   KDTree2D "1" -- "*" Station : spatialIndex
-  GeoQuery "1" -- "1" KDTree2D : usa
+  GeoQuery "1" -- "1" KDTree2D : uses
 }
 
 ' =========================
