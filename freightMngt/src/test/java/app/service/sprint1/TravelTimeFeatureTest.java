@@ -1,10 +1,10 @@
-package app.service;
+package app.service.sprint1;
 
 import app.model.*;
 import app.repositories.*;
-import app.service.TravelTimeFeature.TravelTimeCalculator;
-import app.service.TravelTimeFeature.NoDirectConnectionException;
-import app.service.TravelTimeFeature.InvalidSpeedException;
+import app.service.sprint1.TravelTimeFeature.TravelTimeCalculator;
+import app.service.sprint1.TravelTimeFeature.NoDirectConnectionException;
+import app.service.sprint1.TravelTimeFeature.InvalidSpeedException;
 import org.junit.Before;
 import org.junit.Test;
 
