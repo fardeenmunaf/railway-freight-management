@@ -15,7 +15,6 @@ public class Main {
 
         System.out.println("Dataset initialized successfully.\n\n");
 
-
         System.out.println("\n\n\n");
 
         MainMenu.display();

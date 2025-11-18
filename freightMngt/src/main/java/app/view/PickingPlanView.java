@@ -75,6 +75,9 @@ public class PickingPlanView {
                 allocationMode = "STRICT";
             }
 
+            // Display allocation information
+            displayAllocationInfo(pickingPlan);
+
             System.out.println("\n--- STEP 2: SELECT ORDER SCOPE ---");
             System.out.println("1. Create plan and optimize routes for a specific order");
             System.out.println("2. Create plan and optimize routes for ALL orders");
@@ -128,9 +131,6 @@ public class PickingPlanView {
                 System.out.println("Invalid option. Please select 1 or 2.");
                 return;
             }
-
-            // Display allocation information
-            displayAllocationInfo(pickingPlan);
 
         } catch (NumberFormatException e) {
             System.out.println("Error: Please enter valid numeric values.");
