@@ -1,8 +1,8 @@
-package app.service;
+package app.service.sprint1;
 
 import app.controller.*;
 import app.model.*;
-import app.service.PickingPlan.PickingPlanResult;
+import app.service.sprint1.PickingPlan.PickingPlanResult;
 import org.junit.Before;
 import org.junit.Test;
 

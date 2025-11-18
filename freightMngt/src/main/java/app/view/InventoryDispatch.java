@@ -26,7 +26,7 @@ public class InventoryDispatch {
         System.out.println("=".repeat(60));
         System.out.println("Type 'b' at any time to return to menu.\n");
 
-        app.service.InventoryDispatch dispatchService = new app.service.InventoryDispatch();
+        app.service.sprint1.InventoryDispatch dispatchService = new app.service.sprint1.InventoryDispatch();
 
         try {
             System.out.print("Enter SKU (e.g., SKU00001): ");
@@ -83,8 +83,8 @@ public class InventoryDispatch {
      * Shows allocation preview before dispatch confirmation.
      * @return true if stock is available, false otherwise
      */
-    private static boolean showAllocationPreview(app.service.InventoryDispatch dispatchService,
-                                              Integer skuNum, Integer quantity, String skuInput) {
+    private static boolean showAllocationPreview(app.service.sprint1.InventoryDispatch dispatchService,
+                                                 Integer skuNum, Integer quantity, String skuInput) {
 
         System.out.println("\n" + "=".repeat(50));
         System.out.println("           PLANNED ALLOCATION PREVIEW");
@@ -144,7 +144,7 @@ public class InventoryDispatch {
     /**
      * Shows the state of bays after dispatch operation.
      */
-    private static void showBaysAfterDispatch(app.service.InventoryDispatch dispatchService,
+    private static void showBaysAfterDispatch(app.service.sprint1.InventoryDispatch dispatchService,
                                               Integer skuNum, String skuInput) {
         System.out.println("\n" + "=".repeat(50));
         System.out.println("           BAYS STATE AFTER DISPATCH");

@@ -1,7 +1,7 @@
-package app.service;
+package app.service.sprint1;
 
-import app.service.PickRouteOptimizationService.BayLocation;
-import app.service.PickRouteOptimizationService.RouteResult;
+import app.service.sprint1.PickRouteOptimizationService.BayLocation;
+import app.service.sprint1.PickRouteOptimizationService.RouteResult;
 import org.junit.Before;
 import org.junit.Test;
 
