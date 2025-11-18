@@ -112,9 +112,7 @@ public class InventoryBalanceController {
 
             // Remove expired lots (expDate before current date/time)
             LocalDateTime now = LocalDateTime.now();
-            sortedLots.removeIf(lot ->
-                lot.getExpDate() != null && lot.getExpDate().isBefore(now)
-            );
+            sortedLots.removeIf(lot -> lot.getExpDate() != null && lot.getExpDate().isBefore(now));
 
             sortedLots.sort((lot1, lot2) -> {
                 boolean lot1HasExpiry = lot1.getExpDate() != null;

@@ -1,6 +1,7 @@
 package app.repositories;
 
 import app.model.FacilityType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +31,16 @@ public class FacilityTypeRepository {
         for (FacilityType type : facilityTypes) {
             if (facilityTypeId.equals(type.getFacilityTypeId())) {
                 return type;
+            }
+        }
+        return null;
+    }
+
+    public FacilityType getFacilityTypeByName(String name) {
+        if (name == null) return null;
+        for (FacilityType ft : facilityTypes) {
+            if (ft.getName() != null && ft.getName().equalsIgnoreCase(name.trim())) {
+                return ft;
             }
         }
         return null;
