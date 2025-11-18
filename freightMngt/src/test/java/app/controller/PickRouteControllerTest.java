@@ -3,9 +3,9 @@ package app.controller;
 import app.model.Item;
 import app.model.OrderLine;
 import app.model.PickTask;
-import app.service.Allocation;
-import app.service.PickRouteOptimizationService;
-import app.service.PickingPlan;
+import app.service.sprint1.Allocation;
+import app.service.sprint1.PickRouteOptimizationService;
+import app.service.sprint1.PickingPlan;
 import org.junit.Before;
 import org.junit.Test;
 

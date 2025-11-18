@@ -1,4 +1,4 @@
-package app.service;
+package app.service.sprint1;
 
 import java.util.*;
 

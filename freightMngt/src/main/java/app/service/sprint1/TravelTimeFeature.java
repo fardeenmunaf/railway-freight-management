@@ -1,11 +1,7 @@
-package app.service;
+package app.service.sprint1;
 
 import app.model.*;
 import app.repositories.*;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.Scanner;
 
 /**
  * Helper class that provides a travel time feature and a TravelTimeCalculator for estimating travel time

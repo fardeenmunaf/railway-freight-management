@@ -5,7 +5,7 @@ import app.model.Locomotive;
 import app.repositories.FacilityRepository;
 import app.repositories.LocomotiveRepository;
 import app.repositories.Repositories;
-import app.service.TravelTimeFeature;
+import app.service.sprint1.TravelTimeFeature;
 
 import java.util.Comparator;
 import java.util.List;
