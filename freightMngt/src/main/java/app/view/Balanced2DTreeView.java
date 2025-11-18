@@ -188,6 +188,24 @@ public class Balanced2DTreeView {
         System.out.printf("│  Balance Factor:       %-43s │%n", "Optimal");
         System.out.printf("│  Dimension Split:      %-43s │%n", "Latitude/Longitude Alternating");
         System.out.println("└────────────────────────────────────────────────────────────────────┘");
+
+        int expectedHeight = (int) Math.ceil(Math.log(tree.getSize()) / Math.log(2));
+        int actualHeight = tree.getHeight();
+
+        if (expectedHeight != actualHeight) {
+            System.out.println("\n⚠ Height Analysis:");
+            System.out.println("┌────────────────────────────────────────────────────────────────────┐");
+            System.out.printf("│  Expected (Perfectly Balanced): %-34d │%n", expectedHeight);
+            System.out.printf("│  Actual Height:                 %-34d │%n", actualHeight);
+            System.out.printf("│  Difference:                    +%-33d │%n", (actualHeight - expectedHeight));
+            System.out.println("├────────────────────────────────────────────────────────────────────┤");
+            System.out.println("│  Why the difference?                                               │");
+            System.out.println("│  • 2D-Tree uses median partitioning without AVL rotations          │");
+            System.out.println("│  • Duplicate coordinates (stations in the same city)               │");
+            System.out.println("│  • Non-uniform geographic distribution of stations                 │");
+            System.out.println("│  • No dynamic rebalancing - structure depends on input order       │");
+            System.out.println("└────────────────────────────────────────────────────────────────────┘");
+        }
     }
 
     /**
