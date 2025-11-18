@@ -33,20 +33,16 @@ public class NearestStationView {
 
         boolean running = true;
         while (running) {
-            System.out.println("\n" + "=".repeat(60));
-            System.out.println("              N-NEAREST STATION SEARCH");
-            System.out.println("=".repeat(60));
+            System.out.println("\n=== N-Nearest Station Search ===");
             System.out.println("1. Find N nearest stations");
             System.out.println("2. Find N nearest stations (with time-zone filter)");
             System.out.println("3. Find single nearest station");
             System.out.println("4. Display complexity analysis");
             System.out.println("5. Test with sample locations");
             System.out.println("0. Return to Main Menu");
-            System.out.println("=".repeat(60));
             System.out.print("Choose option: ");
 
             int choice = readInt(scanner);
-            scanner.nextLine(); // consume newline
 
             switch (choice) {
                 case 1:
