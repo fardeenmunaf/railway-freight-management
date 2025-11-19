@@ -32,7 +32,8 @@ public class TrainDispatchController {
                 repositories.getTrainServiceCompositionRepository(),
                 repositories.getLineSegmentRepository(),
                 repositories.getLineSegmentFacilityRepository(),
-                repositories.getFacilityRepository()
+                repositories.getFacilityRepository(),
+                repositories.getLocomotiveRepository()
         );
     }
 

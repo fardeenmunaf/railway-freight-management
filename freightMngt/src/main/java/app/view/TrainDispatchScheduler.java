@@ -82,7 +82,7 @@ public class TrainDispatchScheduler {
      * Displays the main menu.
      */
     private static void displayMainMenu() {
-        System.out.println("\n╔════════════════════════════════════════════════════╗");
+        System.out.println("\n╔═════════════════════════════════════════════════════╗");
         System.out.println("║       TRAIN DISPATCH SCHEDULER - MAIN MENU          ║");
         System.out.println("╠═════════════════════════════════════════════════════╣");
         System.out.println("║ 1. Create New Manual Dispatch                       ║");
@@ -152,41 +152,121 @@ public class TrainDispatchScheduler {
      */
     private static List<Integer> defineRoute(Scanner scanner) {
         System.out.println("\n=== DEFINE ROUTE ===");
+        System.out.println("Tip: Use search to find facilities by name instead of scrolling through all facilities.");
         List<Integer> route = new ArrayList<>();
-
-        // List available facilities
-        List<Facility> facilities = repositories.getFacilityRepository().getAllFacilities();
-        System.out.println("\nAvailable Facilities:");
-        for (Facility f : facilities) {
-            System.out.printf("ID: %d | Name: %s | Type: %s%n",
-                    f.getFacilityId(),
-                    f.getName(),
-                    f.getFacilityType() != null ? f.getFacilityType().getName() : "N/A");
-        }
 
         boolean addingStops = true;
         while (addingStops) {
-            System.out.println("\nCurrent route has " + route.size() + " stop(s).");
-            Integer facilityId = getIntInput(scanner, "Enter Facility ID to add (0 to finish): ");
+            System.out.println("\n─────────────────────────────────────────────────────");
+            System.out.println("Current route has " + route.size() + " stop(s).");
 
-            if (facilityId == 0) {
+            if (!route.isEmpty()) {
+                System.out.println("Route so far:");
+                for (int i = 0; i < route.size(); i++) {
+                    Facility f = repositories.getFacilityRepository().getFacilityById(route.get(i));
+                    System.out.printf("  %d. %s (ID: %d)%n", i + 1,
+                            f != null ? f.getName() : "Unknown", route.get(i));
+                }
+            }
+
+            System.out.println("─────────────────────────────────────────────────────");
+            System.out.println("Options:");
+            System.out.println("  1. Search facility by name");
+            System.out.println("  2. Enter facility ID directly");
+            System.out.println("  0. Finish route definition");
+
+            int option = getIntInput(scanner, "Choose option: ");
+
+            if (option == 0) {
                 if (route.size() < 2) {
-                    System.out.println("Route must have at least 2 stops (origin and destination).");
+                    System.out.println("✗ Route must have at least 2 stops (origin and destination).");
                 } else {
                     addingStops = false;
                 }
+            } else if (option == 1) {
+                searchAndAddFacility(scanner, route);
+            } else if (option == 2) {
+                addFacilityById(scanner, route);
             } else {
-                Facility facility = repositories.getFacilityRepository().getFacilityById(facilityId);
-                if (facility != null) {
-                    route.add(facilityId);
-                    System.out.println("✓ Added: " + facility.getName());
-                } else {
-                    System.out.println("✗ Facility not found.");
-                }
+                System.out.println("✗ Invalid option.");
             }
         }
 
         return route;
+    }
+
+    /**
+     * Searches for facilities by name and allows user to select one.
+     */
+    private static void searchAndAddFacility(Scanner scanner, List<Integer> route) {
+        System.out.print("\nEnter facility name to search (partial match): ");
+        String searchTerm = scanner.nextLine().trim();
+
+        if (searchTerm.isEmpty()) {
+            System.out.println("✗ Search term cannot be empty.");
+            return;
+        }
+
+        List<Facility> facilities = repositories.getFacilityRepository().getAllFacilities();
+        List<Facility> matches = new ArrayList<>();
+
+        // Search for facilities matching the term (case-insensitive)
+        for (Facility f : facilities) {
+            if (f.getName() != null && f.getName().toLowerCase().contains(searchTerm.toLowerCase())) {
+                matches.add(f);
+            }
+        }
+
+        if (matches.isEmpty()) {
+            System.out.println("✗ No facilities found matching '" + searchTerm + "'.");
+            return;
+        }
+
+        // Limit display to first 20 results
+        int displayLimit = Math.min(20, matches.size());
+        System.out.println("\nFound " + matches.size() + " matching facilities" +
+                (matches.size() > 20 ? " (showing first 20):" : ":"));
+        System.out.println("┌─────┬────────────────────────────────────────────┬──────────────────────┐");
+        System.out.println("│ No. │ Facility Name                              │ Type                 │");
+        System.out.println("├─────┼────────────────────────────────────────────┼──────────────────────┤");
+
+        for (int i = 0; i < displayLimit; i++) {
+            Facility f = matches.get(i);
+            System.out.printf("│ %-3d │ %-42s │ %-20s │%n",
+                    (i + 1),
+                    truncate(f.getName(), 42),
+                    f.getFacilityType() != null ? truncate(f.getFacilityType().getName(), 20) : "N/A");
+        }
+        System.out.println("└─────┴────────────────────────────────────────────┴──────────────────────┘");
+
+        if (matches.size() > 20) {
+            System.out.println("⚠ Too many results. Refine your search for more options.");
+        }
+
+        int selection = getIntInput(scanner, "\nSelect facility number (0 to cancel): ");
+
+        if (selection > 0 && selection <= displayLimit) {
+            Facility selected = matches.get(selection - 1);
+            route.add(selected.getFacilityId());
+            System.out.println("✓ Added: " + selected.getName() + " (ID: " + selected.getFacilityId() + ")");
+        } else if (selection != 0) {
+            System.out.println("✗ Invalid selection.");
+        }
+    }
+
+    /**
+     * Adds a facility to the route by entering its ID directly.
+     */
+    private static void addFacilityById(Scanner scanner, List<Integer> route) {
+        Integer facilityId = getIntInput(scanner, "\nEnter Facility ID: ");
+
+        Facility facility = repositories.getFacilityRepository().getFacilityById(facilityId);
+        if (facility != null) {
+            route.add(facilityId);
+            System.out.println("✓ Added: " + facility.getName() + " (ID: " + facilityId + ")");
+        } else {
+            System.out.println("✗ Facility not found with ID: " + facilityId);
+        }
     }
 
     /**
@@ -238,21 +318,21 @@ public class TrainDispatchScheduler {
      */
     private static void displayDispatchSummary(TrainDispatch dispatch) {
         System.out.println("\n╔═══════════════════════════════════════════════════════════════╗");
-        System.out.println("║                    DISPATCH SUMMARY                          ║");
-        System.out.println("╠═══════════════════════════════════════════════════════════════╣");
-        System.out.printf("║ Dispatch ID:           %-38d║%n", dispatch.getDispatchId());
-        System.out.printf("║ Train Service ID:      %-38d║%n",
+        System.out.println("║                     DISPATCH SUMMARY                        ║");
+        System.out.println("╠═════════════════════════════════════════════════════════════╣");
+        System.out.printf("║ Dispatch ID:           %-37d║%n", dispatch.getDispatchId());
+        System.out.printf("║ Train Service ID:      %-37d║%n",
                 dispatch.getTrainService() != null ? dispatch.getTrainService().getServiceId() : 0);
-        System.out.printf("║ Route Type:            %-38s║%n", dispatch.getRouteType());
-        System.out.printf("║ Status:                %-38s║%n", dispatch.getStatus());
-        System.out.printf("║ Planned Departure:     %-38s║%n",
+        System.out.printf("║ Route Type:            %-37s║%n", dispatch.getRouteType());
+        System.out.printf("║ Status:                %-37s║%n", dispatch.getStatus());
+        System.out.printf("║ Planned Departure:     %-37s║%n",
                 dispatch.getPlannedDepartureTime() != null ? dispatch.getPlannedDepartureTime().format(dateTimeFormatter) : "N/A");
-        System.out.printf("║ Estimated Arrival:     %-38s║%n",
+        System.out.printf("║ Estimated Arrival:     %-37s║%n",
                 dispatch.getEstimatedArrivalTime() != null ? dispatch.getEstimatedArrivalTime().format(dateTimeFormatter) : "N/A");
         System.out.printf("║ Total Distance:        %-33.2f km ║%n", dispatch.getTotalDistanceKm());
         System.out.printf("║ Est. Travel Time:      %-33.0f min║%n", dispatch.getEstimatedTravelTimeMinutes());
-        System.out.printf("║ Route Points:          %-38d║%n", dispatch.getRoute().size());
-        System.out.println("╚═══════════════════════════════════════════════════════════════╝");
+        System.out.printf("║ Route Points:          %-37d║%n", dispatch.getRoute().size());
+        System.out.println("╚═════════════════════════════════════════════════════════════╝");
     }
 
     /**
@@ -300,11 +380,21 @@ public class TrainDispatchScheduler {
         String status;
 
         switch (choice) {
-            case 1: status = "PLANNED"; break;
-            case 2: status = "DISPATCHED"; break;
-            case 3: status = "IN_TRANSIT"; break;
-            case 4: status = "COMPLETED"; break;
-            case 5: status = "CANCELLED"; break;
+            case 1:
+                status = "PLANNED";
+                break;
+            case 2:
+                status = "DISPATCHED";
+                break;
+            case 3:
+                status = "IN_TRANSIT";
+                break;
+            case 4:
+                status = "COMPLETED";
+                break;
+            case 5:
+                status = "CANCELLED";
+                break;
             default:
                 System.out.println("Invalid choice.");
                 return;
@@ -361,10 +451,18 @@ public class TrainDispatchScheduler {
         String operation;
 
         switch (choice) {
-            case 1: operation = "NONE"; break;
-            case 2: operation = "WAIT_FOR_CROSSING"; break;
-            case 3: operation = "SIDING_WAIT"; break;
-            case 4: operation = "PRIORITY_PASS"; break;
+            case 1:
+                operation = "NONE";
+                break;
+            case 2:
+                operation = "WAIT_FOR_CROSSING";
+                break;
+            case 3:
+                operation = "SIDING_WAIT";
+                break;
+            case 4:
+                operation = "PRIORITY_PASS";
+                break;
             default:
                 System.out.println("Invalid choice.");
                 return;

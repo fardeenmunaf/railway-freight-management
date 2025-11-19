@@ -1,8 +1,7 @@
-package app.service.sprint3;
+package app.service.sprint2;
 
 import app.model.*;
 import app.repositories.*;
-import app.service.sprint2.TrainDispatchService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +45,7 @@ class TrainDispatchServiceTest {
         // Create service
         service = new TrainDispatchService(
             dispatchRepo, routePointRepo, compositionRepo,
-            segmentRepo, segmentFacilityRepo, facilityRepo
+            segmentRepo, segmentFacilityRepo, facilityRepo, locomotiveRepo
         );
 
         // Setup test data
@@ -85,7 +84,7 @@ class TrainDispatchServiceTest {
         segmentFacilityRepo.addLineSegmentFacility(link4);
 
         // Create train and train service
-        Company operator = new Company(1, "Test Railway");
+        Company operator = new Company(1, "Test Railway", "Test Railway", "VAT123456");
         Train train = new Train(1, 101, "Station A", "Station C", operator);
         TrainService trainService = new TrainService(1, train,
             LocalDateTime.now(), LocalDateTime.now().plusHours(3), null, "scheduled");
@@ -99,7 +98,7 @@ class TrainDispatchServiceTest {
         locomotiveRepo.addLocomotive(locomotive);
 
         // Create service locomotive and composition
-        ServiceLocomotive serviceLoco = new ServiceLocomotive(1, locomotive, trainService, null);
+        ServiceLocomotive serviceLoco = new ServiceLocomotive(1, trainService, locomotive, null);
         TrainServiceComposition composition = new TrainServiceComposition(trainService, serviceLoco, null);
         compositionRepo.addTrainServiceComposition(composition);
     }

@@ -2,6 +2,7 @@ package app.service.sprint2;
 
 import app.model.*;
 import app.repositories.*;
+import app.service.sprint1.TravelTimeFeature;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,8 +13,11 @@ import java.util.List;
  * Handles route planning, speed calculations, travel time estimation,
  * and crossing operation planning for train dispatches.
  *
+ * <p>Version 1.1: Integrated with TravelTimeFeature for optimized route calculations
+ * using Dijkstra's algorithm instead of manual segment-by-segment calculation.</p>
+ *
  * @author G113 2DK
- * @version 1.0
+ * @version 1.1
  */
 public class TrainDispatchService {
 
@@ -23,6 +27,8 @@ public class TrainDispatchService {
     private final LineSegmentRepository lineSegmentRepository;
     private final LineSegmentFacilityRepository lineSegmentFacilityRepository;
     private final FacilityRepository facilityRepository;
+    private final LocomotiveRepository locomotiveRepository;
+    private final TravelTimeFeature.TravelTimeCalculator travelTimeCalculator;
 
     /**
      * Constructor with dependencies.
@@ -33,19 +39,30 @@ public class TrainDispatchService {
      * @param lineSegmentRepository the line segment repository
      * @param lineSegmentFacilityRepository the line segment facility repository
      * @param facilityRepository the facility repository
+     * @param locomotiveRepository the locomotive repository
      */
     public TrainDispatchService(TrainDispatchRepository dispatchRepository,
                                RoutePointRepository routePointRepository,
                                TrainServiceCompositionRepository compositionRepository,
                                LineSegmentRepository lineSegmentRepository,
                                LineSegmentFacilityRepository lineSegmentFacilityRepository,
-                               FacilityRepository facilityRepository) {
+                               FacilityRepository facilityRepository,
+                               LocomotiveRepository locomotiveRepository) {
         this.dispatchRepository = dispatchRepository;
         this.routePointRepository = routePointRepository;
         this.compositionRepository = compositionRepository;
         this.lineSegmentRepository = lineSegmentRepository;
         this.lineSegmentFacilityRepository = lineSegmentFacilityRepository;
         this.facilityRepository = facilityRepository;
+        this.locomotiveRepository = locomotiveRepository;
+
+        // Initialize TravelTimeCalculator for optimized route calculations
+        this.travelTimeCalculator = TravelTimeFeature.create(
+            facilityRepository,
+            lineSegmentRepository,
+            lineSegmentFacilityRepository,
+            locomotiveRepository
+        );
     }
 
     /**
@@ -83,7 +100,8 @@ public class TrainDispatchService {
     }
 
     /**
-     * Builds route points from a list of facility IDs.
+     * Builds route points from a list of facility IDs using TravelTimeFeature for optimized calculations.
+     * Falls back to manual calculation if no locomotive is found.
      *
      * @param dispatch the train dispatch
      * @param facilityIds list of facility IDs
@@ -96,6 +114,10 @@ public class TrainDispatchService {
         double cumulativeTime = 0.0;
         LocalDateTime currentTime = startTime;
 
+        // Try to get locomotive ID, if available use TravelTimeCalculator
+        Integer locomotiveId = getLocomotiveFromTrainService(dispatch.getTrainService());
+        boolean useTravelTimeCalculator = (locomotiveId != null);
+
         for (int i = 0; i < facilityIds.size(); i++) {
             Facility facility = facilityRepository.getFacilityById(facilityIds.get(i));
             if (facility == null) continue;
@@ -104,31 +126,77 @@ public class TrainDispatchService {
             point.setTrainDispatch(dispatch);
             point.setSequenceOrder(i + 1);
             point.setFacility(facility);
-            point.setDistanceFromStartKm(cumulativeDistance);
-            point.setCumulativeTravelTimeMinutes(cumulativeTime);
 
             if (i == 0) {
                 // First point - departure
+                point.setDistanceFromStartKm(0.0);
+                point.setCumulativeTravelTimeMinutes(0.0);
                 point.setEstimatedArrivalTime(startTime);
                 point.setEstimatedDepartureTime(startTime);
+                point.setCrossingOperation("NONE");
             } else {
                 // Subsequent points - calculate travel time
-                Facility previousFacility = facilityRepository.getFacilityById(facilityIds.get(i - 1));
+                Integer previousFacilityId = facilityIds.get(i - 1);
+                Facility previousFacility = facilityRepository.getFacilityById(previousFacilityId);
+
+                boolean calculated = false;
+
+                // Try using TravelTimeCalculator if locomotive available
+                if (useTravelTimeCalculator && locomotiveId != null) {
+                    try {
+                        // Calculate travel time using Dijkstra's algorithm
+                        double travelTimeMinutes = travelTimeCalculator.calculateTravelTimeMinutes(
+                            previousFacilityId,
+                            facility.getFacilityId(),
+                            locomotiveId
+                        );
+
+                        // Get the calculated distance from the last calculation
+                        double segmentDistance = travelTimeCalculator.getDistanceKm();
+
+                        cumulativeDistance += segmentDistance;
+                        cumulativeTime += travelTimeMinutes;
+                        currentTime = currentTime.plusMinutes((long) travelTimeMinutes);
+
+                        point.setEstimatedArrivalTime(currentTime);
+                        calculated = true;
+
+                    } catch (TravelTimeFeature.NoDirectConnectionException e) {
+                        // No direct connection - fall through to manual calculation
+                        System.out.println("⚠ No connection found via TravelTime, using manual calculation");
+                    } catch (TravelTimeFeature.InvalidSpeedException e) {
+                        // Invalid speed - fall through to manual calculation
+                        System.out.println("⚠ Invalid speed in TravelTime, using manual calculation");
+                    }
+                }
+
+                // Manual fallback calculation
+                if (!calculated) {
+                    LineSegment segment = findSegmentBetweenFacilities(previousFacility, facility);
+
+                    if (segment != null) {
+                        // Calculate speed and time for this segment
+                        double segmentSpeed = calculateSegmentSpeed(dispatch.getTrainService(), segment);
+                        double segmentDistance = segment.getLengthKm() != null ? segment.getLengthKm() : 0.0;
+                        double segmentTime = (segmentDistance / segmentSpeed) * 60.0; // Convert to minutes
+
+                        cumulativeDistance += segmentDistance;
+                        cumulativeTime += segmentTime;
+                        currentTime = currentTime.plusMinutes((long) segmentTime);
+
+                        point.setEstimatedArrivalTime(currentTime);
+                    } else {
+                        // No segment found - use default
+                        point.setEstimatedArrivalTime(currentTime);
+                        point.setNotes("No segment connection found");
+                    }
+                }
+
+                // Find direct segment for crossing operation analysis
                 LineSegment segment = findSegmentBetweenFacilities(previousFacility, facility);
 
                 if (segment != null) {
                     routePoints.get(i - 1).setSegmentToNext(segment);
-
-                    // Calculate speed and time for this segment
-                    double segmentSpeed = calculateSegmentSpeed(dispatch.getTrainService(), segment);
-                    double segmentDistance = segment.getLengthKm() != null ? segment.getLengthKm() : 0.0;
-                    double segmentTime = (segmentDistance / segmentSpeed) * 60.0; // Convert to minutes
-
-                    cumulativeDistance += segmentDistance;
-                    cumulativeTime += segmentTime;
-                    currentTime = currentTime.plusMinutes((long) segmentTime);
-
-                    point.setEstimatedArrivalTime(currentTime);
 
                     // Check if single-line segment and plan crossing if needed
                     boolean isSingleLine = checkIfSingleLine(segment);
@@ -136,17 +204,20 @@ public class TrainDispatchService {
 
                     if (isSingleLine) {
                         planCrossingOperation(point);
+                    } else {
+                        point.setCrossingOperation("NONE");
                     }
+                } else {
+                    point.setCrossingOperation("NONE");
+                }
 
-                    // Add stop time at intermediate stations (e.g., 5 minutes)
-                    int stopTime = (i < facilityIds.size() - 1) ? 5 : 0;
+                // Add stop time at intermediate stations (e.g., 5 minutes)
+                int stopTime = (i < facilityIds.size() - 1) ? 5 : 0;
+                if (stopTime > 0) {
                     currentTime = currentTime.plusMinutes(stopTime);
                     cumulativeTime += stopTime;
-                    point.setEstimatedDepartureTime(currentTime);
-                } else {
-                    point.setEstimatedArrivalTime(currentTime);
-                    point.setEstimatedDepartureTime(currentTime);
                 }
+                point.setEstimatedDepartureTime(currentTime);
             }
 
             point.setDistanceFromStartKm(cumulativeDistance);
@@ -156,6 +227,26 @@ public class TrainDispatchService {
         }
 
         return routePoints;
+    }
+
+    /**
+     * Gets locomotive ID from train service composition.
+     *
+     * @param trainService the train service
+     * @return the locomotive ID, or null if no locomotive found
+     */
+    private Integer getLocomotiveFromTrainService(TrainService trainService) {
+        List<TrainServiceComposition> compositions =
+            compositionRepository.getCompositionsByTrainService(trainService.getServiceId());
+
+        for (TrainServiceComposition comp : compositions) {
+            if (comp.getServiceLocomotive() != null &&
+                comp.getServiceLocomotive().getLocomotive() != null) {
+                return comp.getServiceLocomotive().getLocomotive().getLocomotiveId();
+            }
+        }
+
+        return null; // No locomotive found - will use manual calculation
     }
 
     /**
