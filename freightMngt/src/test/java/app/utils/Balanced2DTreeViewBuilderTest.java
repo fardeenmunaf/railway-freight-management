@@ -1,5 +1,7 @@
 package app.utils;
 
+import app.model.Station; // Importar a classe de domínio Station
+import app.model.FacilityType; // Necessário para criar objetos Station
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
@@ -14,12 +16,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests tree construction, balancing, bucket management, and complexity analysis.
  *
  * @author G113 2DK
- * @version 1.0
+ * @version 1.1 (Refactored for domain Station)
  */
 public class Balanced2DTreeViewBuilderTest {
 
     private Balanced2DTreeBuilder.Balanced2DTree tree;
-    private List<Balanced2DTreeBuilder.Station> stations;
+    private List<Station> stations; // Usar a classe de domínio Station
+    private FacilityType dummyType; // Objeto auxiliar para criar Station
 
     /**
      * Sets up a fresh tree and station list before each test.
@@ -28,6 +31,18 @@ public class Balanced2DTreeViewBuilderTest {
     void setUp() {
         tree = new Balanced2DTreeBuilder.Balanced2DTree();
         stations = new ArrayList<>();
+        // Criar um FacilityType dummy para os construtores de Station
+        dummyType = new FacilityType(99, "Dummy");
+    }
+
+    // Metodo auxiliar para criar uma Station de domínio
+    private Station createStation(double lat, double lon, String name) {
+        return new Station(
+                null, name, dummyType,
+                lat, lon, false,
+                null, null, null,
+                null, null, null
+        );
     }
 
     /**
@@ -63,7 +78,7 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should build tree with single station")
     void testSingleStation() {
-        stations.add(new Balanced2DTreeBuilder.Station(40.0, -74.0, "Station A"));
+        stations.add(createStation(40.0, -74.0, "Station A"));
         tree.bulkBuild(stations);
 
         assertEquals(1, tree.getSize());
@@ -71,9 +86,9 @@ public class Balanced2DTreeViewBuilderTest {
         assertEquals(1, tree.getBucketSizes().size());
         assertEquals(1, tree.getBucketSizes().get(0));
 
-        List<Balanced2DTreeBuilder.Station> allStations = tree.getAllStations();
+        List<Station> allStations = tree.getAllStations();
         assertEquals(1, allStations.size());
-        assertEquals("Station A", allStations.get(0).name);
+        assertEquals("Station A", allStations.get(0).getName()); // Usar getName()
     }
 
     /**
@@ -82,11 +97,11 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should build balanced tree with multiple unique stations")
     void testMultipleUniqueStations() {
-        stations.add(new Balanced2DTreeBuilder.Station(40.0, -74.0, "Station A"));
-        stations.add(new Balanced2DTreeBuilder.Station(41.0, -73.0, "Station B"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "Station C"));
-        stations.add(new Balanced2DTreeBuilder.Station(42.0, -72.0, "Station D"));
-        stations.add(new Balanced2DTreeBuilder.Station(38.0, -76.0, "Station E"));
+        stations.add(createStation(40.0, -74.0, "Station A"));
+        stations.add(createStation(41.0, -73.0, "Station B"));
+        stations.add(createStation(39.0, -75.0, "Station C"));
+        stations.add(createStation(42.0, -72.0, "Station D"));
+        stations.add(createStation(38.0, -76.0, "Station E"));
 
         tree.bulkBuild(stations);
 
@@ -94,7 +109,7 @@ public class Balanced2DTreeViewBuilderTest {
         assertTrue(tree.getHeight() <= 4); // Balanced tree property
         assertEquals(5, tree.getBucketSizes().size());
 
-        List<Balanced2DTreeBuilder.Station> allStations = tree.getAllStations();
+        List<Station> allStations = tree.getAllStations();
         assertEquals(5, allStations.size());
     }
 
@@ -104,16 +119,16 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should group stations with identical coordinates in bucket")
     void testStationsWithSameCoordinates() {
-        stations.add(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Lisbon Santa Apolónia"));
-        stations.add(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Lisbon Oriente"));
-        stations.add(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Station A"));
+        stations.add(createStation(38.71387, -9.122271, "Lisbon Santa Apolónia"));
+        stations.add(createStation(38.71387, -9.122271, "Lisbon Oriente"));
+        stations.add(createStation(38.71387, -9.122271, "Station A"));
         tree.bulkBuild(stations);
 
         assertEquals(1, tree.getSize());
         assertEquals(1, tree.getBucketSizes().size());
         assertEquals(3, tree.getBucketSizes().get(0));
 
-        List<Balanced2DTreeBuilder.Station> allStations = tree.getAllStations();
+        List<Station> allStations = tree.getAllStations();
         assertEquals(3, allStations.size());
     }
 
@@ -124,14 +139,15 @@ public class Balanced2DTreeViewBuilderTest {
     @DisplayName("Should sort stations alphabetically within bucket")
     void testBucketAlphabeticalSorting() {
         Balanced2DTreeBuilder.StationBucket bucket = new Balanced2DTreeBuilder.StationBucket();
-        bucket.addStation(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Lisbon Santa Apolónia"));
-        bucket.addStation(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Lisbon Oriente"));
-        bucket.addStation(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Station A"));
+        bucket.addStation(createStation(38.71387, -9.122271, "Lisbon Santa Apolónia"));
+        bucket.addStation(createStation(38.71387, -9.122271, "Lisbon Oriente"));
+        bucket.addStation(createStation(38.71387, -9.122271, "Station A"));
 
         assertEquals(3, bucket.size());
-        assertEquals("Lisbon Oriente", bucket.stations.get(0).name);
-        assertEquals("Lisbon Santa Apolónia", bucket.stations.get(1).name);
-        assertEquals("Station A", bucket.stations.get(2).name);
+        // Usar getName()
+        assertEquals("Lisbon Oriente", bucket.stations.get(0).getName());
+        assertEquals("Lisbon Santa Apolónia", bucket.stations.get(1).getName());
+        assertEquals("Station A", bucket.stations.get(2).getName());
     }
 
     /**
@@ -140,16 +156,17 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should return all stations in correct order from tree")
     void testGetAllStationsAlphabeticalOrder() {
-        stations.add(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Lisbon Santa Apolónia"));
-        stations.add(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Lisbon Oriente"));
-        stations.add(new Balanced2DTreeBuilder.Station(38.71387, -9.122271, "Station A"));
+        stations.add(createStation(38.71387, -9.122271, "Lisbon Santa Apolónia"));
+        stations.add(createStation(38.71387, -9.122271, "Lisbon Oriente"));
+        stations.add(createStation(38.71387, -9.122271, "Station A"));
         tree.bulkBuild(stations);
 
-        List<Balanced2DTreeBuilder.Station> allStations = tree.getAllStations();
+        List<Station> allStations = tree.getAllStations();
         assertEquals(3, allStations.size());
-        assertEquals("Lisbon Oriente", allStations.get(0).name);
-        assertEquals("Lisbon Santa Apolónia", allStations.get(1).name);
-        assertEquals("Station A", allStations.get(2).name);
+        // Usar getName()
+        assertEquals("Lisbon Oriente", allStations.get(0).getName());
+        assertEquals("Lisbon Santa Apolónia", allStations.get(1).getName());
+        assertEquals("Station A", allStations.get(2).getName());
     }
 
     /**
@@ -159,7 +176,7 @@ public class Balanced2DTreeViewBuilderTest {
     @DisplayName("Should maintain balance with larger dataset")
     void testTreeBalanceWithLargeDataset() {
         for (int i = 0; i < 100; i++) {
-            stations.add(new Balanced2DTreeBuilder.Station(
+            stations.add(createStation(
                     40.0 + i * 0.1,
                     -74.0 + i * 0.1,
                     "Station " + i
@@ -172,7 +189,7 @@ public class Balanced2DTreeViewBuilderTest {
         int expectedMaxHeight = (int) Math.ceil(Math.log(100) / Math.log(2)) + 2;
         assertTrue(tree.getHeight() <= expectedMaxHeight);
 
-        List<Balanced2DTreeBuilder.Station> allStations = tree.getAllStations();
+        List<Station> allStations = tree.getAllStations();
         assertEquals(100, allStations.size());
     }
 
@@ -183,7 +200,7 @@ public class Balanced2DTreeViewBuilderTest {
     @DisplayName("Should provide temporal complexity analysis")
     void testTemporalComplexityAnalysis() {
         for (int i = 0; i < 10; i++) {
-            stations.add(new Balanced2DTreeBuilder.Station(
+            stations.add(createStation(
                     40.0 + i,
                     -74.0 + i,
                     "Station " + i
@@ -206,16 +223,18 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should calculate node height correctly")
     void testNodeHeightCalculation() {
+        Balanced2DTreeBuilder.StationBucket dummyBucket = new Balanced2DTreeBuilder.StationBucket();
+
         Balanced2DTreeBuilder.Node2D node = new Balanced2DTreeBuilder.Node2D(
                 40.0,
                 true,
-                new Balanced2DTreeBuilder.StationBucket()
+                dummyBucket
         );
 
         assertEquals(1, node.height);
 
-        node.left = new Balanced2DTreeBuilder.Node2D(39.0, false, new Balanced2DTreeBuilder.StationBucket());
-        node.right = new Balanced2DTreeBuilder.Node2D(41.0, false, new Balanced2DTreeBuilder.StationBucket());
+        node.left = new Balanced2DTreeBuilder.Node2D(39.0, false, dummyBucket);
+        node.right = new Balanced2DTreeBuilder.Node2D(41.0, false, dummyBucket);
         node.updateHeight();
 
         assertEquals(2, node.height);
@@ -227,12 +246,12 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should handle mixed duplicate and unique coordinates")
     void testMixedDuplicateAndUniqueCoordinates() {
-        stations.add(new Balanced2DTreeBuilder.Station(40.0, -74.0, "A1"));
-        stations.add(new Balanced2DTreeBuilder.Station(40.0, -74.0, "A2"));
-        stations.add(new Balanced2DTreeBuilder.Station(41.0, -73.0, "B1"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "C1"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "C2"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "C3"));
+        stations.add(createStation(40.0, -74.0, "A1"));
+        stations.add(createStation(40.0, -74.0, "A2"));
+        stations.add(createStation(41.0, -73.0, "B1"));
+        stations.add(createStation(39.0, -75.0, "C1"));
+        stations.add(createStation(39.0, -75.0, "C2"));
+        stations.add(createStation(39.0, -75.0, "C3"));
 
         tree.bulkBuild(stations);
 
@@ -242,7 +261,7 @@ public class Balanced2DTreeViewBuilderTest {
         assertTrue(bucketSizes.contains(1)); // 1 station at (41.0, -73.0)
         assertTrue(bucketSizes.contains(3)); // 3 stations at (39.0, -75.0)
 
-        List<Balanced2DTreeBuilder.Station> allStations = tree.getAllStations();
+        List<Station> allStations = tree.getAllStations();
         assertEquals(6, allStations.size()); // Total of 6 stations
     }
 
@@ -252,9 +271,9 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should collect bucket sizes in traversal order")
     void testBucketSizesCollection() {
-        stations.add(new Balanced2DTreeBuilder.Station(40.0, -74.0, "Station A"));
-        stations.add(new Balanced2DTreeBuilder.Station(41.0, -73.0, "Station B"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "Station C"));
+        stations.add(createStation(40.0, -74.0, "Station A"));
+        stations.add(createStation(41.0, -73.0, "Station B"));
+        stations.add(createStation(39.0, -75.0, "Station C"));
 
         tree.bulkBuild(stations);
         List<Integer> bucketSizes = tree.getBucketSizes();
@@ -269,16 +288,16 @@ public class Balanced2DTreeViewBuilderTest {
     @Test
     @DisplayName("Should return correct total station count from getAllStations")
     void testGetAllStationsTotalCount() {
-        stations.add(new Balanced2DTreeBuilder.Station(40.0, -74.0, "A1"));
-        stations.add(new Balanced2DTreeBuilder.Station(40.0, -74.0, "A2"));
-        stations.add(new Balanced2DTreeBuilder.Station(41.0, -73.0, "B1"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "C1"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "C2"));
-        stations.add(new Balanced2DTreeBuilder.Station(39.0, -75.0, "C3"));
+        stations.add(createStation(40.0, -74.0, "A1"));
+        stations.add(createStation(40.0, -74.0, "A2"));
+        stations.add(createStation(41.0, -73.0, "B1"));
+        stations.add(createStation(39.0, -75.0, "C1"));
+        stations.add(createStation(39.0, -75.0, "C2"));
+        stations.add(createStation(39.0, -75.0, "C3"));
 
         tree.bulkBuild(stations);
 
-        List<Balanced2DTreeBuilder.Station> allStations = tree.getAllStations();
+        List<Station> allStations = tree.getAllStations();
         assertEquals(6, allStations.size());
 
         // Verify bucket sizes sum matches total stations
