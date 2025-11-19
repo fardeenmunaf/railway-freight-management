@@ -1,63 +1,59 @@
-# Compilador e ferramentas
-CC = riscv32-linux-gcc
-CFLAGS = -Wall -Wextra -fanalyzer -g
-ARCHFLAGS = -march=rv32imd -mabi=ilp32d
-LIBRV32 = ${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
+# Utests setup 
 
-# Ficheiros do projeto
-OBJS = main.o extract.o
-TARGET = program.elf
 
-# -------------------------------------------------------------------
-# Regras principais
-# -------------------------------------------------------------------
+CC=riscv32-linux-gcc
+CFLAGS=-Wall -Wextra -fanalyzer -g
+ARCHFLAGS=-march=rv32imd -mabi=ilp32d
+LIBRV32=${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(ARCHFLAGS) $(OBJS) -o $(TARGET)
 
-main.o: main.c
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c main.c -o main.o
+space := $(subst ,, ) 		# space macro # not needded 
 
-extract.o: extract.s
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c extract.s -o extract.o
+CURRENT_DIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 
-# -------------------------------------------------------------------
-# Limpeza
-# -------------------------------------------------------------------
+ifeq ($(REPO),)
+  REPO := $(shell dirname $(CURRENT_DIR))
+endif  
+EX_TEST:=$(subst utests,$(REPO),$(CURRENT_DIR)) 
 
-clean:
-	rm -f *.o *.elf .gdbinit
+FILES:=$(shell find $(EX_TEST) -type f \( -iname \*.c -o -iname \*.s \) )  ## all the source files 
+ifeq ($(strip $(FILES)),)
+  export FILES_NOT_FOUND=1 
+  $(error Could not find source files in $(EX_TEST) )
+endif 
+MAIN_FILE:=$(shell grep -l -E 'int[ \t\n]+main' $(FILES))  	##  the file where is "int main" 
+REAL_FILES:=$(filter-out $(MAIN_FILE),$(FILES))			## take it out of the list of files to compile 
+REAL_FILES:=$(filter-out %callfunc.s %unity.c,$(REAL_FILES))	## exclude callfunc.s and unity.c 
+ifeq ($(strip $(REAL_FILES)),)
+  export FILES_NOT_FOUND=1 
+  $(error Could not find source files in $(EX_TEST) )
+endif 
 
-# -------------------------------------------------------------------
-# Execução no QEMU
-# -------------------------------------------------------------------
+REAL_OBJS1:=$(notdir $(REAL_FILES))
+REAL_OBJS2:=$(subst .c,.o,$(REAL_OBJS1)) 
+REAL_OBJS:=$(subst .s,.o,$(REAL_OBJS2)) 
 
-run: $(TARGET)
-	qemu-riscv32 -L $(LIBRV32) ./$(TARGET)
 
-# -------------------------------------------------------------------
-# Debug com GDB
-# -------------------------------------------------------------------
+prog.elf: main.o  callfunc.o unity.o $(REAL_OBJS)   
+	$(CC) $(CFLAGS) $(ARCHFLAGS) main.o callfunc.o unity.o $(REAL_OBJS) -o prog.elf  
 
-debug: $(TARGET) .gdbinit
-	@echo "On another terminal, run:"
-	@echo "riscv32-linux-gdb --tui ./$(TARGET)"
-	@echo
-	@echo "Or paste this command:"
-	@echo -n "cd $(CURDIR) ; riscv32-linux-gdb --tui ./$(TARGET)" \
-		| xclip -selection clipboard
-	qemu-riscv32 -L $(LIBRV32) -g 1234 $(TARGET) -S
+main.o : main.c
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c $< 
 
-define GDBINIT
-target extended-remote localhost:1234
-set sysroot ~/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
-break main
-continue
-endef
+callfunc.o : callfunc.s
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c $< 
 
-export GDBINIT
+unity.o : unity.c  
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c  $< -o unity.o  
 
-.gdbinit:
-	@echo "$$GDBINIT" > .gdbinit
+$(REAL_OBJS):  $(REAL_FILES)  
+	$(CC) $(CFLAGS) $(ARCHFLAGS)  -c $(REAL_FILES) 
 
-.PHONY: clean run debug
+run: prog.elf 
+	qemu-riscv32 -L $(LIBRV32) prog.elf 
+
+clean: 
+	rm -f prog.elf *.o 	
+
+full-clean:  
+	rm -f prog.elf *.o unity.o  

@@ -1,20 +1,21 @@
 package app.view;
 
+import app.model.Station;
 import app.repositories.Repositories;
 import app.utils.Balanced2DTreeBuilder.Balanced2DTree;
-import app.utils.Balanced2DTreeBuilder.Station;
 import app.utils.Balanced2DTreeBuilder.TemporalComplexity;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
  * View class for displaying Balanced 2D-Tree results.
  * This class only handles presentation logic - no business logic.
  *
  * @author G113 2DK
- * @version 1.0
+ * @version 1.1 (Refactored for domain Station)
  */
 public class Balanced2DTreeView {
 
@@ -66,12 +67,12 @@ public class Balanced2DTreeView {
      */
     private static Balanced2DTree loadTreeFromRepository() {
         Repositories repositories = Repositories.getInstance();
-        List<app.model.Station> modelStations = new ArrayList<>();
+        List<Station> modelStations = new ArrayList<>();
 
         // Filter only Station objects from all facilities
         for (var facility : repositories.getFacilityRepository().getAllFacilities()) {
-            if (facility instanceof app.model.Station) {
-                modelStations.add((app.model.Station) facility);
+            if (facility instanceof Station) {
+                modelStations.add((Station) facility);
             }
         }
 
@@ -84,26 +85,20 @@ public class Balanced2DTreeView {
         System.out.println("📂 Loading stations from repository...");
         System.out.println("✓ Found " + modelStations.size() + " stations in repository");
 
-        // Convert model.Station to Balanced2DTreeBuilder.Station
-        List<Station> treeStations = new ArrayList<>();
-        for (app.model.Station modelStation : modelStations) {
-            if (modelStation.getLat() != null && modelStation.getLon() != null) {
-                treeStations.add(new Station(
-                        modelStation.getLat(),
-                        modelStation.getLon(),
-                        modelStation.getName()
-                ));
-            }
-        }
+        // Filtrar apenas as estações com coordenadas válidas
+        List<Station> treeStations = modelStations.stream()
+                .filter(s -> s.getLat() != null && s.getLon() != null)
+                .collect(Collectors.toList());
 
         if (treeStations.isEmpty()) {
             System.err.println("⚠ No valid station coordinates found.");
             return null;
         }
 
-        System.out.println("✓ Converting " + treeStations.size() + " stations with valid coordinates");
+        System.out.println("✓ Using " + treeStations.size() + " stations with valid coordinates");
 
         Balanced2DTree tree = new Balanced2DTree();
+        // Passar a lista de objetos de domínio diretamente
         tree.bulkBuild(treeStations);
         System.out.println("✓ Tree built successfully\n");
 
@@ -193,6 +188,24 @@ public class Balanced2DTreeView {
         System.out.printf("│  Balance Factor:       %-43s │%n", "Optimal");
         System.out.printf("│  Dimension Split:      %-43s │%n", "Latitude/Longitude Alternating");
         System.out.println("└────────────────────────────────────────────────────────────────────┘");
+
+        int expectedHeight = (int) Math.ceil(Math.log(tree.getSize()) / Math.log(2));
+        int actualHeight = tree.getHeight();
+
+        if (expectedHeight != actualHeight) {
+            System.out.println("\n⚠ Height Analysis:");
+            System.out.println("┌────────────────────────────────────────────────────────────────────┐");
+            System.out.printf("│  Expected (Perfectly Balanced): %-34d │%n", expectedHeight);
+            System.out.printf("│  Actual Height:                 %-34d │%n", actualHeight);
+            System.out.printf("│  Difference:                    +%-33d │%n", (actualHeight - expectedHeight));
+            System.out.println("├────────────────────────────────────────────────────────────────────┤");
+            System.out.println("│  Why the difference?                                               │");
+            System.out.println("│  • 2D-Tree uses median partitioning without AVL rotations          │");
+            System.out.println("│  • Duplicate coordinates (stations in the same city)               │");
+            System.out.println("│  • Non-uniform geographic distribution of stations                 │");
+            System.out.println("│  • No dynamic rebalancing - structure depends on input order       │");
+            System.out.println("└────────────────────────────────────────────────────────────────────┘");
+        }
     }
 
     /**
@@ -285,10 +298,10 @@ public class Balanced2DTreeView {
 
         for (int i = 0; i < stations.size(); i++) {
             Station station = stations.get(i);
-            String truncatedName = station.name.length() > 30 ?
-                    station.name.substring(0, 27) + "..." : station.name;
+            String truncatedName = station.getName().length() > 30 ?
+                    station.getName().substring(0, 27) + "..." : station.getName();
             System.out.printf("│ %-2d │ %-30s │ %11.6f │ %12.6f │%n",
-                    (i + 1), truncatedName, station.latitude, station.longitude);
+                    (i + 1), truncatedName, station.getLat(), station.getLon());
         }
 
         System.out.println("└────┴────────────────────────────────┴─────────────┴──────────────┘");

@@ -14,12 +14,31 @@ import app.model.*;
 public class PickingPlan {
     List<PickTask> tasks;
 
+    private String allocationMode = "STRICT";
+
     InventoryBalanceController inventoryBalanceController = new InventoryBalanceController();
     OrderController orderController = new OrderController();
     OrderLineController orderLineController = new OrderLineController();
     CartController cartController = new CartController();
     PickWaveController pickWaveController = new PickWaveController();
     PickTaskController pickTaskController = new PickTaskController();
+
+    /**
+     * Sets the allocation mode to be used for planning.
+     * @param mode "STRICT" or "PARTIAL"
+     */
+    public void setAllocationMode(String mode) {
+        if ("PARTIAL".equalsIgnoreCase(mode) || "STRICT".equalsIgnoreCase(mode)) {
+            this.allocationMode = mode.toUpperCase();
+        }
+    }
+
+    /**
+     * Gets the current allocation mode.
+     */
+    public String getAllocationMode() {
+        return allocationMode;
+    }
 
     // Shared allocation result to prevent duplicate allocations
     private static Allocation.AllocationResult sharedAllocationResult = null;
@@ -153,11 +172,11 @@ public class PickingPlan {
     public Allocation.AllocationResult planAllocations(String mode) {
         // Use shared allocation result if available to prevent duplicate allocations
         if (sharedAllocationResult == null) {
-            if (mode == null || mode.isBlank()) mode = "STRICT";
+            String effectiveMode = (mode != null && !mode.isBlank()) ? mode : this.allocationMode;
             Allocation allocator = new Allocation();
             List<Order> orders = getAllOrders();
             List<InventoryBalance> balances = getAllItemBalences();
-            sharedAllocationResult = allocator.allocateOrders(orders, balances, mode);
+            sharedAllocationResult = allocator.allocateOrders(orders, balances, effectiveMode);
         }
 
         return sharedAllocationResult;
@@ -248,7 +267,7 @@ public class PickingPlan {
         List<Cart> carts = getAllCarts();
 
         // Run allocation to get eligibilities and locations
-        Allocation.AllocationResult allocationResult = planAllocations("PARTIAL");
+        Allocation.AllocationResult allocationResult = planAllocations(this.allocationMode);
         List<Allocation.OrderEligibility> eligibilities = allocationResult.getEligibilities();
         List<Allocation.AllocationRecord> allocations = allocationResult.getAllocations();
 
@@ -280,7 +299,7 @@ public class PickingPlan {
         }
 
         // Run allocation to get eligibilities and locations
-        Allocation.AllocationResult allocationResult = planAllocations("PARTIAL");
+        Allocation.AllocationResult allocationResult = planAllocations(this.allocationMode);
         List<Allocation.OrderEligibility> eligibilities = allocationResult.getEligibilities();
         List<Allocation.AllocationRecord> allocations = allocationResult.getAllocations();
 
@@ -309,9 +328,8 @@ public class PickingPlan {
         List<PickWave> createdWaves = new ArrayList<>();
 
         // Run allocation to get eligibilities and locations
-        Allocation.AllocationResult allocationResult = planAllocations("PARTIAL");
-        List<Allocation.OrderEligibility> eligibilitiesForTask = allocationResult.getEligibilities();
-        List<Allocation.AllocationRecord> allocationsForTask = allocationResult.getAllocations();
+        List<Allocation.OrderEligibility> eligibilitiesForTask = eligibilities;
+        List<Allocation.AllocationRecord> allocationsForTask = allocations;
 
         // Process each order line (ONE PickTask per OrderLine)
         for (OrderLine orderLine : orderLines) {

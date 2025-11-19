@@ -1,8 +1,7 @@
-    .section .text
+.section .text
     .globl decrypt_data
     .type decrypt_data, @function
 
-#With errors because of ide but works on antix/wsl
 # ==========================================================
 # FUNCTION: decrypt_data
 # ----------------------------------------------------------
@@ -39,8 +38,9 @@ decrypt_data:
     li s3, 1                # s3 = return_code = 1 (sucesso)
 
     # --- Verificar se entrada é vazia ---
+    # CORREÇÃO: Se a string for vazia, o resultado é sucesso.
     lb t0, 0(a0)
-    beqz t0, failure_char   # Se string vazia, falha
+    beqz t0, loop_end       # Se string vazia, salta para o fim (sucesso).
 
     # --- Verificar se key ∈ [1, 26] ---
     li t0, 1
@@ -65,15 +65,9 @@ loop_start:
 
     # --- Aplicar D(x) = (x - key + 26) mod 26 ---
     sub t0, t0, s2          # t0 = t0 - key
-    bltz t0, fix_negative   # Se negativo, corrige com +26
-    j do_mod
-
-fix_negative:
-    addi t0, t0, 26         # t0 += 26
-
-do_mod:
+    add t0, t0, 26          # Adiciona 26 para garantir que o resultado é positivo
     li t1, 26
-    rem t0, t0, t1          # t0 = t0 % 26
+    rem t0, t0, t1          # t0 = (t0 - key + 26) % 26
 
     # --- Converter de volta para ASCII ---
     li t1, 'A'
