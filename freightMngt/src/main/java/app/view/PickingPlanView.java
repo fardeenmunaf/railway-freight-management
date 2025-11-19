@@ -53,7 +53,32 @@ public class PickingPlanView {
         displayOrders(repositories);
 
         try {
-            System.out.println("\nOptions:");
+            System.out.println("\n--- STEP 1: SELECT ALLOCATION MODE ---");
+            System.out.println("1. STRICT - Only fully dispatchable orders");
+            System.out.println("2. PARTIAL - Allow partial allocations");
+            System.out.print("Select allocation mode (1-2): ");
+
+            String modeInput = scanner.nextLine().trim();
+            if ("b".equalsIgnoreCase(modeInput)) return;
+
+            int modeChoice = Integer.parseInt(modeInput);
+            String allocationMode;
+
+            if (modeChoice == 1) {
+                allocationMode = "STRICT";
+                System.out.println("✓ Selected: STRICT mode");
+            } else if (modeChoice == 2) {
+                allocationMode = "PARTIAL";
+                System.out.println("✓ Selected: PARTIAL mode");
+            } else {
+                System.out.println("Invalid option. Defaulting to STRICT mode.");
+                allocationMode = "STRICT";
+            }
+
+            // Display allocation information
+            displayAllocationInfo(pickingPlan);
+
+            System.out.println("\n--- STEP 2: SELECT ORDER SCOPE ---");
             System.out.println("1. Create plan and optimize routes for a specific order");
             System.out.println("2. Create plan and optimize routes for ALL orders");
             System.out.print("\nSelect option (1-2): ");
@@ -73,12 +98,15 @@ public class PickingPlanView {
                 int orderId = Integer.parseInt(orderInput);
 
                 // Step 1: Create picking plan
-                System.out.println("\nStep 1: Creating picking plan...");
+                System.out.println("\nStep 3: Creating picking plan (" + allocationMode + " mode)...");
+                pickingPlan.setAllocationMode(allocationMode);
+                PickingPlan.resetSharedAllocation();
+
                 result = pickingPlan.planPickingTaskForOrder(orderId);
                 displayPickingPlanResults(result, "Order " + orderId);
 
                 // Step 2: Optimize routes
-                System.out.println("\nStep 2: Optimizing routes...");
+                System.out.println("\nStep 4: Optimizing routes...");
                 Map<String, PickRouteOptimizationService.RouteResult> routes =
                     routeController.calculateRouteForOrder(orderId);
                 displayRouteOptimizationResults(routes, "Order " + orderId);
@@ -86,12 +114,15 @@ public class PickingPlanView {
             } else if (option == 2) {
                 // Process all orders
                 // Step 1: Create picking plan
-                System.out.println("\nStep 1: Creating picking plans for all orders...");
+                System.out.println("\nStep 3: Creating picking plans for all orders (" + allocationMode + " mode)...");
+                pickingPlan.setAllocationMode(allocationMode);
+                PickingPlan.resetSharedAllocation();
+
                 result = pickingPlan.planPickingTask();
                 displayPickingPlanResults(result, "All Orders");
 
                 // Step 2: Optimize routes for all pick tasks
-                System.out.println("\nStep 2: Optimizing routes for all pick tasks...");
+                System.out.println("\nStep 4: Optimizing routes for all pick tasks...");
                 Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> allRoutes =
                         routeController.calculateRoutesForPickTasks(result);
                 displayAllTasksRouteResults(allRoutes, result);
@@ -100,9 +131,6 @@ public class PickingPlanView {
                 System.out.println("Invalid option. Please select 1 or 2.");
                 return;
             }
-
-            // Display allocation information
-            displayAllocationInfo(pickingPlan);
 
         } catch (NumberFormatException e) {
             System.out.println("Error: Please enter valid numeric values.");
