@@ -362,5 +362,57 @@ public class Balanced2DTreeBuilder {
             stations.addAll(node.bucket.stations);
             collectAllStations(node.right, stations);
         }
+        public List<Station> rangeSearch(double latMin, double latMax,
+                                         double lonMin, double lonMax,
+                                         Boolean isCity, Boolean isMainStation,
+                                         String country) {
+
+            List<Station> results = new ArrayList<>();
+            rangeRecursive(root, latMin, latMax, lonMin, lonMax,
+                    isCity, isMainStation, country, results);
+            return results;
+        }
+        private void rangeRecursive(Node2D node,
+                                    double latMin, double latMax,
+                                    double lonMin, double lonMax,
+                                    Boolean isCity, Boolean isMainStation,
+                                    String country,
+                                    List<Station> results) {
+
+            if (node == null) return;
+
+            boolean isLat = node.isLatitude;
+
+            double minVal = isLat ? latMin : lonMin;
+            double maxVal = isLat ? latMax : lonMax;
+
+            // PRUNE LEFT
+            if (node.key > minVal)
+                rangeRecursive(node.left, latMin, latMax, lonMin, lonMax,
+                        isCity, isMainStation, country, results);
+
+            // PROCESS NODE BUCKET
+            for (Station s : node.bucket.stations) {
+                double lat = s.getLat();
+                double lon = s.getLon();
+
+                if (lat >= latMin && lat <= latMax &&
+                        lon >= lonMin && lon <= lonMax) {
+
+                    if (isCity != null && !isCity.equals(s.getIsCity())) continue;
+                    if (isMainStation != null && !isMainStation.equals(s.getIsMainStation())) continue;
+                    if (country != null && !country.equals("ALL") &&
+                            (s.getCountry() == null || !s.getCountry().equals(country))) continue;
+
+                    results.add(s);
+                }
+            }
+
+            // PRUNE RIGHT
+            if (node.key < maxVal)
+                rangeRecursive(node.right, latMin, latMax, lonMin, lonMax,
+                        isCity, isMainStation, country, results);
+        }
+
     }
 }

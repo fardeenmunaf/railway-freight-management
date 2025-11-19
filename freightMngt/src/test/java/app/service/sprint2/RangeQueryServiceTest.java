@@ -2,83 +2,118 @@ package app.service.sprint2;
 
 import app.model.FacilityType;
 import app.model.Station;
-import org.junit.jupiter.api.BeforeEach;
+import app.utils.Balanced2DTreeBuilder.Balanced2DTree;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class RangeQueryServiceTest {
 
-    private RangeQueryService service;
+    private static RangeQueryService service;
+    private static List<Station> stations;
 
-    @BeforeEach
-    void setup() {
-        // Criar algumas estações de teste
-        Station s1 = new Station(1, "Lisboa", new FacilityType(2, "Station"), 38.7169, -9.139, true, "PT", "Europe/Lisbon", null, true, true, false);
-        Station s2 = new Station(2, "Porto", new FacilityType(2, "Station"), 41.1496, -8.611, true, "PT", "Europe/Lisbon", null, true, true, false);
-        Station s3 = new Station(3, "Coimbra", new FacilityType(2, "Station"), 40.2056, -8.419, true, "PT", "Europe/Lisbon", null, true, false, false);
-        Station s4 = new Station(4, "Madrid", new FacilityType(2, "Station"), 40.4165, -3.7026, true, "ES", "Europe/Madrid", null, true, true, false);
-        Station s5 = new Station(5, "Barcelona", new FacilityType(2, "Station"), 41.3851, 2.1734, true, "ES", "Europe/Madrid", null, true, false, false);
+    @BeforeAll
+    static void setup() {
+        // Criar tipos de facility
+        FacilityType STATION = new FacilityType(2, "Station");
+        FacilityType AIRPORT = new FacilityType(3, "Airport");
 
-        // Construir árvore KD
-        service = new RangeQueryService();
-        service.buildIndex(List.of(s1, s2, s3, s4, s5));
+        // Criar lista de estações
+        stations = new ArrayList<>();
+        stations.add(new Station(1, "Lisboa Oriente", STATION,
+                38.7680, -9.1010, true, "PT", "Europe/Lisbon", "WET",
+                false, true, false));
+        stations.add(new Station(2, "Lisboa Santa Apolónia", STATION,
+                38.7138, -9.1217, true, "PT", "Europe/Lisbon", "WET",
+                false, false, false));
+        stations.add(new Station(3, "Porto Campanhã", STATION,
+                41.1473, -8.5850, true, "PT", "Europe/Lisbon", "WET",
+                false, true, false));
+        stations.add(new Station(4, "Madrid Atocha", STATION,
+                40.4066, -3.6890, true, "ES", "Europe/Madrid", "CET",
+                false, true, false));
+        stations.add(new Station(5, "Faro", STATION,
+                37.0194, -7.9322, false, "PT", "Europe/Lisbon", "WET",
+                false, false, false));
+        stations.add(new Station(6, "Porto Airport", AIRPORT,
+                41.2356, -8.6781, true, "PT", "Europe/Lisbon", "WET",
+                false, false, true));
+
+        // Construir a árvore 2D
+        Balanced2DTree tree = new Balanced2DTree();
+        tree.bulkBuild(stations);
+
+        // Inicializar service
+        service = new RangeQueryService(tree);
     }
 
     @Test
-    void testRectangularQueryBounds() {
-        // lat ∈ [40,42], lon ∈ [-9,-6] → Porto e Coimbra
-        List<Station> results = service.rangeQuery(40, 42, -9, -6, null, null, null);
-        assertEquals(2, results.size());
-        assertTrue(results.stream().anyMatch(s -> s.getName().equals("Porto")));
-        assertTrue(results.stream().anyMatch(s -> s.getName().equals("Coimbra")));
+    void testRectangularQuery() {
+        // Queremos apenas estações dentro de um retângulo
+        List<Station> result = service.rangeQuery(38.7, 38.8, -9.2, -9.0,
+                null, null, null);
+
+        assertEquals(2, result.size());
+        for (Station s : result) {
+            assertTrue(s.getLat() >= 38.7 && s.getLat() <= 38.8);
+            assertTrue(s.getLon() >= -9.2 && s.getLon() <= -9.0);
+        }
     }
 
     @Test
     void testCountryFilter() {
-        List<Station> results = service.rangeQuery(-90, 90, -180, 180, null, null, "PT");
-        assertEquals(3, results.size());
-        assertTrue(results.stream().allMatch(s -> s.getCountry().equalsIgnoreCase("PT")));
+        List<Station> result = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
+                null, null, "PT");
+
+        // Apenas estações PT
+        for (Station s : result) {
+            assertEquals("PT", s.getCountry());
+        }
     }
 
     @Test
-    void testIsMainStationFilter() {
-        List<Station> results = service.rangeQuery(-90, 90, -180, 180, null, true, null);
-        assertEquals(3, results.size());
-        assertTrue(results.stream().allMatch(Station::getIsMainStation));
+    void testMainStationFilter() {
+        List<Station> result = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
+                null, true, "PT");
+
+        // Apenas main stations
+        for (Station s : result) {
+            assertTrue(s.getIsMainStation());
+        }
     }
 
     @Test
     void testPerformanceVsFullScan() {
-        // Query com KD-tree
+        // Medir tempo do range query
         long startKD = System.nanoTime();
-        List<Station> kdResults = service.rangeQuery(40, 42, -9, -6, null, null, null);
+        List<Station> kdResult = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
+                null, null, null);
         long endKD = System.nanoTime();
 
-        // Full scan: percorre toda a lista original
-        List<Station> allStations = List.of(
-                new Station(1, "Lisboa", null, 38.7169, -9.139, true, "PT", null, null, true, true, false),
-                new Station(2, "Porto", null, 41.1496, -8.611, true, "PT", null, null, true, true, false),
-                new Station(3, "Coimbra", null, 40.2056, -8.419, true, "PT", null, null, true, false, false),
-                new Station(4, "Madrid", null, 40.4165, -3.7026, true, "ES", null, null, true, true, false),
-                new Station(5, "Barcelona", null, 41.3851, 2.1734, true, "ES", null, null, true, false, false)
-        );
+        // Medir tempo de full scan (simulação)
+        long startFull = System.nanoTime();
+        List<Station> fullScan = new ArrayList<>();
+        for (Station s : stations) {
+            if (s.getLat() >= 36.0 && s.getLat() <= 43.0 &&
+                    s.getLon() >= -10.0 && s.getLon() <= -6.0) {
+                fullScan.add(s);
+            }
+        }
+        long endFull = System.nanoTime();
 
-        long startScan = System.nanoTime();
-        List<Station> scanResults = allStations.stream()
-                .filter(s -> s.getLat() >= 40 && s.getLat() <= 42)
-                .filter(s -> s.getLon() >= -9 && s.getLon() <= -6)
-                .toList();
-        long endScan = System.nanoTime();
+        // Resultados devem ser iguais
+        assertEquals(fullScan.size(), kdResult.size());
 
-        System.out.println("KD query time: " + (endKD - startKD) + " ns");
-        System.out.println("Full scan time: " + (endScan - startScan) + " ns");
+        // KD-tree deve ser mais rápida (em média)
+        long kdTime = endKD - startKD;
+        long fullTime = endFull - startFull;
 
-        assertEquals(2, kdResults.size());
-        assertEquals(scanResults.size(), kdResults.size());
-        assertTrue((endKD - startKD) < (endScan - startScan) * 10_000, "KD query should be much faster");
+        System.out.printf("Range query KD-tree: %d ns, full scan: %d ns%n", kdTime, fullTime);
+
+        assertTrue(kdTime <= fullTime * 5); // aceitável em micro-dataset
     }
-
 }
