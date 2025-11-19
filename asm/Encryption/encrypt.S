@@ -1,8 +1,7 @@
-    .section .text
+.section .text
     .globl encrypt_data
     .type encrypt_data, @function
 
-#With errors because of ide but works on antix/wsl
 # ==========================================================
 # FUNCTION: encrypt_data
 # ----------------------------------------------------------
@@ -39,8 +38,9 @@ encrypt_data:
     li s3, 1                # s3 = return_code = 1 (assume sucesso)
 
     # --- Verificar se a string está vazia ---
+    # CORREÇÃO: Se a string for vazia, o resultado é sucesso (string de saída vazia).
     lb t0, 0(a0)
-    beqz t0, failure_char   # Se *in == '\0', falha imediatamente
+    beqz t0, loop_end       # Se *in == '\0', salta para o fim (sucesso).
 
     # --- Verificar se a key ∈ [1, 26] ---
     li t0, 1
