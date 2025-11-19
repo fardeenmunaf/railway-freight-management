@@ -35,6 +35,17 @@ public class TrainServiceCompositionRepository {
         return result;
     }
 
+    /**
+     * Gets train service compositions by train service ID.
+     * Alias method for better code readability.
+     *
+     * @param trainServiceId the train service ID
+     * @return list of compositions for the train service
+     */
+    public List<TrainServiceComposition> getCompositionsByTrainService(Integer trainServiceId) {
+        return getTrainServiceCompositionsByServiceId(trainServiceId);
+    }
+
     public boolean deleteTrainServiceComposition(Integer serviceId, Integer locomotiveId, Integer wagonId) {
         return trainServiceCompositions.removeIf(composition -> {
             boolean matchesService = composition.getTrainService() != null &&
