@@ -382,4 +382,15 @@ public class StationService {
         }
         return spatial2DTree.getTemporalComplexity();
     }
+
+    /**
+     * Returns the spatial 2D-tree for nearest-neighbor and radius searches.
+     * Lazily builds it if not yet constructed.
+     */
+    public Balanced2DTreeBuilder.Balanced2DTree getSpatial2DTree() {
+        if (spatial2DTree == null) {
+            build2DTree();
+        }
+        return spatial2DTree;
+    }
 }

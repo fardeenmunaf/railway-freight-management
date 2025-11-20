@@ -19,9 +19,97 @@ public class RadiusSearchService {
 
     private final Balanced2DTreeBuilder.Balanced2DTree tree;
 
-    public RadiusSearchService(Balanced2DTreeBuilder.Balanced2DTree tree)
-    {
+    /**
+     * Inject the already built 2D tree; view/controller or StationService is responsible for building it.
+     *
+     * @param tree The 2D tree containing station data
+     */
+    public RadiusSearchService(Balanced2DTreeBuilder.Balanced2DTree tree) {
         this.tree = tree;
+    }
+
+    /**
+     * Simple DTO carrying both the radius search results and a temporal analysis
+     * description for reporting purposes.
+     */
+    public static class RadiusSearchResult {
+        public final AVLTree<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance,
+                Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> resultsTree;
+        public final TemporalAnalysis temporalAnalysis;
+
+        public RadiusSearchResult(AVLTree<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance,
+                Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> resultsTree,
+                                  TemporalAnalysis temporalAnalysis) {
+            this.resultsTree = resultsTree;
+            this.temporalAnalysis = temporalAnalysis;
+        }
+    }
+
+    /**
+     * Temporal analysis for USEI10 (Radius Search + Density Summary).
+     *
+     * Uses the documented complexity:
+     *   Radius Search: O(√N + k · log k)
+     *   Density Summary: O(k)
+     *   Total (USEI10): O(√N + k · log k)
+     */
+    public static class TemporalAnalysis {
+        public final String radiusSearchComplexity;
+        public final String densitySummaryComplexity;
+        public final String totalUseCaseComplexity;
+        public final int totalNodes;
+        public final int resultCount;
+
+        public TemporalAnalysis(int totalNodes, int resultCount) {
+            this.totalNodes = totalNodes;
+            this.resultCount = resultCount;
+
+            // Radius search: traversal on 2D-tree O(√N) + AVL inserts O(k · log k)
+            this.radiusSearchComplexity =
+                    "Radius Search: O(√N + k · log k) where N = " + totalNodes + " and k = " + resultCount;
+
+            // Density summary: single pass over k results
+            this.densitySummaryComplexity =
+                    "Density Summary: O(k) where k = " + resultCount;
+
+            // Total for USEI10 is dominated by the radius search phase
+            this.totalUseCaseComplexity =
+                    "Total (USEI10): O(√N + k · log k) where N = " + totalNodes + " and k = " + resultCount;
+        }
+
+        @Override
+        public String toString() {
+            return String.format(
+                "Temporal Analysis (USEI10):%n" +
+                "  %s%n" +
+                "  %s%n" +
+                "  %s",
+                radiusSearchComplexity,
+                densitySummaryComplexity,
+                totalUseCaseComplexity
+            );
+        }
+    }
+
+    /**
+     * Performs radius search and returns both the AVL tree of results and a
+     * temporal analysis description.
+     */
+    public RadiusSearchResult radiusSearchWithAnalysis(double targetLat, double targetLon, double radiusKm) {
+        AVLTree<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance,
+                Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> results =
+                radiusSearchAsTree(targetLat, targetLon, radiusKm);
+
+        int totalNodes;
+        if (tree != null) {
+            totalNodes = tree.getSize();
+        } else {
+            totalNodes = 0;
+        }
+        int resultCount = results.inOrderTraversal().size();
+        TemporalAnalysis analysis = new TemporalAnalysis(totalNodes, resultCount);
+
+        return new RadiusSearchResult(results, analysis);
     }
 
     public AVLTree<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance, Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> radiusSearchAsTree(double targetLat, double targetLon, double radiusKm) {

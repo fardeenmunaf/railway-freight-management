@@ -1,5 +1,5 @@
-# USEI10 - Temporal Complexity Analysis
-## Radius Search and Density Summary
+# USEI10 - Análise de Complexidade Temporal
+## Radius Search e Density Summary
 
 **Autor:** G113 2DK  
 **Data:** 2025-01-20  
@@ -7,63 +7,81 @@
 
 ---
 
-## 📊 Resumo Executivo
+## 1. Resumo da solução e complexidade principal
 
-| Operação | Complexidade Temporal | Explicação |
-|----------|----------------------|------------|
-| **Radius Search** | **O(√N + k log k)** | √N = traversal da 2D-tree com pruning; k log k = inserções na AVL |
-| **Density Summary** | **O(k)** | Percorre k resultados uma vez |
-| **Total (USEI10)** | **O(√N + k log k)** | Dominado pelo radius search |
+Nesta US analisamos o desempenho do algoritmo de pesquisa por raio (radius search) e do cálculo de densidade (density summary) implementados sobre:
+
+- uma 2D-tree (variação de KD-tree) para pesquisa espacial; e
+- uma AVL tree para manter os resultados já ordenados.
+
+A tabela seguinte resume a complexidade temporal das operações mais relevantes.
+
+| Operação          | Complexidade Temporal       | Observações principais                                      |
+|-------------------|-----------------------------|-------------------------------------------------------------|
+| **Radius Search** | **O(√N + k · log k)**       | √N ≈ nós visitados na 2D-tree com poda; k resultados     |
+| **Density Summary** | **O(k)**                  | Um único percurso sobre os k resultados                     |
+| **Total (USEI10)** | **O(√N + k · log k)**      | Dominado pela fase de radius search                        |
 
 Onde:
-- **N** = Total de estações na 2D-tree
-- **k** = Número de estações dentro do raio R
-- Tipicamente: **k << N** (k é muito menor que N)
+- **N** é o número total de estações indexadas na 2D-tree;
+- **k** é o número de estações que ficam dentro do raio R;
+- em cenários típicos de uso, **k << N** (o raio é relativamente pequeno).
 
 ---
 
-## 🔍 Análise Detalhada por Componente
+## 2. Radius Search na 2D-tree
 
-### **1. Radius Search na 2D-Tree**
-
-#### **Método:** `radiusSearchAsTree()`
+### 2.1. Método principal `radiusSearchAsTree`
 
 ```java
 public AVLTree<StationWithDistance, StationWithDistance> radiusSearchAsTree(
     double targetLat, double targetLon, double radiusKm) {
-    
+
     AVLTree<...> results = new AVLTree<>();
     radiusSearchRecursive(tree.getRoot(), targetLat, targetLon, radiusKm, results);
     return results;
 }
 ```
 
-#### **Complexidade:** `O(√N + k log k)`
+O método recebe um ponto alvo `(targetLat, targetLon)` e um raio em quilómetros. A partir daí:
 
-**Decomposição:**
+1. Cria uma AVL tree vazia para guardar os resultados.
+2. Invoca `radiusSearchRecursive` a partir da raiz da 2D-tree.
+3. Devolve a AVL com todas as estações encontradas já ordenadas por:
+   - distância crescente; e, em empate,
+   - nome decrescente.
 
-| Sub-operação | Complexidade | Justificação |
-|--------------|--------------|--------------|
-| Traversal da 2D-tree | `O(√N)` | Com pruning espacial eficiente |
-| Inserção de k estações na AVL | `O(k log k)` | Cada inserção é O(log k) |
-| **Total** | **O(√N + k log k)** | Soma das operações |
+### 2.2. Complexidade do radius search
+
+A complexidade total do radius search é:
+
+> **O(√N + k · log k)**
+
+Decomposta em duas partes:
+
+| Sub-operação                    | Complexidade       | Explicação resumida                                         |
+|---------------------------------|--------------------|--------------------------------------------------------------|
+| Percurso da 2D-tree (com poda) | `O(√N)`          | Visita apenas uma fracção dos nós, em média                 |
+| Inserção de k estações na AVL   | `O(k · log k)`     | Cada inserção na AVL custa O(log k)                         |
+
+A seguir detalhamos estas duas componentes.
 
 ---
 
-### **1.1. Traversal da 2D-Tree: O(√N)**
+## 3. Percurso da 2D-tree com poda
 
-#### **Método:** `radiusSearchRecursive()`
+### 3.1. Método `radiusSearchRecursive`
 
 ```java
-private void radiusSearchRecursive(Node2D node, double targetLat, 
-                                   double targetLon, double radiusKm, 
+private void radiusSearchRecursive(Node2D node, double targetLat,
+                                   double targetLon, double radiusKm,
                                    AVLTree<...> results) {
     if (node == null) return;  // O(1)
 
-    // Processar nó atual: O(b) onde b = tamanho do bucket
+    // Processar nó atual
     getNodeStations(node, targetLat, targetLon, radiusKm, results);
 
-    // Calcular distância ao plano divisor: O(1)
+    // Determinar coordenada relevante (lat ou lon)
     double targetValue;
     if (node.isLatitude) {
         targetValue = targetLat;
@@ -71,70 +89,72 @@ private void radiusSearchRecursive(Node2D node, double targetLat,
         targetValue = targetLon;
     }
 
-    // PRUNING: Decidir se visita subárvores
+    // Decidir se vale a pena visitar a subárvore esquerda
     if (node.left != null && (targetValue - node.key) * 111.0 <= radiusKm) {
-        radiusSearchRecursive(node.left, ...);  // Condicional
+        radiusSearchRecursive(node.left, targetLat, targetLon, radiusKm, results);
     }
 
+    // Decidir se vale a pena visitar a subárvore direita
     if (node.right != null && (node.key - targetValue) * 111.0 <= radiusKm) {
-        radiusSearchRecursive(node.right, ...);  // Condicional
+        radiusSearchRecursive(node.right, targetLat, targetLon, radiusKm, results);
     }
 }
 ```
 
-#### **Análise do Pruning:**
+Em cada nó:
+- processamos o bucket de estações associado ao nó;
+- calculamos a distância do ponto alvo ao plano de separação (latitude ou longitude);
+- apenas descemos para a esquerda/direita se essa subárvore ainda puder conter pontos dentro do raio.
 
-**Sem pruning (pior caso):**
-- Visita **todos os nós**: `O(N)`
-- Acontece quando raio é muito grande ou árvore desbalanceada
+### 3.2. Por que aparece o termo √N?
 
-**Com pruning (caso médio):**
-- Visita apenas nós **próximos** do ponto alvo
-- Para range queries em KD-trees balanceadas: **O(√N + k)**
-- **√N** = número esperado de nós visitados com pruning espacial
+**Pior caso (sem poda eficaz):**
+- Se o raio for enorme (ou a árvore estiver bastante desbalanceada), podemos acabar por visitar praticamente todos os nós → **O(N)**.
 
-**Intuição:**
-- 2D-tree divide o espaço em regiões
-- Pruning elimina ~70-90% dos ramos
-- Em vez de visitar todos N nós, visita ~√N nós
+**Caso médio em árvores balanceadas:**
+- Em KD-trees/2D-trees equilibradas, a literatura aponta para **O(√N + k)** nós visitados em queries de range.
+- Intuitivamente, cada nível divide o espaço; como fazemos poda com base na distância ao plano, a maior parte dos ramos fica logo descartada.
+- Em vez de varrermos N nós, o número de nós relevantes cresce aproximadamente com √N.
+
+Assim, no caso típico:
+
+> **Traversal ≈ O(√N)**
 
 ---
 
-### **1.2. Inserção na AVL Tree: O(k log k)**
+## 4. Inserções na AVL com resultados do radius search
 
-#### **Método:** `getNodeStations()`
+### 4.1. Método `getNodeStations`
 
 ```java
-private void getNodeStations(Node2D node, double targetLat, double targetLon, 
+private void getNodeStations(Node2D node, double targetLat, double targetLon,
                              double radiusKm, AVLTree<...> results) {
     for (Station station : node.bucket.stations) {  // O(b)
         double distance = HaversineDistance.calculate(...);  // O(1)
 
         if (distance <= radiusKm) {  // O(1)
             StationWithDistance swd = new StationWithDistance(station, distance);
-            results.insert(swd, swd);  // ← O(log k) inserção na AVL
+            results.insert(swd, swd);  // inserção na AVL: O(log k)
         }
     }
 }
 ```
 
-#### **Análise:**
+Cada estação candidata passa por três passos:
 
-- Cada estação dentro do raio é inserida na AVL tree
-- **k** estações dentro do raio → **k inserções**
-- Cada inserção na AVL: **O(log k)** (altura da árvore)
-- **Total:** `k × log k = O(k log k)`
+1. Cálculo da distância Haversine → custo constante **O(1)**.
+2. Comparação `distance <= radiusKm` → **O(1)**.
+3. Inserção na AVL tree → **O(log k)**, sendo k o número de elementos já inseridos.
 
-**Exemplo:**
-- k = 100 estações no raio
-- Cada inserção: ~log₂(100) ≈ 7 operações
-- Total: 100 × 7 = 700 operações
+No total, para k estações que acabam por estar dentro do raio:
+
+> **Inserções na AVL:** `O(k · log k)`
 
 ---
 
-### **2. Density Summary Calculation**
+## 5. Cálculo do Density Summary
 
-#### **Método:** `calculateDensitySummary()`
+### 5.1. Método `calculateDensitySummary`
 
 ```java
 public DensitySummary calculateDensitySummary(AVLTree<...> resultsTree) {
@@ -143,18 +163,17 @@ public DensitySummary calculateDensitySummary(AVLTree<...> resultsTree) {
     int nonCityCount = 0;
     int totalCount = 0;
 
-    // Percorre TODAS as k estações UMA VEZ
     for (StationWithDistance result : resultsTree.inOrderTraversal()) {  // O(k)
         Station station = result.station;
         totalCount++;  // O(1)
 
-        // Count by country
+        // Contagem por país
         String country = station.getCountry();
         if (country != null) {
-            byCountry.put(country, byCountry.getOrDefault(country, 0) + 1);  // O(1)
+            byCountry.put(country, byCountry.getOrDefault(country, 0) + 1);  // O(1) amortizado
         }
 
-        // Count by isCity
+        // Contagem por isCity
         Boolean isCity = station.getIsCity();
         if (isCity != null && isCity) {
             cityCount++;  // O(1)
@@ -167,205 +186,149 @@ public DensitySummary calculateDensitySummary(AVLTree<...> resultsTree) {
 }
 ```
 
-#### **Complexidade:** `O(k)`
+A AVL `resultsTree` contém exatamente **k** entradas, uma por estação dentro do raio. O método percorre essa árvore em in-order traversal e, para cada estação, atualiza contadores simples.
 
-**Justificação:**
-- **In-order traversal** da AVL tree: `O(k)` - visita cada nó uma vez
-- **HashMap operations** (put, getOrDefault): `O(1)` amortizado
-- **Contadores** (cityCount, totalCount): `O(1)`
-- **Total:** Percorre k estações → **O(k)**
+- In-order traversal de k nós → **O(k)**;
+- Operações em `HashMap` (`getOrDefault` e `put`) → **O(1)** amortizado por chamada;
+- Atualização de contadores inteiros → **O(1)**.
+
+Logo, a complexidade total desta fase é:
+
+> **Density Summary:** `O(k)`
 
 ---
 
-## 📈 Análise de Cenários
+## 6. Cenários típicos de utilização
 
-### **Cenário 1: Raio pequeno (10 km)**
+Para ter noção da ordem de grandeza, assumimos um dataset de referência com:
 
-```
-N = 10,000 estações
+- **N = 10 000** estações na 2D-tree;
+- Raio e distribuição espacial a variar consoante o cenário.
+
+### 6.1. Raio pequeno (≈10 km)
+
+Exemplo:
+
+```text
+N = 10 000
 k = 15 estações dentro do raio
 ```
 
-| Operação | Cálculo | Resultado |
-|----------|---------|-----------|
-| Traversal 2D-tree | √10,000 | ~100 nós visitados |
-| Inserções AVL | 15 × log₂(15) | ~60 operações |
-| Density summary | 15 | 15 operações |
-| **Total** | 100 + 60 + 15 | **~175 operações** |
+Estimativa de operações:
 
-**Eficiência:** Excelente! Apenas 1.75% dos nós visitados.
+| Etapa               | Estimativa                   |
+|---------------------|------------------------------|
+| Traversal 2D-tree   | √10 000 ≈ 100 nós            |
+| Inserções na AVL    | 15 · log₂(15) ≈ 60          |
+| Density summary     | 15                           |
+| **Total aproximado** | **~175 operações**          |
 
----
+Neste cenário, só uma pequena fracção das estações é de facto processada.
 
-### **Cenário 2: Raio médio (50 km)**
+### 6.2. Raio médio (≈50 km)
 
-```
-N = 10,000 estações
+```text
+N = 10 000
 k = 150 estações dentro do raio
 ```
 
-| Operação | Cálculo | Resultado |
-|----------|---------|-----------|
-| Traversal 2D-tree | √10,000 | ~100 nós visitados |
-| Inserções AVL | 150 × log₂(150) | ~1,125 operações |
-| Density summary | 150 | 150 operações |
-| **Total** | 100 + 1,125 + 150 | **~1,375 operações** |
+| Etapa               | Estimativa                        |
+|---------------------|-----------------------------------|
+| Traversal 2D-tree   | √10 000 ≈ 100 nós                 |
+| Inserções na AVL    | 150 · log₂(150) ≈ 1 125          |
+| Density summary     | 150                               |
+| **Total aproximado** | **~1 375 operações**             |
 
-**Eficiência:** Muito boa! Apenas 13.75% dos nós processados.
+Mesmo assim, continuamos bastante abaixo de um percurso completo de N elementos.
+
+### 6.3. Raio grande (≈500 km) – caso desfavorável
+
+```text
+N = 10 000
+k = 5 000 estações dentro do raio (50% do dataset)
+```
+
+| Etapa               | Estimativa                         |
+|---------------------|------------------------------------|
+| Traversal 2D-tree   | ~N/2 ≈ 5 000 nós                   |
+| Inserções na AVL    | 5 000 · log₂(5 000) ≈ 61 400      |
+| Density summary     | 5 000                              |
+| **Total aproximado** | **~71 400 operações**             |
+
+Aqui já nos aproximamos mais do custo de uma abordagem “brute force”, mas ainda com estruturação e ordenação automáticas.
 
 ---
 
-### **Cenário 3: Raio grande (500 km) - Pior Caso**
+## 7. Comparação com alternativas simples
 
-```
-N = 10,000 estações
-k = 5,000 estações dentro do raio (50% do dataset)
-```
-
-| Operação | Cálculo | Resultado |
-|----------|---------|-----------|
-| Traversal 2D-tree | ~N/2 | ~5,000 nós visitados |
-| Inserções AVL | 5,000 × log₂(5,000) | ~61,400 operações |
-| Density summary | 5,000 | 5,000 operações |
-| **Total** | 5,000 + 61,400 + 5,000 | **~71,400 operações** |
-
-**Eficiência:** Aceitável. Dominado por k log k (inserções AVL).
-
----
-
-## 🔬 Comparação com Alternativas
-
-### **Abordagem 1: Brute Force (sem 2D-tree)**
+### 7.1. Abordagem 1 – Brute Force sem 2D-tree
 
 ```java
-// Percorre TODAS as estações
-for (Station s : allStations) {  // O(N)
+for (Station s : allStations) {        // O(N)
     double distance = haversine(...);  // O(1)
     if (distance <= radius) {
-        results.add(s);
+        results.add(s);                // O(1)
     }
 }
-Collections.sort(results);  // O(k log k)
+Collections.sort(results);             // O(k · log k)
 ```
 
-**Complexidade:** `O(N + k log k)`
+Complexidade:
 
-**Comparação:**
-- **USEI10:** `O(√N + k log k)` ← Melhor!
-- **Brute Force:** `O(N + k log k)`
-- **Ganho:** √N vs N (ex: 100 vs 10,000 operações)
+> **Brute force:** `O(N + k · log k)`
 
----
+Comparação:
 
-### **Abordagem 2: Lista ordenada (sem AVL tree)**
+- **Implementação USEI10:** `O(√N + k · log k)`
+- **Brute force:** `O(N + k · log k)`
+
+O ganho está essencialmente em substituir o termo **N** por **√N** na parte de pesquisa espacial.
+
+### 7.2. Abordagem 2 – Usar apenas lista e sort final
 
 ```java
-// Usa 2D-tree mas guarda em List
 List<StationWithDistance> results = new ArrayList<>();
-radiusSearchRecursive(..., results);  // O(√N + k)
-Collections.sort(results);  // O(k log k)
+// radiusSearchRecursive preenche a lista
+Collections.sort(results);  // O(k · log k)
 ```
 
-**Complexidade:** `O(√N + k log k)`
+Nesta abordagem também se obtém `O(√N + k · log k)`, mas:
 
-**Comparação:**
-- **USEI10:** `O(√N + k log k)` ← Igual!
-- **Lista ordenada:** `O(√N + k log k)`
-- **Vantagem USEI10:** AVL mantém invariante de ordenação durante inserção
-
----
-
-## 🎯 Otimizações Implementadas
-
-### **1. Pruning Espacial**
-
-```java
-// Calcula distância perpendicular ao plano divisor
-if ((targetValue - node.key) * 111.0 <= radiusKm) {
-    radiusSearchRecursive(node.left, ...);  // ← Só visita se necessário
-}
-```
-
-**Impacto:** Reduz O(N) → O(√N)
+- é necessário manter uma lista adicional;
+- a ordenação só acontece no fim;
+- na nossa solução, a AVL tree garante ordenação incremental e uma API homogénea com o resto do projeto.
 
 ---
 
-### **2. Inserção Direta na AVL**
+## 8. Complexidade espacial
 
-```java
-// Insere diretamente durante a busca (não cria lista intermediária)
-results.insert(swd, swd);
-```
+| Estrutura                      | Espaço       | Comentário                           |
+|--------------------------------|--------------|--------------------------------------|
+| 2D-tree (todas as estações)   | O(N)         | Estrutura principal de indexação     |
+| AVL com resultados             | O(k)         | Apenas estações dentro do raio       |
+| HashMap `byCountry`           | O(c)         | c = nº de países distintos (c << k)  |
+| Contadores simples             | O(1)         | cityCount, nonCityCount, totalCount |
+| **Total**                      | **O(N + k)** | Dominado pela 2D-tree                |
 
-**Impacto:** 
-- Ordenação automática durante inserção
-- Sem overhead de ordenação posterior
-- Memória constante (não duplica dados)
-
----
-
-### **3. HashMap para Contagem de Países**
-
-```java
-byCountry.put(country, byCountry.getOrDefault(country, 0) + 1);
-```
-
-**Impacto:** 
-- Contagem em O(1) por país (amortizado)
-- Em vez de O(k²) com busca linear
+Importa notar que a 2D-tree é construída uma vez (no carregamento/índice inicial) e reutilizada em múltiplas queries, amortizando o custo de construção.
 
 ---
 
-## 📊 Complexidade Espacial
+## 9. Conclusão
 
-| Estrutura | Espaço | Justificação |
-|-----------|--------|--------------|
-| **2D-tree** | O(N) | Armazena todas as N estações |
-| **AVL results** | O(k) | Apenas estações no raio |
-| **HashMap byCountry** | O(c) | c = número de países únicos (c << k) |
-| **Contadores** | O(1) | cityCount, totalCount, etc. |
-| **Total** | **O(N + k)** | Dominado pela 2D-tree |
+A combinação 2D-tree + AVL tree para o USEI10 conduz à seguinte complexidade global:
 
-**Nota:** A 2D-tree é construída **uma vez** e reutilizada para múltiplas queries.
+> **Complexidade final:** `O(√N + k · log k)`
 
----
+Em resumo:
 
-## 🏆 Conclusão
+- Para raios pequenos e médios (caso mais comum), **k é muito menor que N**, pelo que a componente `√N` é bastante favorável face a uma pesquisa linear.
+- A AVL garante que os resultados ficam sempre ordenados sem passos adicionais de sort.
+- O cálculo do density summary é linear no número de resultados, `O(k)`, e portanto mais eficiente comparado com o radius search.
 
-### **Complexidade Final: O(√N + k log k)**
-
-**Vantagens:**
-1. ✅ **Sub-linear** em N (graças ao pruning: √N << N)
-2. ✅ **Eficiente** para raios pequenos/médios (k << N)
-3. ✅ **Escalável** para datasets grandes (10,000+ estações)
-4. ✅ **Ordenação automática** via AVL tree
-5. ✅ **Density summary em tempo linear** O(k)
-
-**Casos de uso ideais:**
-- Raios pequenos a médios (1-100 km)
-- Queries frequentes (2D-tree amortiza custo de construção)
-- Datasets com distribuição espacial não uniforme
-
-**Performance esperada:**
-- Dataset de 10,000 estações
-- Raio típico de 50 km → ~150 resultados
-- **~1,500 operações** (vs 10,000 em brute force)
-- **Speedup de ~7x** 🚀
+Face a uma solução inadequada (brute force), esperamos beneficios claros em datasets com milhares de estações e com consultas frequentes.
 
 ---
 
-## 📚 Referências
-
-1. **Bentley, J. L.** (1975). "Multidimensional binary search trees used for associative searching." *Communications of the ACM*, 18(9), 509-517.
-
-2. **Cormen, T. H., et al.** (2009). *Introduction to Algorithms* (3rd ed.). MIT Press. Chapter 12 (BST) and Chapter 13 (AVL Trees).
-
-3. **de Berg, M., et al.** (2008). *Computational Geometry: Algorithms and Applications* (3rd ed.). Springer. Chapter 5 (Range Searching).
-
-4. **Haversine Formula**: Great-circle distance calculation for spherical coordinates.
-
----
-
-**Documento gerado para USEI10 - G113 2DK**  
-**ISEP - LAPR3 - 2024/2025**
-
+**Documento elaborado para USEI10 – Grupo G113 2DK**  
+**ISEP – LAPR3 – 2024/2025**
