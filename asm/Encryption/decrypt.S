@@ -30,23 +30,35 @@ decrypt_data:
     sw s1, 8(sp)
     sw s2, 4(sp)
     sw s3, 0(sp)
-
+    
     # --- Guardar parâmetros ---
-    mv s0, a2               # s0 = out
-    mv s1, a0               # s1 = in
+    mv s0, a2               # s0 = out (Endereço original de out)
+    mv s1, a0               # s1 = in (Endereço original de in)
     mv s2, a1               # s2 = key
     li s3, 1                # s3 = return_code = 1 (sucesso)
 
     # --- Verificar se entrada é vazia ---
-    # CORREÇÃO: Se a string for vazia, o resultado é sucesso.
     lb t0, 0(a0)
-    beqz t0, loop_end       # Se string vazia, salta para o fim (sucesso).
+    beqz t0, check_key_for_empty_string   # Se *in == '\0', verifica a chave antes de falhar
 
     # --- Verificar se key ∈ [1, 26] ---
     li t0, 1
     blt s2, t0, failure_key
     li t0, 26
     bgt s2, t0, failure_key
+
+    j loop_start # Continua para o loop principal
+
+check_key_for_empty_string:
+    # A string está vazia. Apenas a chave precisa de ser válida para retornar sucesso (1).
+    # Se a chave for inválida, salta para failure_key.
+    li t0, 1
+    blt s2, t0, failure_key # key < 1 → falha
+    li t0, 26
+    bgt s2, t0, failure_key # key > 26 → falha
+    
+    # Se a chave é válida, salta para o final do loop (sucesso)
+    j loop_end
 
 # ================= LOOP PRINCIPAL =================
 loop_start:
@@ -61,7 +73,7 @@ loop_start:
 
     # --- Converter ASCII → índice (0–25) ---
     li t1, 'A'
-    sub t0, t0, t1
+    sub t0, t0, t1          # t0 = (char - 'A')
 
     # --- Aplicar D(x) = (x - key + 26) mod 26 ---
     sub t0, t0, s2          # t0 = t0 - key
@@ -71,7 +83,7 @@ loop_start:
 
     # --- Converter de volta para ASCII ---
     li t1, 'A'
-    add t0, t0, t1
+    add t0, t0, t1          # t0 = t0 + 'A'
 
     # --- Escrever caractere decifrado ---
     sb t0, 0(a2)
@@ -90,7 +102,7 @@ loop_end:
 failure_key:
 failure_char:
     li s3, 0                # return_code = 0 (falha)
-    sb zero, 0(s0)          # out = "" (string vazia)
+    sb zero, 0(s0)          # out = "" (string vazia, usando o endereço original s0)
 
 # ================= FIM DA FUNÇÃO =================
 end_function:
