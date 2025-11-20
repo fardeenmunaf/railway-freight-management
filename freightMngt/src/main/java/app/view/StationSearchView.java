@@ -1,7 +1,8 @@
 package app.view;
 
 import app.model.Station;
-import app.service.StationService;
+import app.service.sprint2.StationService;
+import app.service.sprint2.ServiceRegistry;
 
 import java.util.List;
 import java.util.Scanner;
@@ -25,8 +26,7 @@ public class StationSearchView {
         System.out.println("Search and filter stations by various criteria");
         System.out.println("Type 'b' at any time to return to menu.\n");
 
-        StationService stationService = new StationService();
-        stationService.buildIndexes();
+        StationService stationService = ServiceRegistry.getStationService();
 
         boolean running = true;
 
@@ -129,12 +129,12 @@ public class StationSearchView {
             System.out.print("Minimum latitude (e.g., 36.0): ");
             String minLatStr = scanner.nextLine().trim();
             if ("b".equalsIgnoreCase(minLatStr)) return;
-            Double minLat = Double.parseDouble(minLatStr);
+            double minLat = Double.parseDouble(minLatStr);
 
             System.out.print("Maximum latitude (e.g., 43.0): ");
             String maxLatStr = scanner.nextLine().trim();
             if ("b".equalsIgnoreCase(maxLatStr)) return;
-            Double maxLat = Double.parseDouble(maxLatStr);
+            double maxLat = Double.parseDouble(maxLatStr);
 
             if (minLat < -90.0 || minLat > 90.0 || maxLat < -90.0 || maxLat > 90.0) {
                 System.out.println("ERROR: Latitude must be between -90 and 90.");
@@ -203,12 +203,12 @@ public class StationSearchView {
             System.out.print("Latitude: ");
             String latStr = scanner.nextLine().trim();
             if ("b".equalsIgnoreCase(latStr)) return;
-            Double lat = Double.parseDouble(latStr);
+            double lat = Double.parseDouble(latStr);
 
             System.out.print("Longitude: ");
             String lonStr = scanner.nextLine().trim();
             if ("b".equalsIgnoreCase(lonStr)) return;
-            Double lon = Double.parseDouble(lonStr);
+            double lon = Double.parseDouble(lonStr);
 
             if (lat < -90.0 || lat > 90.0 || lon < -180.0 || lon > 180.0) {
                 System.out.println("ERROR: Invalid coordinates range.");

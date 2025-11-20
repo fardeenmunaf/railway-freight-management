@@ -1,5 +1,6 @@
 package app.utils;
 
+import app.model.Station; // Importar a classe de domínio Station
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,24 +12,9 @@ import java.util.stream.Collectors;
  * Reuses AVLTree for efficient bulk-build strategy.
  *
  * @author G113 2DK
- * @version 1.0
+ * @version 1.3 (Cleaned up for compatibility with StationService)
  */
 public class Balanced2DTreeBuilder {
-
-    /**
-     * Represents a station with coordinates and a name.
-     */
-    public static class Station {
-        public final double latitude;
-        public final double longitude;
-        public final String name;
-
-        public Station(double latitude, double longitude, String name) {
-            this.latitude = latitude;
-            this.longitude = longitude;
-            this.name = name;
-        }
-    }
 
     /**
      * Node in the 2D-tree alternating between latitude and longitude dimensions.
@@ -66,7 +52,8 @@ public class Balanced2DTreeBuilder {
         }
 
         public void addStation(Station s) {
-            int pos = Collections.binarySearch(stations, s, Comparator.comparing(st -> st.name));
+            // Usar o getName() da classe de domínio
+            int pos = Collections.binarySearch(stations, s, Comparator.comparing(Station::getName));
             if (pos < 0) pos = -pos - 1;
             stations.add(pos, s);
         }
@@ -120,7 +107,7 @@ public class Balanced2DTreeBuilder {
          * Bulk build 2D-tree using AVLTree for efficient sorting and grouping.
          * Complexity: O(N log N) where N is the number of stations.
          *
-         * @param stations Input station list
+         * @param stations Input station list (app.model.Station)
          */
         public void bulkBuild(List<Station> stations) {
             if (stations == null || stations.isEmpty()) {
@@ -136,7 +123,7 @@ public class Balanced2DTreeBuilder {
          * Recursive helper using AVLTree to efficiently sort and partition stations.
          * Uses median of unique keys for balanced partitioning.
          *
-         * @param stations subset to build
+         * @param stations subset to build (app.model.Station)
          * @param useLatitude dimension selector (latitude vs longitude)
          * @return root of subtree
          */
@@ -146,7 +133,8 @@ public class Balanced2DTreeBuilder {
             // Use AVLTree to group stations by current dimension key
             AVLTree<Double, Station> avl = new AVLTree<>();
             for (Station s : stations) {
-                Double key = useLatitude ? s.latitude : s.longitude;
+                // Usar os getters da classe de domínio (getLat() e getLon())
+                Double key = useLatitude ? s.getLat() : s.getLon();
                 avl.insert(key, s);
             }
 
@@ -155,7 +143,7 @@ public class Balanced2DTreeBuilder {
 
             // Extract unique keys to find true median for balanced split
             List<Double> uniqueKeys = sortedStations.stream()
-                    .map(s -> useLatitude ? s.latitude : s.longitude)
+                    .map(s -> useLatitude ? s.getLat() : s.getLon()) // Usar getters
                     .distinct()
                     .sorted()
                     .collect(Collectors.toList());
@@ -170,7 +158,7 @@ public class Balanced2DTreeBuilder {
             List<Station> rightList = new ArrayList<>();
 
             for (Station s : stations) {
-                double stationKey = useLatitude ? s.latitude : s.longitude;
+                double stationKey = useLatitude ? s.getLat() : s.getLon(); // Usar getters
                 int cmp = Double.compare(stationKey, medianKey);
                 if (cmp < 0) {
                     leftList.add(s);
@@ -182,7 +170,7 @@ public class Balanced2DTreeBuilder {
             }
 
             // Create bucket with stations sorted alphabetically by name
-            equalList.sort(Comparator.comparing(s -> s.name));
+            equalList.sort(Comparator.comparing(Station::getName)); // Usar getName()
             StationBucket bucket = new StationBucket();
             for (Station s : equalList) {
                 bucket.addStation(s);
@@ -201,6 +189,125 @@ public class Balanced2DTreeBuilder {
         }
 
         /**
+         * Result wrapper for a station with its distance from query point.
+         */
+        public static class StationWithDistance implements Comparable<StationWithDistance> {
+            public final Station station;
+            public final double distance;
+
+            public StationWithDistance(Station station, double distance) {
+                this.station = station;
+                this.distance = distance;
+            }
+
+            @Override
+            public int compareTo(StationWithDistance other) {
+                int cmp = Double.compare(this.distance, other.distance);
+                if (cmp != 0) return cmp;
+                // If distances are equal, sort by name (DESC)
+                return other.station.getName().compareTo(this.station.getName());
+            }
+        }
+
+        /**
+         * Finds the N nearest stations to a given coordinate using Haversine distance.
+         *
+         * Algorithm:
+         * 1. Uses KD-tree pruning to avoid checking all stations
+         * 2. Maintains a max-heap of N best candidates
+         * 3. Prunes branches that cannot contain closer stations
+         * 4. Returns results sorted by distance ASC
+         *
+         * Temporal Complexity: O(log N) average case, O(N) worst case
+         *
+         * @param targetLat Target latitude in degrees
+         * @param targetLon Target longitude in degrees
+         * @param n Number of nearest neighbors to find
+         * @return List of N nearest stations with distances, sorted by distance ASC
+         */
+        public List<StationWithDistance> findNearestStations(double targetLat, double targetLon, int n) {
+            if (root == null || n <= 0) {
+                return new ArrayList<>();
+            }
+
+            // Use a list to maintain best N candidates
+            List<StationWithDistance> bestCandidates = new ArrayList<>();
+
+            // Start recursive search
+            findNearestRecursive(root, targetLat, targetLon, n, bestCandidates);
+
+            // Sort by distance ascending
+            Collections.sort(bestCandidates);
+
+            return bestCandidates;
+        }
+
+        /**
+         * Recursive helper for nearest neighbor search.
+         * Uses branch pruning to avoid checking irrelevant subtrees.
+         */
+        private void findNearestRecursive(Node2D node, double targetLat, double targetLon,
+                                          int n, List<StationWithDistance> bestCandidates) {
+            if (node == null) return;
+
+            // Calculate distance to all stations in current bucket
+            for (Station station : node.bucket.stations) {
+                double distance = HaversineDistance.calculate(
+                        targetLat, targetLon, station.getLat(), station.getLon());
+
+                StationWithDistance candidate = new StationWithDistance(station, distance);
+
+                // Add to candidates
+                if (bestCandidates.size() < n) {
+                    bestCandidates.add(candidate);
+                    Collections.sort(bestCandidates);
+                } else if (distance < bestCandidates.get(bestCandidates.size() - 1).distance) {
+                    // Replace worst candidate if this one is better
+                    bestCandidates.set(bestCandidates.size() - 1, candidate);
+                    Collections.sort(bestCandidates);
+                }
+            }
+
+            // Determine which subtree to search first
+            double targetValue = node.isLatitude ? targetLat : targetLon;
+            boolean goLeft = targetValue < node.key;
+
+            Node2D firstChild = goLeft ? node.left : node.right;
+            Node2D secondChild = goLeft ? node.right : node.left;
+
+            // Search the closer subtree first
+            findNearestRecursive(firstChild, targetLat, targetLon, n, bestCandidates);
+
+            // Check if we need to search the other subtree
+            // Calculate the distance to the splitting plane
+            double planeDistance = Math.abs(targetValue - node.key);
+
+            // Convert to approximate km (rough estimate for pruning)
+            // At equator, 1 degree ≈ 111 km
+            double planeDistanceKm = planeDistance * 111.0;
+
+            // Only search other side if it could contain closer points
+            if (bestCandidates.size() < n ||
+                    planeDistanceKm < bestCandidates.get(bestCandidates.size() - 1).distance) {
+                findNearestRecursive(secondChild, targetLat, targetLon, n, bestCandidates);
+            }
+        }
+
+        /**
+         * Finds the single nearest station to a given coordinate.
+         * Convenience method that calls findNearestStations with n=1.
+         *
+         * @param targetLat Target latitude in degrees
+         * @param targetLon Target longitude in degrees
+         * @return The nearest station with distance, or null if tree is empty
+         */
+        public StationWithDistance findNearestStation(double targetLat, double targetLon) {
+            List<StationWithDistance> results = findNearestStations(targetLat, targetLon, 1);
+            return results.isEmpty() ? null : results.get(0);
+        }
+
+
+        /**
          * Returns total number of distinct coordinate nodes.
          */
         public int getSize() {
@@ -212,6 +319,14 @@ public class Balanced2DTreeBuilder {
          */
         public int getHeight() {
             return root == null ? 0 : root.height;
+        }
+
+        /**
+         * Returns the root node of the tree.
+         * Package-private to allow service layer access.
+         */
+        public Node2D getRoot() {
+            return root;
         }
 
         /**

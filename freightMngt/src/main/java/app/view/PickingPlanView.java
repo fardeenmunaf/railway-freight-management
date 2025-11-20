@@ -4,9 +4,9 @@ import app.controller.PickRouteController;
 import app.model.Order;
 import app.model.PickTask;
 import app.repositories.Repositories;
-import app.service.PickingPlan;
-import app.service.Allocation;
-import app.service.PickRouteOptimizationService;
+import app.service.sprint1.PickingPlan;
+import app.service.sprint1.Allocation;
+import app.service.sprint1.PickRouteOptimizationService;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -53,7 +53,32 @@ public class PickingPlanView {
         displayOrders(repositories);
 
         try {
-            System.out.println("\nOptions:");
+            System.out.println("\n--- STEP 1: SELECT ALLOCATION MODE ---");
+            System.out.println("1. STRICT - Only fully dispatchable orders");
+            System.out.println("2. PARTIAL - Allow partial allocations");
+            System.out.print("Select allocation mode (1-2): ");
+
+            String modeInput = scanner.nextLine().trim();
+            if ("b".equalsIgnoreCase(modeInput)) return;
+
+            int modeChoice = Integer.parseInt(modeInput);
+            String allocationMode;
+
+            if (modeChoice == 1) {
+                allocationMode = "STRICT";
+                System.out.println("✓ Selected: STRICT mode");
+            } else if (modeChoice == 2) {
+                allocationMode = "PARTIAL";
+                System.out.println("✓ Selected: PARTIAL mode");
+            } else {
+                System.out.println("Invalid option. Defaulting to STRICT mode.");
+                allocationMode = "STRICT";
+            }
+
+            // Display allocation information
+            displayAllocationInfo(pickingPlan);
+
+            System.out.println("\n--- STEP 2: SELECT ORDER SCOPE ---");
             System.out.println("1. Create plan and optimize routes for a specific order");
             System.out.println("2. Create plan and optimize routes for ALL orders");
             System.out.print("\nSelect option (1-2): ");
