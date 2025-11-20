@@ -4,10 +4,9 @@ import app.model.Station;
 import app.controller.StationController;
 import app.utils.AVLTree;
 import app.utils.Balanced2DTreeBuilder;
+
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Service class responsible for efficient station search operations.
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
  * Uses 2D-tree for spatial nearest neighbor searches.
  *
  * @author G113 2DK
- * @version 1.2 (Refactored to use domain Station in 2D-Tree and fixed service methods)
+ * @version 1.0
  */
 public class StationService {
     private StationController stationController;
@@ -60,15 +59,16 @@ public class StationService {
      */
     private void build2DTree() {
         List<Station> allStations = stationController.getAllStations();
+        List<Station> validStations = new ArrayList<>();
 
-        // Filter stations that have valid coordinates
-        List<Station> stationsWithCoords = allStations.stream()
-                .filter(s -> s.getLat() != null && s.getLon() != null)
-                .collect(Collectors.toList());
+        for (Station station : allStations) {
+            if (station.getLat() != null && station.getLon() != null) {
+                validStations.add(station);
+            }
+        }
 
         spatial2DTree = new Balanced2DTreeBuilder.Balanced2DTree();
-        // Pass the list of domain objects directly
-        spatial2DTree.bulkBuild(stationsWithCoords);
+        spatial2DTree.bulkBuild(validStations);
     }
 
     /**
@@ -97,79 +97,45 @@ public class StationService {
     }
 
     /**
-     * Searches stations by exact name match.
-     * Complexity: O(log n) where n = total stations
+     * Searches stations by exact coordinates.
+     * Handles duplicates sorted by name ASC.
+     * Complexity: O(log n + k) where k = stations at coordinates
      */
-    public List<Station> searchByName(String name) {
-        if (name == null || name.isEmpty()) {
-            return new ArrayList<>();
-        }
-        return stationsByName.search(name.toLowerCase());
-    }
-
-    /**
-     * Searches stations by country code.
-     * Complexity: O(log n + k) where k = results
-     */
-    public List<Station> searchByCountry(String country) {
-        if (country == null || country.isEmpty()) {
-            return new ArrayList<>();
-        }
-        return stationsByCountry.search(country.toLowerCase());
-    }
-
-    /**
-     * Searches stations by time zone.
-     * Complexity: O(log n + k) where k = results
-     */
-    public List<Station> searchByTimeZone(String timeZone) {
-        if (timeZone == null || timeZone.isEmpty()) {
-            return new ArrayList<>();
-        }
-        return stationsByTimeZone.search(timeZone.toLowerCase());
+    public List<Station> searchByCoordinates(Double lat, Double lon) {
+        String keyPrefix = String.format("%.6f_%.6f_", lat, lon);
+        String keyMin = keyPrefix + "A";
+        String keyMax = keyPrefix + "z";
+        return stationsByCoordinates.rangeSearch(keyMin, keyMax);
     }
 
     /**
      * Searches stations in a time-zone group, ordered by country ASC.
      * Complexity: O(log n + k*log k) where k = results
      */
-    public List<Station> searchByTimeZoneGroupOrderedByCountry(String timeZoneGroup) {
-        if (timeZoneGroup == null || timeZoneGroup.isBlank()) {
-            return new ArrayList<>();
-        }
-        List<Station> results = stationsByTimeZoneGroup.search(timeZoneGroup);
-        results.sort(Comparator.comparing(Station::getCountry));
+    public List<Station> searchByTimeZoneGroupOrderedByCountry(String group) {
+        List<Station> results = searchByTimeZoneGroupRange(group, group);
+        results.sort((a, b) -> {
+            int countryCompare = a.getCountry().compareToIgnoreCase(b.getCountry());
+            return countryCompare != 0 ? countryCompare :
+                    a.getName().compareToIgnoreCase(b.getName());
+        });
         return results;
     }
 
     /**
-     * Searches for stations in a time zone group range.
-     * Complexity: O(N) worst case.
+     * Searches stations in a time-zone group range.
+     * Example: searchByTimeZoneGroupRange("CET", "WET/GMT")
+     * Complexity: O(log n + k) where k = results
      */
-    public List<Station> searchByTimeZoneGroupRange(String startGroup, String endGroup) {
-        if (startGroup == null || endGroup == null) {
-            return new ArrayList<>();
-        }
-        return stationsByTimeZoneGroup.rangeSearch(startGroup, endGroup);
-    }
-
-    /**
-     * Searches stations by exact coordinates.
-     * Handles duplicates sorted by name ASC.
-     * Complexity: O(log n + k) where k = stations at coordinates
-     */
-    public List<Station> searchByCoordinates(double lat, double lon) {
-        String coordKey = String.format("%.6f_%.6f_", lat, lon);
-        String keyMin = coordKey + "A";
-        String keyMax = coordKey + "z";
-        return stationsByCoordinates.rangeSearch(keyMin, keyMax);
+    public List<Station> searchByTimeZoneGroupRange(String fromGroup, String toGroup) {
+        return stationsByTimeZoneGroup.rangeSearch(fromGroup, toGroup);
     }
 
     /**
      * Searches stations by latitude range.
      * Complexity: O(log n + k)
      */
-    public List<Station> searchByLatitudeRange(double minLat, double maxLat) {
+    public List<Station> searchByLatitudeRange(Double minLat, Double maxLat) {
         return stationsByLatitude.rangeSearch(
                 String.format("%.6f", minLat),
                 String.format("%.6f", maxLat)
@@ -177,21 +143,68 @@ public class StationService {
     }
 
     /**
-     * Gets all main stations (stations with isMain = true).
-     *
-     * @return list of main stations
+     * Searches stations by exact name match.
+     */
+    public List<Station> searchByName(String name) {
+        if (name == null || name.isBlank()) {
+            return new ArrayList<>();
+        }
+        return stationsByName.search(name.toLowerCase());
+    }
+
+    /**
+     * Searches stations by country code.
+     */
+    public List<Station> searchByCountry(String country) {
+        if (country == null || country.isBlank()) {
+            return new ArrayList<>();
+        }
+        return stationsByCountry.search(country.toLowerCase());
+    }
+
+    /**
+     * Searches stations by time zone.
+     */
+    public List<Station> searchByTimeZone(String timeZone) {
+        if (timeZone == null || timeZone.isBlank()) {
+            return new ArrayList<>();
+        }
+        return stationsByTimeZone.search(timeZone.toLowerCase());
+    }
+
+    /**
+     * Range search for stations by time zone.
+     */
+    public List<Station> searchByTimeZoneRange(String fromZone, String toZone) {
+        return stationsByTimeZone.rangeSearch(fromZone, toZone);
+    }
+
+    /**
+     * Returns all main stations.
      */
     public List<Station> getMainStations() {
         return stationController.getMainStations();
     }
 
     /**
-     * Gets all airport stations (stations with isAirport = true).
-     *
-     * @return list of airport stations
+     * Returns all airport stations.
      */
     public List<Station> getAirportStations() {
         return stationController.getAirportStations();
+    }
+
+    /**
+     * Returns all stations sorted by name.
+     */
+    public List<Station> getAllStationsSortedByName() {
+        return stationsByName.inOrderTraversal();
+    }
+
+    /**
+     * Returns total number of indexed stations.
+     */
+    public int getStationCount() {
+        return stationController.getAllStations().size();
     }
 
     /**
@@ -215,6 +228,12 @@ public class StationService {
     /**
      * Finds the N nearest stations to a given coordinate using Haversine distance.
      *
+     * Uses KD-tree for efficient spatial search with branch pruning.
+     * Results are ordered by distance ascending.
+     *
+     * Temporal Complexity: O(log N) average case, O(N) worst case
+     * where N is the total number of stations in the tree.
+     *
      * @param latitude Target latitude in degrees
      * @param longitude Target longitude in degrees
      * @param n Number of nearest neighbors to find
@@ -225,14 +244,21 @@ public class StationService {
             build2DTree();
         }
 
-        // Get nearest stations with distances from 2D tree (already sorted by distance)
         List<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> results =
                 spatial2DTree.findNearestStations(latitude, longitude, n);
 
-        // Convert to service's StationDistance wrapper
+        // Convert to StationDistance with full Station objects
         List<StationDistance> stationDistances = new ArrayList<>();
         for (Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance result : results) {
-            stationDistances.add(new StationDistance(result.station, result.distance));
+            // Find the full Station object by name and coordinates
+            Station station = findStationByNameAndCoordinates(
+                    result.station.getName(),
+                    result.station.getLat(),
+                    result.station.getLon()
+            );
+            if (station != null) {
+                stationDistances.add(new StationDistance(station, result.distance));
+            }
         }
 
         return stationDistances;
@@ -240,6 +266,12 @@ public class StationService {
 
     /**
      * Finds the N nearest stations to a given coordinate with optional time-zone group filter.
+     *
+     * If timeZoneGroup is provided, only stations in that time-zone group are returned.
+     * Results are ordered by distance ascending.
+     *
+     * Temporal Complexity: O(log N) average case for spatial search,
+     * plus O(k) for filtering where k is the number of candidates.
      *
      * @param latitude Target latitude in degrees
      * @param longitude Target longitude in degrees
@@ -253,21 +285,57 @@ public class StationService {
             return findNearestStations(latitude, longitude, n);
         }
 
-        // Get all stations sorted by distance (using a large number for 'n' to get all candidates)
-        List<StationDistance> nearest = findNearestStations(latitude, longitude, getStationCount());
+        if (spatial2DTree == null) {
+            build2DTree();
+        }
 
-        return nearest.stream()
-                .filter(sd -> timeZoneGroup.equalsIgnoreCase(sd.station.getTimeZoneGroup()))
-                .limit(n)
-                .collect(Collectors.toList());
+        // Get more candidates than needed to account for filtering
+        int candidateMultiplier = 5;
+        int maxCandidates = Math.min(n * candidateMultiplier, spatial2DTree.getSize());
+
+        List<StationDistance> filteredResults = new ArrayList<>();
+        int candidatesChecked = n;
+
+        // Keep searching until we have enough results or checked all stations
+        while (filteredResults.size() < n && candidatesChecked <= spatial2DTree.getSize()) {
+            List<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> results =
+                    spatial2DTree.findNearestStations(latitude, longitude, candidatesChecked);
+
+            filteredResults.clear();
+
+            // Filter by time-zone group
+            for (Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance result : results) {
+                Station station = findStationByNameAndCoordinates(
+                        result.station.getName(),
+                        result.station.getLat(),
+                        result.station.getLon()
+                );
+
+                if (station != null && timeZoneGroup.equals(station.getTimeZoneGroup())) {
+                    filteredResults.add(new StationDistance(station, result.distance));
+                    if (filteredResults.size() >= n) {
+                        break;
+                    }
+                }
+            }
+
+            // Increase candidates if we didn't find enough
+            if (filteredResults.size() < n) {
+                candidatesChecked = Math.min(candidatesChecked * 2, spatial2DTree.getSize());
+            }
+        }
+
+        // Return only the requested number
+        return filteredResults.size() > n ?
+                filteredResults.subList(0, n) : filteredResults;
     }
 
     /**
-     * Finds the single nearest station to a given point.
+     * Finds the single nearest station to a given coordinate.
      *
      * @param latitude Target latitude in degrees
      * @param longitude Target longitude in degrees
-     * @return The nearest station with distance, or null if no stations exist
+     * @return The nearest station with distance, or null if no stations available
      */
     public StationDistance findNearestStation(double latitude, double longitude) {
         List<StationDistance> results = findNearestStations(latitude, longitude, 1);
@@ -275,24 +343,43 @@ public class StationService {
     }
 
     /**
-     * Gets the temporal complexity analysis of the 2D tree.
+     * Finds the single nearest station with time-zone group filter.
      *
-     * @return TemporalComplexity object containing size and height information
+     * @param latitude Target latitude in degrees
+     * @param longitude Target longitude in degrees
+     * @param timeZoneGroup Time-zone group filter
+     * @return The nearest station with distance, or null if no matching stations
+     */
+    public StationDistance findNearestStation(double latitude, double longitude, String timeZoneGroup) {
+        List<StationDistance> results = findNearestStations(latitude, longitude, 1, timeZoneGroup);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    /**
+     * Helper method to find a Station object by name and coordinates.
+     */
+    private Station findStationByNameAndCoordinates(String name, double lat, double lon) {
+        List<Station> candidates = stationsByName.search(name.toLowerCase());
+
+        for (Station station : candidates) {
+            if (station.getLat() != null && station.getLon() != null) {
+                if (Math.abs(station.getLat() - lat) < 0.0001 &&
+                        Math.abs(station.getLon() - lon) < 0.0001) {
+                    return station;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns temporal complexity analysis for the 2D-tree.
      */
     public Balanced2DTreeBuilder.TemporalComplexity get2DTreeComplexity() {
         if (spatial2DTree == null) {
             build2DTree();
         }
         return spatial2DTree.getTemporalComplexity();
-    }
-
-    /**
-     * Returns total number of indexed stations in the 2D-tree.
-     */
-    public int getStationCount() {
-        if (spatial2DTree == null) {
-            build2DTree();
-        }
-        return spatial2DTree.getSize();
     }
 }
