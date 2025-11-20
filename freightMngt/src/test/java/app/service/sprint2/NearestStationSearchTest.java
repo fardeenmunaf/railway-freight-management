@@ -5,6 +5,8 @@ import app.model.FacilityType;
 import app.controller.StationController;
 import app.controller.FacilityTypeController;
 import app.utils.HaversineDistance;
+import app.service.sprint2.StationService; // Importar a StationService correta
+import app.repositories.Repositories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,6 +31,8 @@ public class NearestStationSearchTest {
     public void setUp() {
         stationService = new StationService();
         stationController = new StationController();
+        // Limpar o estado do controller antes de cada teste (necessário para testes unitários)
+        Repositories.getInstance().getFacilityRepository().clear();
 
         // Create a facility type for stations
         FacilityTypeController facilityTypeController = new FacilityTypeController();
@@ -44,7 +48,7 @@ public class NearestStationSearchTest {
 
     private void createTestStations() {
         // Lisbon area stations
-        Station lisbon = new Station(1, "Lisboa-Santa Apolónia", stationType,
+        Station lisbon = new Station(1, "Lisbon Santa Apolónia", stationType,
                 38.7223, -9.1393, false, "PT", "Europe/Lisbon", "WET/GMT",
                 false, true, false);
         stationController.createStation(lisbon);
@@ -97,7 +101,7 @@ public class NearestStationSearchTest {
         StationService.StationDistance result = stationService.findNearestStation(queryLat, queryLon);
 
         assertNotNull(result);
-        assertEquals("Lisboa-Santa Apolónia", result.station.getName());
+        assertEquals("Lisbon Santa Apolónia", result.station.getName());
 
         // Verify distance is reasonable (should be < 5 km)
         assertTrue(result.distanceKm < 5.0,
@@ -127,8 +131,8 @@ public class NearestStationSearchTest {
                     "Results should be sorted by distance ascending");
         }
 
-        // First result should be Lisboa-Santa Apolónia
-        assertEquals("Lisboa-Santa Apolónia", results.get(0).station.getName());
+        // First result should be Lisbon Santa Apolónia
+        assertEquals("Lisbon Santa Apolónia", results.get(0).station.getName());
 
         // Verify all distances are calculated correctly
         for (StationService.StationDistance result : results) {
