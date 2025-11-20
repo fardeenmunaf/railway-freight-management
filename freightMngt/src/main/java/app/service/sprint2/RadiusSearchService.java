@@ -5,6 +5,9 @@ import app.utils.AVLTree;
 import app.utils.Balanced2DTreeBuilder;
 import app.utils.HaversineDistance;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Service for radius search operations on stations.
  * Implements USEI10 - Radius search and density summary.
@@ -42,12 +45,10 @@ public class RadiusSearchService {
      */
     private void getNodeStations(Balanced2DTreeBuilder.Node2D node, double targetLat, double targetLon, double radiusKm, AVLTree<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance, Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> results) {
         for (Station station : node.bucket.stations) {
-            double distance = HaversineDistance.calculate(
-                    targetLat, targetLon, station.getLat(), station.getLon());
+            double distance = HaversineDistance.calculate(targetLat, targetLon, station.getLat(), station.getLon());
 
             if (distance <= radiusKm) {
-                Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance swd =
-                        new Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance(station, distance);
+                Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance swd = new Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance(station, distance);
                 results.insert(swd, swd); // Insert into AVL tree (key = value)
             }
         }
@@ -81,6 +82,71 @@ public class RadiusSearchService {
         // Search the right subtree if it could contain points within radius
         if (node.right != null && (node.key - targetValue) * 111.0 <= radiusKm) {
             radiusSearchRecursive(node.right, targetLat, targetLon, radiusKm, results);
+        }
+    }
+
+    /**
+     * Calculates density summary by country and isCity.
+     * Works directly with AVL tree without converting to list.
+     *
+     * @param resultsTree AVL tree containing stations with distances
+     * @return DensitySummary containing distribution statistics
+     */
+    public DensitySummary calculateDensitySummary(AVLTree<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance, Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> resultsTree) {
+        Map<String, Integer> byCountry = new HashMap<>();
+        int cityCount = 0;
+        int nonCityCount = 0;
+        int totalCount = 0;
+
+        // Traverse tree and count using traditional for loop
+        for (Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance result : resultsTree.inOrderTraversal()) {
+            Station station = result.station;
+            totalCount++;
+
+            // Count by country
+            String country = station.getCountry();
+            if (country != null) {
+                byCountry.put(country, byCountry.getOrDefault(country, 0) + 1);
+            }
+
+            // Count by isCity
+            Boolean isCity = station.getIsCity();
+            if (isCity != null && isCity) {
+                cityCount++;
+            } else {
+                nonCityCount++;
+            }
+        }
+
+        return new DensitySummary(byCountry, cityCount, nonCityCount, totalCount);
+    }
+
+    /**
+     * Density summary containing distribution statistics by country and isCity.
+     */
+    public static class DensitySummary {
+        public final Map<String, Integer> byCountry;
+        public final int cityCount;
+        public final int nonCityCount;
+        public final int totalCount;
+
+        public DensitySummary(Map<String, Integer> byCountry, int cityCount, int nonCityCount, int totalCount) {
+            this.byCountry = byCountry;
+            this.cityCount = cityCount;
+            this.nonCityCount = nonCityCount;
+            this.totalCount = totalCount;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Density Summary:\n");
+            sb.append(String.format("  Total Stations: %d\n", totalCount));
+            sb.append(String.format("  City Stations: %d\n", cityCount));
+            sb.append(String.format("  Non-City Stations: %d\n", nonCityCount));
+            sb.append("  Distribution by Country:\n");
+            byCountry.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue().reversed()).forEach(entry -> sb.append(String.format("    %s: %d stations\n", entry.getKey(), entry.getValue())));
+            return sb.toString();
         }
     }
 }
