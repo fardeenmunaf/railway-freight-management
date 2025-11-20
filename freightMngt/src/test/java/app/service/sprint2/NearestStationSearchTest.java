@@ -5,7 +5,6 @@ import app.model.FacilityType;
 import app.controller.StationController;
 import app.controller.FacilityTypeController;
 import app.utils.HaversineDistance;
-import app.service.sprint2.StationService; // Importar a StationService correta
 import app.repositories.Repositories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
