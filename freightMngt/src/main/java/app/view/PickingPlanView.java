@@ -75,8 +75,8 @@ public class PickingPlanView {
                 allocationMode = "STRICT";
             }
 
-            // Display allocation information
-            displayAllocationInfo(pickingPlan);
+            // Set the allocation mode on the picking plan
+            pickingPlan.setAllocationMode(allocationMode);
 
             System.out.println("\n--- STEP 2: SELECT ORDER SCOPE ---");
             System.out.println("1. Create plan and optimize routes for a specific order");
@@ -226,78 +226,78 @@ public class PickingPlanView {
         // Display processing details for each order line
         if (result.getProcessingDetails() != null && !result.getProcessingDetails().isEmpty()) {
             System.out.println("\n>>> PROCESSING DETAILS <<<\n");
-            
+
             for (PickingPlan.OrderLineProcessingInfo info : result.getProcessingDetails()) {
                 System.out.println("─".repeat(80));
                 System.out.println(">>> Processing OrderLine " + info.getOrderLineId() +
-                    " (Order " + info.getOrderId() + ", SKU " + info.getSkuId() +
-                    ", Qty: " + info.getQtyRequested() + ") <<<");
-                
+                        " (Order " + info.getOrderId() + ", SKU " + info.getSkuId() +
+                        ", Qty: " + info.getQtyRequested() + ") <<<");
+
                 if ("ERROR".equals(info.getStatus()) || "SKIPPED".equals(info.getStatus())) {
                     System.out.println("  ❌ " + info.getStatus() + ": " + info.getErrorMessage());
                     continue;
                 }
-                
+
                 // Display location information
                 if (info.getLocations() != null && !info.getLocations().isEmpty()) {
                     if (info.getLocations().size() > 1) {
                         System.out.println("🔄 MULTI-BAY ORDER - OrderLine " + info.getOrderLineId() +
-                            " (Order " + info.getOrderId() + ") spans " + info.getLocations().size() + " bays:");
+                                " (Order " + info.getOrderId() + ") spans " + info.getLocations().size() + " bays:");
                         for (PickingPlan.LocationInfo loc : info.getLocations()) {
                             System.out.println("   → Bay " + loc.getBay() + ": " + loc.getQtyAvailable() + " units");
                         }
                     } else if (info.getLocations().size() == 1) {
                         PickingPlan.LocationInfo loc = info.getLocations().get(0);
                         System.out.println("📍 Single bay - Bay " + loc.getBay() +
-                            ": " + loc.getQtyAvailable() + " units");
+                                ": " + loc.getQtyAvailable() + " units");
                     }
                 }
-                
+
                 // Display cart selection
                 if (info.getSelectedCart() != null) {
                     System.out.println("  Selected Cart " + info.getSelectedCart().getCartId() +
-                        " (capacity: " + info.getCartCapacity() + " items per trip)" +
-                        (info.getCartCapacity() >= 5 ? " ✓" : " - LOW CAPACITY WARNING"));
+                            " (capacity: " + info.getCartCapacity() + " items per trip)" +
+                            (info.getCartCapacity() >= 5 ? " ✓" : " - LOW CAPACITY WARNING"));
                 }
-                
+
                 // Display location details with waves
                 if (info.getLocations() != null) {
                     for (PickingPlan.LocationInfo loc : info.getLocations()) {
                         System.out.println("  Location: Aisle " + loc.getAisle() +
-                            ", Bay " + loc.getBay() +
-                            " - Available: " + loc.getQtyAvailable() +
-                            " - To collect: " + loc.getQtyToCollect() +
-                            " - Trips needed: " + loc.getTripsNeeded());
-                        
+                                ", Bay " + loc.getBay() +
+                                " - Available: " + loc.getQtyAvailable() +
+                                " - To collect: " + loc.getQtyToCollect() +
+                                " - Trips needed: " + loc.getTripsNeeded());
+
                         // Display waves for this location
                         if (loc.getWaves() != null) {
                             for (PickingPlan.WaveInfo wave : loc.getWaves()) {
                                 System.out.println("    Wave " + wave.getWaveId() +
-                                    ": Cart " + wave.getCartId() +
-                                    ", Trip " + wave.getTripNumber() + "/" + wave.getTotalTrips() +
-                                    ", Qty: " + wave.getQty() +
-                                    " (Total collected: " + wave.getTotalCollected() + "/" + wave.getTotalNeeded() + ")");
+                                        ": Cart " + wave.getCartId() +
+                                        ", Trip " + wave.getTripNumber() + "/" + wave.getTotalTrips() +
+                                        ", Qty: " + wave.getQty() +
+                                        " (Total collected: " + wave.getTotalCollected() + "/" + wave.getTotalNeeded() + ")");
                             }
                         }
                     }
                 }
-                
+
                 // Display task creation
                 if (info.getPickTaskId() != null) {
                     System.out.println("  ✓ PickTask " + info.getPickTaskId() +
-                        " created with " + info.getWavesCount() + " wave(s) (trips)");
+                            " created with " + info.getWavesCount() + " wave(s) (trips)");
                 }
             }
         }
 
         System.out.println("\n" + "=".repeat(80));
         System.out.println("=== Picking Task Planning Complete ===");
-        System.out.println("Total Pick Tasks created: " + 
-            (result.getPickTasks() != null ? result.getPickTasks().size() : 0) + 
-            " (one per eligible OrderLine)");
-        System.out.println("Total Pick Waves created: " + 
-            (result.getPickWaves() != null ? result.getPickWaves().size() : 0) + 
-            " (one per trip)");
+        System.out.println("Total Pick Tasks created: " +
+                (result.getPickTasks() != null ? result.getPickTasks().size() : 0) +
+                " (one per eligible OrderLine)");
+        System.out.println("Total Pick Waves created: " +
+                (result.getPickWaves() != null ? result.getPickWaves().size() : 0) +
+                " (one per trip)");
         System.out.println("=".repeat(80));
 
         // Display summary tables
@@ -385,7 +385,7 @@ public class PickingPlanView {
             String scope,
             PickRouteController routeController) {
 
-        System.out.println("\n"+ "=".repeat(50));
+        System.out.println("\n" + "=".repeat(50));
         System.out.println("ROUTE OPTIMIZATION RESULTS - " + scope + ":");
         System.out.println("=".repeat(50));
 
@@ -435,7 +435,7 @@ public class PickingPlanView {
             PickingPlan.PickingPlanResult planResult,
             PickRouteController routeController) {
 
-        System.out.println("\n"+ "=".repeat(50));
+        System.out.println("\n" + "=".repeat(50));
         System.out.println("ROUTE OPTIMIZATION RESULTS - ALL TASKS:");
         System.out.println("=".repeat(50));
 

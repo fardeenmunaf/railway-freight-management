@@ -295,9 +295,16 @@ public class StationService {
 
         List<StationDistance> filteredResults = new ArrayList<>();
         int candidatesChecked = n;
+        int previousCandidatesChecked = 0;
 
         // Keep searching until we have enough results or checked all stations
         while (filteredResults.size() < n && candidatesChecked <= spatial2DTree.getSize()) {
+            // Break if we're not making progress (prevents infinite loop when no matches exist)
+            if (candidatesChecked == previousCandidatesChecked) {
+                break;
+            }
+            previousCandidatesChecked = candidatesChecked;
+
             List<Balanced2DTreeBuilder.Balanced2DTree.StationWithDistance> results =
                     spatial2DTree.findNearestStations(latitude, longitude, candidatesChecked);
 

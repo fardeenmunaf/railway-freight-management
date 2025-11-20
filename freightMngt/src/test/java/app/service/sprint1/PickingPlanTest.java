@@ -712,39 +712,41 @@ public class PickingPlanTest {
      */
     @Test
     public void testPlanPickingTask_SkipsIneligibleOrders() {
-        // Setup warehouse with insufficient inventory
-        WarehouseBay[] bays = createWarehouseStructure(1);
+        // Setup warehouse with insufficient inventory (using unique IDs to avoid conflicts)
+        WarehouseBay[] bays = createWarehouseStructure(501);
 
-        Item item = createItem(10, "SKU-010", 10.0);
-        InventoryLot lot = new InventoryLot(101, 10, 10,  // Only 10 items available
+        Item item = createItem(510, "SKU-510", 10.0);
+        InventoryLot lot = new InventoryLot(5101, 510, 10,  // Only 10 items available
                 LocalDateTime.of(2026, 6, 1, 0, 0),
                 LocalDateTime.of(2025, 10, 1, 10, 0));
 
         lotController.createInventoryLot(lot);
-        InventoryLot lotFromRepo = lotController.getInventoryLotById(101);
+        InventoryLot lotFromRepo = lotController.getInventoryLotById(5101);
 
         List<InventoryLot> lots = new ArrayList<>();
         lots.add(lotFromRepo);
-        InventoryBalance balance = new InventoryBalance(1, bays[0], lots, 10);
+        InventoryBalance balance = new InventoryBalance(501, bays[0], lots, 10);
         balanceController.createInventoryBalance(balance);
 
-        Cart cart = new Cart(1, "Cart-1", 100.0);
+        Cart cart = new Cart(501, "Cart-501", 100.0);
         cartController.createCart(cart);
 
         // Create order requesting 50 items (will be UNDISPATCHABLE in STRICT mode)
-        Order order = new Order(1, "NEW", 1, LocalDateTime.of(2025, 11, 1, 0, 0));
+        Order order = new Order(501, "NEW", 1, LocalDateTime.of(2025, 11, 1, 0, 0));
         orderController.createOrder(order);
 
-        OrderLine orderLine = new OrderLine(1, order, item, 50.0);
+        OrderLine orderLine = new OrderLine(501, order, item, 50.0);
         orderLineController.createOrderLine(orderLine);
 
         // Execute with PARTIAL mode to get allocation
+        PickingPlan.resetSharedAllocation(); // Reset to ensure fresh allocation with new mode
+        pickingPlan.setAllocationMode("PARTIAL");
         PickingPlanResult result = pickingPlan.planPickingTask();
 
         // Verify - should create task because PARTIAL mode allocates what's available
         assertNotNull("Result should not be null", result);
         // In PARTIAL mode, it should allocate the 10 available items
         assertTrue("Should have at least some tasks/waves",
-                result.getPickTasks().size() > 0 || result.getPickWaves().size() > 0);
+                !result.getPickTasks().isEmpty() || !result.getPickWaves().isEmpty());
     }
 }
