@@ -204,8 +204,8 @@ public class Balanced2DTreeBuilder {
             public int compareTo(StationWithDistance other) {
                 int cmp = Double.compare(this.distance, other.distance);
                 if (cmp != 0) return cmp;
-                // If distances are equal, sort by name
-                return this.station.getName().compareTo(other.station.getName());
+                // If distances are equal, sort by name (DESC)
+                return other.station.getName().compareTo(this.station.getName());
             }
         }
 
@@ -319,6 +319,14 @@ public class Balanced2DTreeBuilder {
          */
         public int getHeight() {
             return root == null ? 0 : root.height;
+        }
+
+        /**
+         * Returns the root node of the tree.
+         * Package-private to allow service layer access.
+         */
+        public Node2D getRoot() {
+            return root;
         }
 
         /**
