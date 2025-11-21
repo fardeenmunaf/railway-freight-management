@@ -18,7 +18,7 @@
 #   a0 = 0 em falha (*n_elem < num ou length == 0 com num>0)
 
 move_n_to_array:
-    # caso trivial: num == 0 → sucesso, não mexe em nada
+    # caso trivial: num == 0 -> sucesso, não mexe em nada
     beq     a5, x0, .ret_success        # n == 0
 
     # comprimento inválido
