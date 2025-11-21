@@ -113,6 +113,7 @@ CREATE TABLE PARKING_QUEUE
     parking_track_id NUMBER                         NOT NULL,
     wagon_id         NUMBER                         NOT NULL,
     position_no      NUMBER                         NOT NULL,
+    length_no        NUMBER                         NOT NULL,
     status           VARCHAR2(20) DEFAULT 'WAITING' NOT NULL
 );
 
