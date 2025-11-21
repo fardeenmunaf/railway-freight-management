@@ -39,6 +39,7 @@ public class AppInitializer implements Runnable {
         loadTravelTimeData(repositories);
         loadMockedData();
         loadStations(repositories);
+        loadSampleDispatches(repositories); // Carregar dispatches de exemplo
     }
 
     private void loadBays(Repositories repositories) {
@@ -461,4 +462,211 @@ public class AppInitializer implements Runnable {
         String[] parts = cleaned.split("\\s+");
         return parts[0];
     }
+
+    /**
+     * Loads sample train dispatches for testing the Train Dispatch Scheduler.
+     * Creates example dispatches with complete routes, crossing operations, and timing information.
+     */
+    private void loadSampleDispatches(Repositories repositories) {
+        System.out.println("\n🚂 Loading sample train dispatches...");
+
+        try {
+            // Verificar se já existem facilities e train services
+            List<Facility> facilities = repositories.getFacilityRepository().getAllFacilities();
+            List<TrainService> trainServices = repositories.getTrainServiceRepository().getAllTrainServices();
+
+            if (facilities.isEmpty()) {
+                System.out.println("⚠️  No facilities found. Creating sample facilities first...");
+                createSampleFacilities(repositories);
+                facilities = repositories.getFacilityRepository().getAllFacilities();
+            }
+
+            if (trainServices.isEmpty()) {
+                System.out.println("⚠️  No train services found. Creating sample train services first...");
+                createSampleTrainServices(repositories);
+                trainServices = repositories.getTrainServiceRepository().getAllTrainServices();
+            }
+
+            // Criar dispatches de exemplo
+            int dispatchCount = 0;
+            LocalDateTime baseTime = LocalDateTime.now().plusHours(2);
+
+            // Dispatch 1: Lisboa -> Porto -> Coimbra (PLANNED)
+            if (facilities.size() >= 3 && !trainServices.isEmpty()) {
+                TrainDispatch dispatch1 = createSampleDispatch(
+                    repositories,
+                    trainServices.get(0),
+                    baseTime,
+                    List.of(facilities.get(0).getFacilityId(), facilities.get(1).getFacilityId(), facilities.get(2).getFacilityId()),
+                    "PLANNED"
+                );
+                if (dispatch1 != null) dispatchCount++;
+            }
+
+            // Dispatch 2: Porto -> Braga (DISPATCHED)
+            if (facilities.size() >= 4 && trainServices.size() >= 2) {
+                TrainDispatch dispatch2 = createSampleDispatch(
+                    repositories,
+                    trainServices.size() > 1 ? trainServices.get(1) : trainServices.get(0),
+                    baseTime.plusHours(1),
+                    List.of(facilities.get(1).getFacilityId(), facilities.get(3).getFacilityId()),
+                    "DISPATCHED"
+                );
+                if (dispatch2 != null) dispatchCount++;
+            }
+
+            // Dispatch 3: Coimbra -> Lisboa -> Porto (IN_TRANSIT)
+            if (facilities.size() >= 3 && trainServices.size() >= 3) {
+                TrainDispatch dispatch3 = createSampleDispatch(
+                    repositories,
+                    trainServices.size() > 2 ? trainServices.get(2) : trainServices.get(0),
+                    baseTime.minusHours(1),
+                    List.of(facilities.get(2).getFacilityId(), facilities.get(0).getFacilityId(), facilities.get(1).getFacilityId()),
+                    "IN_TRANSIT"
+                );
+                if (dispatch3 != null) dispatchCount++;
+            }
+
+            System.out.println("✅ Sample dispatches loaded: " + dispatchCount);
+
+        } catch (Exception e) {
+            System.out.println("⚠️  Error loading sample dispatches: " + e.getMessage());
+        }
+    }
+
+    private TrainDispatch createSampleDispatch(Repositories repositories, TrainService trainService,
+                                              LocalDateTime departureTime, List<Integer> facilityIds,
+                                              String status) {
+        try {
+            TrainDispatch dispatch = new TrainDispatch();
+            dispatch.setTrainService(trainService);
+            dispatch.setPlannedDepartureTime(departureTime);
+            dispatch.setRouteType("MANUAL");
+            dispatch.setStatus(status);
+
+            // Criar e adicionar o dispatch
+            dispatch = repositories.getTrainDispatchRepository().addTrainDispatch(dispatch);
+
+            // Criar route points
+            List<RoutePoint> routePoints = new ArrayList<>();
+            double cumulativeDistance = 0.0;
+            double cumulativeTime = 0.0;
+            LocalDateTime currentTime = departureTime;
+
+            for (int i = 0; i < facilityIds.size(); i++) {
+                Facility facility = repositories.getFacilityRepository().getFacilityById(facilityIds.get(i));
+                if (facility == null) continue;
+
+                RoutePoint point = new RoutePoint();
+                point.setTrainDispatch(dispatch);
+                point.setSequenceOrder(i + 1);
+                point.setFacility(facility);
+                point.setDistanceFromStartKm(cumulativeDistance);
+                point.setCumulativeTravelTimeMinutes(cumulativeTime);
+
+                if (i == 0) {
+                    // Primeiro ponto - partida
+                    point.setEstimatedArrivalTime(departureTime);
+                    point.setEstimatedDepartureTime(departureTime);
+                    point.setCrossingOperation("NONE");
+                    point.setExpectedWaitTimeMinutes(0);
+                } else {
+                    // Pontos subsequentes - simular viagem
+                    double segmentDistance = 50.0 + (i * 30.0); // Distância variável
+                    double segmentSpeed = 80.0; // Velocidade média
+                    double segmentTime = (segmentDistance / segmentSpeed) * 60.0; // Minutos
+
+                    cumulativeDistance += segmentDistance;
+                    cumulativeTime += segmentTime;
+                    currentTime = currentTime.plusMinutes((long) segmentTime);
+
+                    point.setEstimatedArrivalTime(currentTime);
+                    point.setDistanceFromStartKm(cumulativeDistance);
+                    point.setCumulativeTravelTimeMinutes(cumulativeTime);
+
+                    // Simular operação de cruzamento em alguns pontos
+                    if (i == 1 && facilityIds.size() > 2) {
+                        point.setCrossingOperation("WAIT_FOR_CROSSING");
+                        point.setExpectedWaitTimeMinutes(10);
+                        point.setIsSingleLineSegment(true);
+                        point.setNotes("Single-line segment - crossing operation required");
+                        currentTime = currentTime.plusMinutes(10);
+                        cumulativeTime += 10;
+                    } else {
+                        point.setCrossingOperation("NONE");
+                        point.setExpectedWaitTimeMinutes(0);
+                        point.setIsSingleLineSegment(false);
+                    }
+
+                    // Tempo de paragem na estação (exceto última)
+                    int stopTime = (i < facilityIds.size() - 1) ? 5 : 0;
+                    currentTime = currentTime.plusMinutes(stopTime);
+                    cumulativeTime += stopTime;
+                    point.setEstimatedDepartureTime(currentTime);
+                }
+
+                routePoints.add(repositories.getRoutePointRepository().addRoutePoint(point));
+            }
+
+            // Atualizar dispatch com totais
+            if (!routePoints.isEmpty()) {
+                RoutePoint lastPoint = routePoints.get(routePoints.size() - 1);
+                dispatch.setTotalDistanceKm(lastPoint.getDistanceFromStartKm());
+                dispatch.setEstimatedTravelTimeMinutes(lastPoint.getCumulativeTravelTimeMinutes());
+                dispatch.setRoute(routePoints);
+                repositories.getTrainDispatchRepository().updateTrainDispatch(dispatch.getDispatchId(), dispatch);
+            }
+
+            return dispatch;
+
+        } catch (Exception e) {
+            System.out.println("⚠️  Error creating dispatch: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void createSampleFacilities(Repositories repositories) {
+        FacilityType stationType = new FacilityType(1, "Station");
+
+        Facility f1 = new Facility(1, "Lisboa Santa Apolónia", stationType, 38.7223, -9.1393, false);
+        Facility f2 = new Facility(2, "Porto Campanhã", stationType, 41.1496, -8.5850, false);
+        Facility f3 = new Facility(3, "Coimbra-B", stationType, 40.2085, -8.4295, false);
+        Facility f4 = new Facility(4, "Braga", stationType, 41.5454, -8.4265, false);
+
+        repositories.getFacilityRepository().addFacility(f1);
+        repositories.getFacilityRepository().addFacility(f2);
+        repositories.getFacilityRepository().addFacility(f3);
+        repositories.getFacilityRepository().addFacility(f4);
+
+        System.out.println("✅ Sample facilities created: 4");
+    }
+
+    private void createSampleTrainServices(Repositories repositories) {
+        // Criar company
+        Company operator = new Company(1, "CP - Comboios de Portugal", "CP", "PT123456789");
+        repositories.getCompanyRepository().addCompany(operator);
+
+        // Criar trains
+        Train train1 = new Train(1, 101, "Lisboa Santa Apolónia", "Porto Campanhã", operator);
+        Train train2 = new Train(2, 202, "Porto Campanhã", "Braga", operator);
+        Train train3 = new Train(3, 303, "Coimbra-B", "Lisboa Santa Apolónia", operator);
+
+        repositories.getTrainRepository().addTrain(train1);
+        repositories.getTrainRepository().addTrain(train2);
+        repositories.getTrainRepository().addTrain(train3);
+
+        // Criar train services
+        LocalDateTime now = LocalDateTime.now();
+
+        TrainService service1 = new TrainService(1, train1, now, now.plusHours(3), null, "scheduled");
+        TrainService service2 = new TrainService(2, train2, now.plusHours(1), now.plusHours(2), null, "scheduled");
+        TrainService service3 = new TrainService(3, train3, now.minusHours(1), now.plusHours(2), null, "in_transit");
+
+        repositories.getTrainServiceRepository().addTrainService(service1);
+        repositories.getTrainServiceRepository().addTrainService(service2);
+        repositories.getTrainServiceRepository().addTrainService(service3);
+
+        System.out.println("✅ Sample train services created: 3");
+    }
 }
+
