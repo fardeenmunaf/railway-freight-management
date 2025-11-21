@@ -1,6 +1,8 @@
 package app.model;
 
 
+import java.util.ArrayList;
+
 /**
  * Represents a facility in the freight management system.
  * A facility is a physical location such as a warehouse, station, or terminal
@@ -16,6 +18,7 @@ public class Facility {
     private Integer facilityId;
     private String name;
     private FacilityType facilityType;
+    private ArrayList<FacilityFeatureType> facilityFeatures;
     private Double lat;
     private Double lon;
     private Boolean isIntermodal;
@@ -49,6 +52,17 @@ public class Facility {
         this.facilityId = facilityId;
         this.name = name;
         this.facilityType = facilityType;
+        this.lat = lat;
+        this.lon = lon;
+        this.isIntermodal = isIntermodal;
+        this.facilityFeatures = null;
+    }
+
+    public Facility(Integer facilityId, String name, FacilityType facilityType, ArrayList<FacilityFeatureType> facilityFeatures, Double lat, Double lon, Boolean isIntermodal) {
+        this.facilityId = facilityId;
+        this.name = name;
+        this.facilityType = facilityType;
+        this.facilityFeatures = facilityFeatures;
         this.lat = lat;
         this.lon = lon;
         this.isIntermodal = isIntermodal;
@@ -174,6 +188,14 @@ public class Facility {
         this.isIntermodal = isIntermodal;
     }
 
+    public ArrayList<FacilityFeatureType> getFacilityFeatures() {
+        return facilityFeatures;
+    }
+
+    public void setFacilityFeatures(ArrayList<FacilityFeatureType> facilityFeatures) {
+        this.facilityFeatures = facilityFeatures;
+    }
+
     @Override
     public String toString() {
         return "Facility{" +
@@ -183,6 +205,7 @@ public class Facility {
                 ", lat=" + lat +
                 ", lon=" + lon +
                 ", isIntermodal=" + isIntermodal +
+                ", facilityFeatures=" + facilityFeatures +
                 '}';
     }
 }

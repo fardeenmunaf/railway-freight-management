@@ -36,11 +36,19 @@ void run_test(char * str, int key, char * str_expected, int expected)
 
 void test_None()
 { 
-    run_test("",0,"",1); 
+    run_test("",0,"",0); 
+}
+void test_None1()
+{ 
+    run_test("",13,"",1); 
 }
 void test_Error()
 { 
     run_test("heu",2,"",0); 
+}
+void test_Error1()
+{ 
+    run_test("HEU",62,"",0); 
 }
 void test_S1() 
 { 
@@ -63,7 +71,9 @@ int main()
 
     UNITY_BEGIN();
     RUN_TEST(test_None);
+    RUN_TEST(test_None1);
     RUN_TEST(test_Error);
+    RUN_TEST(test_Error1);
     RUN_TEST(test_S1);
     RUN_TEST(test_S2);
     RUN_TEST(test_S3);

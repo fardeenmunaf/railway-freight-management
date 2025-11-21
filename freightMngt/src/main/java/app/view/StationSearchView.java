@@ -2,6 +2,7 @@ package app.view;
 
 import app.model.Station;
 import app.service.sprint2.StationService;
+import app.service.sprint2.ServiceRegistry;
 
 import java.util.List;
 import java.util.Scanner;
@@ -25,8 +26,7 @@ public class StationSearchView {
         System.out.println("Search and filter stations by various criteria");
         System.out.println("Type 'b' at any time to return to menu.\n");
 
-        StationService stationService = new StationService();
-        stationService.buildIndexes();
+        StationService stationService = ServiceRegistry.getStationService();
 
         boolean running = true;
 

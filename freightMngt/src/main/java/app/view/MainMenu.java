@@ -13,20 +13,20 @@ public class MainMenu {
 
         //Some menu options to example
         while (true) {
-            System.out.println("----------------------------------");
-            System.out.println("|   Please select an option:     |");
-            System.out.println("| 1. Calculate Travel Time       |");
-            System.out.println("| 2. Bay Content Overview        |");
-            System.out.println("| 3. Dispatch Stock              |");
-            System.out.println("| 4. Relocate Stock              |");
-            System.out.println("| 5. Inventory Orders Pick       |");
-            System.out.println("| 6. Returned Orders Quarantine  |");
-            System.out.println("| 7. Station                     |");
-            System.out.println("| 8. 2DTree                      |");
-            System.out.println("| 9. Nearest Station Search      |");
-            System.out.println("| 10. Train Dispatch Scheduler   |");
-            System.out.println("| 0. Exit                        |");
-            System.out.println("----------------------------------");
+            System.out.println("-----------------------------------");
+            System.out.println("|   Please select an option:      |");
+            System.out.println("| 1. Calculate Travel Time        |");
+            System.out.println("| 2. Bay Content Overview         |");
+            System.out.println("| 3. Dispatch Stock               |");
+            System.out.println("| 4. Relocate Stock               |");
+            System.out.println("| 5. Inventory Orders Pick        |");
+            System.out.println("| 6. Returned Orders Quarantine   |");
+            System.out.println("| 7. Station Search               |");
+            System.out.println("| 8. 2DTree                       |");
+            System.out.println("| 9. Nearest Station Search       |");
+            System.out.println("| 10. Radius Search               |");
+            System.out.println("| 0. Exit                         |");
+            System.out.println("-----------------------------------");
             System.out.print("Enter your choice (0-10): ");
 
             String input = scanner.nextLine();
@@ -67,7 +67,7 @@ public class MainMenu {
                             NearestStationView.display(scanner);
                             break;
                         case 10:
-                            TrainDispatchScheduler.display(scanner);
+                            RadiusSearchView.display(scanner);
                             break;
                         default:
                             System.out.println("Option not implemented yet.");
