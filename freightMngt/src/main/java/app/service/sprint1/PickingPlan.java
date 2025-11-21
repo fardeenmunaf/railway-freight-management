@@ -227,15 +227,17 @@ public class PickingPlan {
 
     /**
      * Inner class to hold the result of picking task planning.
-     * Contains both the list of created PickTasks and PickWaves.
+     * Contains both the list of created PickTasks and PickWaves, plus detailed planning information.
      */
     public static class PickingPlanResult {
         private final List<PickTask> pickTasks;
         private final List<PickWave> pickWaves;
+        private final List<OrderLineProcessingInfo> processingDetails;
 
-        public PickingPlanResult(List<PickTask> pickTasks, List<PickWave> pickWaves) {
+        public PickingPlanResult(List<PickTask> pickTasks, List<PickWave> pickWaves, List<OrderLineProcessingInfo> processingDetails) {
             this.pickTasks = pickTasks;
             this.pickWaves = pickWaves;
+            this.processingDetails = processingDetails;
         }
 
         public List<PickTask> getPickTasks() {
@@ -245,6 +247,120 @@ public class PickingPlan {
         public List<PickWave> getPickWaves() {
             return pickWaves;
         }
+
+        public List<OrderLineProcessingInfo> getProcessingDetails() {
+            return processingDetails;
+        }
+    }
+
+    /**
+     * Inner class to hold detailed information about order line processing.
+     */
+    public static class OrderLineProcessingInfo {
+        private final Integer orderLineId;
+        private final Integer orderId;
+        private final Integer skuId;
+        private final Double qtyRequested;
+        private final String status;
+        private final String errorMessage;
+        private final List<LocationInfo> locations;
+        private final Cart selectedCart;
+        private final Integer cartCapacity;
+        private final Integer pickTaskId;
+        private final Integer wavesCount;
+
+        public OrderLineProcessingInfo(Integer orderLineId, Integer orderId, Integer skuId, 
+                                       Double qtyRequested, String status, String errorMessage,
+                                       List<LocationInfo> locations, Cart selectedCart, 
+                                       Integer cartCapacity, Integer pickTaskId, Integer wavesCount) {
+            this.orderLineId = orderLineId;
+            this.orderId = orderId;
+            this.skuId = skuId;
+            this.qtyRequested = qtyRequested;
+            this.status = status;
+            this.errorMessage = errorMessage;
+            this.locations = locations;
+            this.selectedCart = selectedCart;
+            this.cartCapacity = cartCapacity;
+            this.pickTaskId = pickTaskId;
+            this.wavesCount = wavesCount;
+        }
+
+        // Getters
+        public Integer getOrderLineId() { return orderLineId; }
+        public Integer getOrderId() { return orderId; }
+        public Integer getSkuId() { return skuId; }
+        public Double getQtyRequested() { return qtyRequested; }
+        public String getStatus() { return status; }
+        public String getErrorMessage() { return errorMessage; }
+        public List<LocationInfo> getLocations() { return locations; }
+        public Cart getSelectedCart() { return selectedCart; }
+        public Integer getCartCapacity() { return cartCapacity; }
+        public Integer getPickTaskId() { return pickTaskId; }
+        public Integer getWavesCount() { return wavesCount; }
+    }
+
+    /**
+     * Inner class to hold location information.
+     */
+    public static class LocationInfo {
+        private final String aisle;
+        private final String bay;
+        private final Double qtyAvailable;
+        private final Double qtyToCollect;
+        private final Integer tripsNeeded;
+        private final List<WaveInfo> waves;
+
+        public LocationInfo(String aisle, String bay, Double qtyAvailable, 
+                           Double qtyToCollect, Integer tripsNeeded, List<WaveInfo> waves) {
+            this.aisle = aisle;
+            this.bay = bay;
+            this.qtyAvailable = qtyAvailable;
+            this.qtyToCollect = qtyToCollect;
+            this.tripsNeeded = tripsNeeded;
+            this.waves = waves;
+        }
+
+        // Getters
+        public String getAisle() { return aisle; }
+        public String getBay() { return bay; }
+        public Double getQtyAvailable() { return qtyAvailable; }
+        public Double getQtyToCollect() { return qtyToCollect; }
+        public Integer getTripsNeeded() { return tripsNeeded; }
+        public List<WaveInfo> getWaves() { return waves; }
+    }
+
+    /**
+     * Inner class to hold wave information.
+     */
+    public static class WaveInfo {
+        private final Integer waveId;
+        private final Integer cartId;
+        private final Integer tripNumber;
+        private final Integer totalTrips;
+        private final Double qty;
+        private final Double totalCollected;
+        private final Double totalNeeded;
+
+        public WaveInfo(Integer waveId, Integer cartId, Integer tripNumber, 
+                       Integer totalTrips, Double qty, Double totalCollected, Double totalNeeded) {
+            this.waveId = waveId;
+            this.cartId = cartId;
+            this.tripNumber = tripNumber;
+            this.totalTrips = totalTrips;
+            this.qty = qty;
+            this.totalCollected = totalCollected;
+            this.totalNeeded = totalNeeded;
+        }
+
+        // Getters
+        public Integer getWaveId() { return waveId; }
+        public Integer getCartId() { return cartId; }
+        public Integer getTripNumber() { return tripNumber; }
+        public Integer getTotalTrips() { return totalTrips; }
+        public Double getQty() { return qty; }
+        public Double getTotalCollected() { return totalCollected; }
+        public Double getTotalNeeded() { return totalNeeded; }
     }
 
     /**
@@ -260,8 +376,6 @@ public class PickingPlan {
      * @return PickingPlanResult containing lists of all created PickTasks and PickWaves
      */
     public PickingPlanResult planPickingTask() {
-        System.out.println("\n=== Planning Picking Tasks ===");
-
         // Get all necessary data
         List<OrderLine> orderLines = getAllOrderLines();
         List<Cart> carts = getAllCarts();
@@ -282,8 +396,6 @@ public class PickingPlan {
      * @return PickingPlanResult containing lists of created PickTasks and PickWaves for this order
      */
     public PickingPlanResult planPickingTaskForOrder(Integer orderId) {
-        System.out.println("\n=== Planning Picking Tasks for Order " + orderId + " ===");
-
         // Get all necessary data
         List<OrderLine> allOrderLines = getAllOrderLines();
         List<Cart> carts = getAllCarts();
@@ -294,8 +406,7 @@ public class PickingPlan {
                 .collect(java.util.stream.Collectors.toList());
 
         if (orderLinesForOrder.isEmpty()) {
-            System.out.println("No order lines found for Order " + orderId);
-            return new PickingPlanResult(new ArrayList<>(), new ArrayList<>());
+            return new PickingPlanResult(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         }
 
         // Run allocation to get eligibilities and locations
@@ -326,6 +437,7 @@ public class PickingPlan {
 
         // Track waves created in THIS execution only
         List<PickWave> createdWaves = new ArrayList<>();
+        List<OrderLineProcessingInfo> processingDetails = new ArrayList<>();
 
         // Run allocation to get eligibilities and locations
         List<Allocation.OrderEligibility> eligibilitiesForTask = eligibilities;
@@ -343,48 +455,35 @@ public class PickingPlan {
                 continue;
             }
 
-            System.out.println("\n>>> Processing OrderLine " + orderLine.getOrderLineId() +
-                " (Order " + orderLine.getOrder().getOrderId() + ", SKU " + skuId +
-                ", Qty: " + orderLine.getQty() + ") <<<");
-
             // Get all bay locations for this order line
             List<Allocation.AllocationRecord> itemLocations = getItemLocationsForOrderLine(
                     allocationsForTask, orderLine.getOrder().getOrderId(), skuId);
 
             if (itemLocations.isEmpty()) {
-                System.out.println("  No inventory locations found - skipping OrderLine " +
-                    orderLine.getOrderLineId() + " (Order " + orderLine.getOrder().getOrderId() + ")");
+                processingDetails.add(new OrderLineProcessingInfo(
+                    orderLine.getOrderLineId(), orderLine.getOrder().getOrderId(), skuId,
+                    orderLine.getQty(), "SKIPPED", "No inventory locations found",
+                    new ArrayList<>(), null, null, null, null
+                ));
                 continue;
             }
 
             // Group locations by bay to avoid duplicates and sum quantities
             List<Allocation.AllocationRecord> groupedLocations = groupLocationsByBay(itemLocations);
 
-            // Show bay locations for this order line
-            if (groupedLocations.size() > 1) {
-                System.out.println("🔄 MULTI-BAY ORDER - OrderLine " + orderLine.getOrderLineId() +
-                    " (Order " + orderLine.getOrder().getOrderId() + ") spans " + groupedLocations.size() + " bays:");
-                for (Allocation.AllocationRecord location : groupedLocations) {
-                    System.out.println("   → Bay " + location.getBay() + ": " + location.getQty() + " units");
-                }
-            } else if (groupedLocations.size() == 1) {
-                System.out.println("📍 Single bay - Bay " + groupedLocations.get(0).getBay() +
-                    ": " + groupedLocations.get(0).getQty() + " units");
-            }
-
             // Find the MOST SUITABLE cart for this order line (not round-robin)
             Cart bestCart = findBestCart(carts, orderLine);
 
             if (bestCart == null) {
-                System.out.println("  ERROR: No suitable cart found for OrderLine " + orderLine.getOrderLineId());
+                processingDetails.add(new OrderLineProcessingInfo(
+                    orderLine.getOrderLineId(), orderLine.getOrder().getOrderId(), skuId,
+                    orderLine.getQty(), "ERROR", "No suitable cart found",
+                    new ArrayList<>(), null, null, null, null
+                ));
                 continue;
             }
 
             int cartCapacity = calculateCartCapacity(bestCart, orderLine);
-
-            System.out.println("  Selected Cart " + bestCart.getCartId() +
-                    " (capacity: " + cartCapacity + " items per trip)" +
-                    (cartCapacity >= 5 ? " ✓" : " - LOW CAPACITY WARNING"));
 
             // Create ONE pick task for this order line
             Integer pickTaskId = pickTaskController.getNextPickTaskId();
@@ -394,15 +493,14 @@ public class PickingPlan {
             double qtyNeeded = eligibility.getAllocatedQty();
             double qtyCollected = 0.0;
 
+            List<LocationInfo> locationInfos = new ArrayList<>();
+
             // For each bay location, create waves (trips) until we have enough quantity
             for (Allocation.AllocationRecord location : groupedLocations) {
                 // Check if we've already collected enough
                 if (qtyCollected >= qtyNeeded) {
-                    System.out.println("  Quantity target reached (" + qtyCollected + "/" + qtyNeeded + ") - skipping remaining locations");
                     break;
                 }
-
-                // Use the best cart selected for this order line
 
                 // Calculate how much we still need and how much is available at this location
                 double remainingNeeded = qtyNeeded - qtyCollected;
@@ -413,15 +511,10 @@ public class PickingPlan {
                 int tripsNeeded = calculateTripsNeeded(bestCart, orderLine, qtyToCollectHere);
 
                 if (tripsNeeded < 0) {
-                    System.out.println("  ERROR: Cannot calculate trips for Cart " + bestCart.getCartId());
                     continue;
                 }
 
-                System.out.println("  Location: Aisle " + location.getAisle() +
-                        ", Bay " + location.getBay() +
-                        " - Available: " + qtyAtLocation +
-                        " - To collect: " + qtyToCollectHere +
-                        " - Trips needed: " + tripsNeeded);
+                List<WaveInfo> waveInfos = new ArrayList<>();
 
                 // Create ONE WAVE for EACH TRIP needed at this location
                 double qtyCollectedFromLocation = 0.0;
@@ -445,12 +538,16 @@ public class PickingPlan {
                     qtyCollectedFromLocation += qtyForThisTrip;
                     qtyCollected += qtyForThisTrip;
 
-                    System.out.println("    Wave " + pickWaveId +
-                            ": Cart " + bestCart.getCartId() +
-                            ", Trip " + (trip + 1) + "/" + tripsNeeded +
-                            ", Qty: " + qtyForThisTrip +
-                            " (Total collected: " + qtyCollected + "/" + qtyNeeded + ")");
+                    waveInfos.add(new WaveInfo(
+                        pickWaveId, bestCart.getCartId(), trip + 1, tripsNeeded,
+                        qtyForThisTrip, qtyCollected, qtyNeeded
+                    ));
                 }
+
+                locationInfos.add(new LocationInfo(
+                    location.getAisle(), String.valueOf(location.getBay()), qtyAtLocation,
+                    qtyToCollectHere, tripsNeeded, waveInfos
+                ));
             }
 
             // Create the pick task with all waves for this order line
@@ -467,18 +564,16 @@ public class PickingPlan {
                 pickTaskController.createPickTask(pickTask);
                 tasks.add(pickTask);
 
-                System.out.println("  PickTask " + pickTaskId +
-                        " created with " + pickWaves.size() + " wave(s) (trips)");
+                processingDetails.add(new OrderLineProcessingInfo(
+                    orderLine.getOrderLineId(), orderLine.getOrder().getOrderId(), skuId,
+                    orderLine.getQty(), "SUCCESS", null,
+                    locationInfos, bestCart, cartCapacity, pickTaskId, pickWaves.size()
+                ));
             }
         }
 
-        String orderInfo = specificOrderId != null ? " for Order " + specificOrderId : "";
-        System.out.println("\n=== Picking Task Planning Complete" + orderInfo + " ===");
-        System.out.println("Total Pick Tasks created: " + tasks.size() + " (one per eligible OrderLine)");
-        System.out.println("Total Pick Waves created: " + createdWaves.size() + " (one per trip)");
-
         // Return both lists through PickingPlanResult
-        return new PickingPlanResult(tasks, createdWaves);
+        return new PickingPlanResult(tasks, createdWaves, processingDetails);
     }
 
     /**

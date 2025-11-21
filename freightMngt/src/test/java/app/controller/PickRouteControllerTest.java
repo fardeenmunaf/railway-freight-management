@@ -199,7 +199,7 @@ public class PickRouteControllerTest {
         t3.setOrderLine(ol3);
 
         List<PickTask> tasks = Arrays.asList(t1, t2, t3);
-        PickingPlan.PickingPlanResult planResult = new PickingPlan.PickingPlanResult(tasks, new ArrayList<>());
+        PickingPlan.PickingPlanResult planResult = new PickingPlan.PickingPlanResult(tasks, new ArrayList<>(), new ArrayList<>());
 
         Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> results =
                 controller.calculateRoutesForPickTasks(planResult);

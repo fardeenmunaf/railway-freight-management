@@ -1,7 +1,8 @@
-.section .text
+   .section .text
     .globl encrypt_data
     .type encrypt_data, @function
 
+#With errors because of ide but works on antix/wsl
 # ==========================================================
 # FUNCTION: encrypt_data
 # ----------------------------------------------------------
@@ -32,21 +33,33 @@ encrypt_data:
     sw s3, 0(sp)            # Guarda s3
 
     # --- Guardar parâmetros em registos salvos ---
-    mv s0, a2               # s0 = out
-    mv s1, a0               # s1 = in
+    mv s0, a2               # s0 = out (Endereço original de out)
+    mv s1, a0               # s1 = in (Endereço original de in)
     mv s2, a1               # s2 = key
     li s3, 1                # s3 = return_code = 1 (assume sucesso)
 
     # --- Verificar se a string está vazia ---
-    # CORREÇÃO: Se a string for vazia, o resultado é sucesso (string de saída vazia).
     lb t0, 0(a0)
-    beqz t0, loop_end       # Se *in == '\0', salta para o fim (sucesso).
+    beqz t0, check_key_for_empty_string   # Se *in == '\0', verifica a chave antes de falhar
 
     # --- Verificar se a key ∈ [1, 26] ---
     li t0, 1
     blt s2, t0, failure_key # key < 1 → falha
     li t0, 26
     bgt s2, t0, failure_key # key > 26 → falha
+
+    j loop_start # Continua para o loop principal
+
+check_key_for_empty_string:
+    # A string está vazia. Apenas a chave precisa de ser válida para retornar sucesso (1).
+    # Se a chave for inválida, salta para failure_key.
+    li t0, 1
+    blt s2, t0, failure_key # key < 1 → falha
+    li t0, 26
+    bgt s2, t0, failure_key # key > 26 → falha
+    
+    # Se a chave é válida, salta para o final do loop (sucesso)
+    j loop_end
 
 # ================= LOOP PRINCIPAL =================
 loop_start:
@@ -89,7 +102,7 @@ loop_end:
 failure_key:
 failure_char:
     li s3, 0                # return_code = 0
-    sb zero, 0(s0)          # out = "" (string vazia)
+    sb zero, 0(s0)          # out = "" (string vazia, usando o endereço original s0)
 
 # ================= FIM DA FUNÇÃO =================
 end_function:
