@@ -1,6 +1,8 @@
-#ifndef ASM_H 
-#define ASM_H 
-int move_n_to_array(int* buffer, int length, int * n_elem, int *read, int *write, int num, int* array);
+#ifndef ASM_H
+#define ASM_H
 
-#endif 
+int move_n_to_array(int* buffer, int length,
+                    int *n_elem, int *read, int *write,
+                    int num, int *array);
 
+#endif

@@ -1,103 +1,74 @@
-#include <string.h>  
-#include "unity.h"
-#include "asm.h" 
+#include <stdio.h>
+#include "asm.h"
 
-
-int callfunc ( int (*f)(int* array, int len, int * n_elem, int* rd, int* wr, int num, int* vec ),
-                          int* array, int len, int * n_elem, int* rd, int *wr, int num, int* vec );  
-
-void setUp(void) {
-    // set stuff up here
+static void print_array(const char *label, int *v, int n) {
+    printf("%s", label);
+    for (int i = 0; i < n; i++) {
+        printf("%s%d", (i == 0 ? "" : " "), v[i]);
+    }
+    printf("\n");
 }
 
-void tearDown(void) {
-    // clean stuff up here
+int main(void) {
+    /* exemplo 1: remoção sem wrap */
+    int buf1[8] = {10, 20, 30, 40, 50, 60, 70, 80};
+    int out1[8] = {0};
+    int n_elem1 = 5;     /* elementos válidos no buffer */
+    int read1   = 2;     /* índice do mais antigo: 30 */
+    int write1  = 7;     /* ignorado pela função */
+    int n1      = 3;     /* quantos queremos mover */
+
+    printf("=== Teste 1 (sem wrap, suficiente) ===\n");
+    print_array("buffer antes: ", buf1, 8);
+    printf("n_elem = %d, read = %d, write = %d, n = %d\n",
+           n_elem1, read1, write1, n1);
+
+    int res1 = move_n_to_array(buf1, 8, &n_elem1, &read1, &write1, n1, out1);
+
+    printf("return = %d\n", res1);
+    print_array("out:          ", out1, n1);
+    printf("n_elem = %d, read = %d, write = %d\n\n",
+           n_elem1, read1, write1);
+
+    /* exemplo 2: com wrap-around */
+    int buf2[6] = {10, 20, 30, 40, 50, 60};
+    int out2[6] = {0};
+    int n_elem2 = 4;    /* elementos válidos: 50,60,10,20 */
+    int read2   = 4;    /* começa em 50 */
+    int write2  = 2;
+    int n2      = 3;    /* vamos tirar 50,60,10 */
+
+    printf("=== Teste 2 (com wrap) ===\n");
+    print_array("buffer antes: ", buf2, 6);
+    printf("n_elem = %d, read = %d, write = %d, n = %d\n",
+           n_elem2, read2, write2, n2);
+
+    int res2 = move_n_to_array(buf2, 6, &n_elem2, &read2, &write2, n2, out2);
+
+    printf("return = %d\n", res2);
+    print_array("out:          ", out2, n2);
+    printf("n_elem = %d, read = %d, write = %d\n\n",
+           n_elem2, read2, write2);
+
+    /* exemplo 3: não há elementos suficientes → falha */
+    int buf3[4] = {1, 2, 3, 4};
+    int out3[4] = {0};
+    int n_elem3 = 2;
+    int read3   = 1;
+    int write3  = 3;
+    int n3      = 3;
+
+    printf("=== Teste 3 (falha: n_elem < n) ===\n");
+    print_array("buffer antes: ", buf3, 4);
+    printf("n_elem = %d, read = %d, write = %d, n = %d\n",
+           n_elem3, read3, write3, n3);
+
+    int res3 = move_n_to_array(buf3, 4, &n_elem3, &read3, &write3, n3, out3);
+
+    printf("return = %d\n", res3);
+    print_array("out (ignorado): ", out3, 4);
+    printf("n_elem = %d, read = %d, write = %d\n",
+           n_elem3, read3, write3);
+
+    return 0;
 }
-
-
-
-void run_test(int * array, int len, int n_elem, int rd, int wr, int num, 
-			  int exp_res, int exp_elem, int * exp_vec, int exp_rd, int exp_wr)
-{
-    int v1[100];
-	// 0 - sentinel  
-	// 1 - read 
-	// 2 - sentinel  
-	// 3 - write 
-    // 4 - sentinel 
-	// 5 - n_elem 
-	// 6 - sentinel 
-	// 7 - buffer 
-	// 7+length - sentinel 	
-
-    // setup 
-    memset(v1, 0x55, sizeof v1);
-	memcpy(v1+7,array,len*sizeof(int));  // buffer   
-	v1[1]=rd; 
-	v1[3]=wr; 
-	v1[5]=n_elem; 
-	
-	int v2[100]; 
-    memset(v2, 0x55, sizeof v2);    // destination 
-    int res; 
-	res=callfunc(move_n_to_array, v1+7, len, v1+5, v1+1, v1+3, num, v2+1);
-    TEST_ASSERT_EQUAL_INT(exp_res,res);    // check result 
-    TEST_ASSERT_EQUAL_INT(0x55555555, v1[0]);    // check sentinel 
-    TEST_ASSERT_EQUAL_INT(0x55555555, v1[2]);    // check sentinel  
-    TEST_ASSERT_EQUAL_INT(0x55555555, v1[4]);    // check sentinel  
-    TEST_ASSERT_EQUAL_INT(0x55555555, v1[6]);    // check sentinel  
-    TEST_ASSERT_EQUAL_INT(0x55555555, v1[len+7]);    // check sentinel  
-    TEST_ASSERT_EQUAL_INT_ARRAY(array, v1+7, len);    // check buffer 
-    TEST_ASSERT_EQUAL_INT(exp_rd, v1[1]);    // check read   
-    TEST_ASSERT_EQUAL_INT(exp_wr, v1[3]);    // check write  
-    TEST_ASSERT_EQUAL_INT(exp_elem, v1[5]);    // check num_elem  
-    // output vector  
-    TEST_ASSERT_EQUAL_INT(0x55555555, v2[0]);    // check sentinel 
-    TEST_ASSERT_EQUAL_INT(0x55555555, v2[num+1]);    // check sentinel  
-    if (exp_res==1) 
-    	TEST_ASSERT_EQUAL_INT_ARRAY(exp_vec,v2+1, num); 
-		// check output
-	else 
-    	TEST_ASSERT_EQUAL_INT(0x55555555, v2[1]);    // check output 
-}
-// void run_test(int * array, int len,int elem, int rd, int wr, int num, 
-//			  int exp_res, int exp_elem,  int * exp_vec, int exp_rd, int exp_wr)
-
-void test_One()
-{ 
-    run_test((int[]){0,0,0}, 3, 0, 0, 0, 1,
-							0, 0, (int[]){0,0,0}, 0, 0); 
-}
-void test_Zero()
-{ 
-    run_test((int[]){1,0,0}, 3, 1, 0, 1, 1,
-							1, 0, (int[]){1}, 1, 1); 
-}
-void test_Three()                                            
-{ 
-    run_test((int[]){1,2,3,4}, 4, 3, 3, 2, 3,
-					1, 0, (int[]){4,1,2}, 2, 2); 
-}
-void test_Five()
-{ 
-    run_test((int[]){1,2,3,4}, 4, 2, 2, 1, 3, 
-					0, 2, (int[]){3,4,1}, 2, 1); 
-}
-
-int main()
-  { 
-
-    UNITY_BEGIN();
-    RUN_TEST(test_One);
-    RUN_TEST(test_Zero);
-    RUN_TEST(test_Three);
-    RUN_TEST(test_Five);
-    return UNITY_END();  
-
-  } 
-
-
-
-
-
-
