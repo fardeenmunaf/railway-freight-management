@@ -12,9 +12,10 @@ INSERT INTO GAUGE (gauge_id, name, size_mm) VALUES (4, 'Russian Gauge', 1520);
 INSERT INTO GAUGE (gauge_id, name, size_mm) VALUES (5, 'Narrow Gauge', 900);
 COMMIT;
 
--- Inserir 2 COMPANY (sem FK)
+-- Inserir 3 COMPANY (sem FK)
 INSERT INTO COMPANY (company_id, name, short_name, vat) VALUES (1, 'Infraestruturas de Portugal, SA', 'IP', 'PT503933813');
 INSERT INTO COMPANY (company_id, name, short_name, vat) VALUES (2, 'Medway - Operador Ferroviário de Mercadorias, S.A', 'Medway', 'PT509017800');
+INSERT INTO COMPANY (company_id, name, short_name, vat) VALUES (3, 'Captrain Portugal S.A.', 'Captrain', 'PT507832388');
 COMMIT;
 -- Inserir 5 ROLE (sem FK)
 INSERT INTO "ROLE" (role_id, name) VALUES (1, 'ADMIN');
@@ -48,6 +49,9 @@ COMMIT;
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (1, 'Cereal wagon');
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (2, 'Covered wagon with sliding door');
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (3, 'Container wagon (max 40" HC');
+INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (4, 'Biodiesel wagaon');
+INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (5, 'Biodiesel wagaon');
+INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (6, 'Wood wagon');
 
 COMMIT;
 -- Inserir FACILITY_FEATURE_TYPE (sem FK)
@@ -120,6 +124,10 @@ INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermod
 INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermodal) VALUES (21, 'Caminha', 2, 41.8733, -8.8397, 0);
 INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermodal) VALUES (22, 'Carvalha', 2, 41.9660, -8.7470, 0);
 INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermodal) VALUES (23, 'Carreço', 2, 41.7490, -8.8650, 0);
+INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermodal) VALUES (50, 'Leixões', 5, 41.1833, -8.7020, 1);
+INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermodal) VALUES (45, 'São Mamede de Infesta', 2, 41.1903, -8.6133, 0);
+INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermodal) VALUES (48, 'Leça do Balio', 2, 41.20845, -8.62974, 0);
+INSERT INTO FACILITY (facility_id, name, facility_type_id, lat, lon, is_intermodal) VALUES (43, 'São Gemil', 2, 41.19714, -8.57921, 0);
 COMMIT;
 -- LINE depende de COMPANY (owner_id)
 INSERT INTO LINE (line_id, name, owner_id) VALUES (1, 'Ramal São Bento - Campanhã', 1);
@@ -129,6 +137,12 @@ INSERT INTO LINE (line_id, name, owner_id) VALUES (4, 'Ramal Barcelos - Viana', 
 INSERT INTO LINE (line_id, name, owner_id) VALUES (5, 'Ramal viana - Caminha', 1);
 INSERT INTO LINE (line_id, name, owner_id) VALUES (6, 'Ramal Caminha - Torre', 1);
 INSERT INTO LINE (line_id, name, owner_id) VALUES (7, 'Ramal Torre - Valença', 1);
+INSERT INTO LINE (line_id, name, owner_id) VALUES (8, 'Ramal Caminha - Torre', 1);
+INSERT INTO LINE (line_id, name, owner_id) VALUES (9, 'Ramal Torre - Valença', 1);
+INSERT INTO LINE (line_id, name, owner_id) VALUES (21, 'Ramal Contumil - São Gemil', 1);
+INSERT INTO LINE (line_id, name, owner_id) VALUES (22, 'Ramal São Gemil - São Mamede de Infesta', 1);
+INSERT INTO LINE (line_id, name, owner_id) VALUES (23, 'Ramal São Mamede de Infesta - Leça do Balio', 1);
+INSERT INTO LINE (line_id, name, owner_id) VALUES (24, 'Ramal Leça do Balio - Leixões', 1);
 COMMIT;
 -- WAGON_MODEL depende de WAGON_TYPE
 INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_bogies, bogies, tare_t, payload_t, volume_m3, length_m, width_m, height_m, max_speed_kmh) VALUES
@@ -142,10 +156,17 @@ INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_b
 INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_bogies, bogies, tare_t, payload_t, volume_m3, length_m, width_m, height_m, max_speed_kmh) VALUES
     (985, 'Lgs 22 94 441 6', 3, 'Metalsines', 1, 'Simples', 11.9, 28.1, 76.3, 13.86, 2.85, 1.06, 120);
 INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_bogies, bogies, tare_t, payload_t, volume_m3, length_m, width_m, height_m, max_speed_kmh) VALUES
-    (987, 'Sgnss 12 94 455 2', 3, 'Emef', 2, 'Duplo', 21.6, 68.4, 76.3, 18.12, 2.95, 1.03, 120);
+    (987, 'Sgnss 12 94 455 2', 3, 'Emef', 2, 'Duplo', 21.6, 68.4, 76.3, 18.116, 2.95, 1.03, 120);
 INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_bogies, bogies, tare_t, payload_t, volume_m3, length_m, width_m, height_m, max_speed_kmh) VALUES
-    (988, 'Sgnss 12 94 455 2', 3, 'Emef', 2, 'Duplo', 21.6, 68.4, 76.3, 18.12, 2.95, 1.03, 120);
+    (988, 'Sgnss 12 94 455 2', 3, 'Emef', 2, 'Duplo', 21.6, 68.4, 76.3, 18.116, 2.95, 1.03, 120);
+INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_bogies, bogies, tare_t, payload_t, volume_m3, length_m, width_m, height_m, max_speed_kmh) VALUES
+    (1525, 'Zaes 81 94 788', 4, 'Equimetal', 2, 'Duplo', 22.9, 57.1, 64.6, 13.8, 2.95, 4.226, 120);
+INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_bogies, bogies, tare_t, payload_t, volume_m3, length_m, width_m, height_m, max_speed_kmh) VALUES
+    (1523, 'Zaes 81 94 788', 4, 'Equimetal', 2, 'Duplo', 22.9, 57.1, 64.6, 13.8, 2.95, 4.226, 120);
+INSERT INTO WAGON_MODEL (wagon_model_id, name, wagon_type, constructor, number_bogies, bogies, tare_t, payload_t, volume_m3, length_m, width_m, height_m, max_speed_kmh) VALUES
+    (1212, 'Kbs 41 94 333', 5, 'Equimetal', 2, 'Simples', 14.2, 25.8, 62.7, 14.02, 2.842, 3.3, 120);
 COMMIT;
+
 -- LOCOMOTIVE depende de USER (operator_id) e LOCOMOTIVE_TYPE
 INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn) VALUES
     (5621, 2, 1, 'Inês', 'Siemens', 'Eurosprinter', 1995, 5600, 0.5, 19.2, 3.0, 4.375, 87, 220, 70, 87, 2, 'Bo-Bo', 300);
@@ -155,6 +176,14 @@ INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand
     (5630, 2, 1, 'Helena', 'Siemens', 'Eurosprinter', 1996, 5600, 0.45, 19.2, 3.0, 4.375, 87, 220, 70, 87, 2, 'Bo-Bo', 300);
 INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn) VALUES
     (1903, 2, 2, 'Eva', 'Sorefame - Alsthom', 'CP 1900', 1981, 1623, 0.3, 19.084, 3.062, 4.31, 117, 100, 42.5, 117, 2, 'Co-Co', 396);
+INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn) VALUES
+    (5034, 2, 2, 'Adriana', 'Stadler', 'E4000', 2017, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400);
+INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn) VALUES
+    (5036, 2, 2, 'Marina', 'Stadler', 'E4000', 2017, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400);
+INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn) VALUES
+    (335.001, 3, 2, 'No_Name', 'Stadler', 'E4000', 2019, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400);
+INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn) VALUES
+    (335.003, 3, 2, 'No_Name', 'Stadler', 'E4000', 2019, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400);
 COMMIT;
 -- ORDER_LINE depende de ORDER e ITEM (sku)
 INSERT INTO ORDER_LINE (order_line_id, order_id, sku, qty) VALUES (1, 1, 'ELEC001', 10);
@@ -189,20 +218,53 @@ COMMIT;
 -- ============================================================
 
 -- LINE_SEGMENT depende de LINE e GAUGE
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (1, 1, 2618, 1, 1, 8000, 100, 4, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (10, 2, 29003, 1, 1, 8000, 90, 2, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (11, 2, 10000, 1, 1, 8000, 80, 2, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (15, 3, 5286, 1, 1, 8000, 110, 2, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (16, 3, 6000, 1, 1, 8000, 100, 2, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (14, 4, 10387, 1, 1, 8000, 100, 2, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (12, 4, 12000, 1, 1, 8000, 100, 2, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (13, 4, 8000, 1, 1, 6400, 100, 2, 3);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (20, 5, 6000, 1, 1, 8000, 100, 2, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (21, 5, 3000, 1, 1, 8000, 100, 2, 2);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (22, 5, 15000, 1, 1, 8000, 100, 2, 3);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (25, 6, 20829, 1, 1, 8000, 100, 2, 1);
-INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position) VALUES (26, 7, 4264, 1, 1, 8000, 100, 2, 1);
+INSERT INTO LINE_SEGMENT (segment_id, line_id, length_km, electrif_type, gauge_id, max_weight_kg_m, speed_limit_kmh, track_number, position)
+VALUES (1, 1, 2618, 1, 1, 8000, 100, 4, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (3, 2, 2443, 1, 1, 8000, 100, 4, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (10, 3, 26560, 1, 1, 8000, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (11, 3, 10000, 1, 1, 8000, 100, 2, 2);
+
+INSERT INTO LINE_SEGMENT VALUES (15, 4, 5286, 1, 1, 8000, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (16, 4, 6000, 1, 1, 8000, 100, 2, 2);
+
+INSERT INTO LINE_SEGMENT VALUES (14, 5, 10387, 1, 1, 8000, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (12, 5, 12000, 1, 1, 8000, 100, 2, 2);
+
+INSERT INTO LINE_SEGMENT VALUES (13, 5, 3100, 1, 1, 8000, 100, 2, 3);
+
+INSERT INTO LINE_SEGMENT VALUES (20, 6, 4890, 1, 1, 6400, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (18, 7, 6000, 1, 1, 8000, 100, 1, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (21, 7, 5000, 1, 1, 8000, 100, 1, 2);
+
+INSERT INTO LINE_SEGMENT VALUES (22, 7, 12000, 1, 1, 8000, 100, 1, 3);
+
+INSERT INTO LINE_SEGMENT VALUES (25, 8, 20829, 1, 1, 8000, 100, 1, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (26, 9, 4264, 1, 1, 8000, 100, 1, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (30, 21, 3883, 1, 1, 8000, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (31, 22, 1174, 1, 1, 8400, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (32, 22, 2534, 1, 1, 8000, 100, 2, 2);
+
+INSERT INTO LINE_SEGMENT VALUES (33, 23, 1566, 1, 1, 8000, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (34, 23, 1453, 1, 1, 8000, 100, 2, 2);
+
+INSERT INTO LINE_SEGMENT VALUES (35, 24, 3597, 1, 1, 8100, 100, 2, 1);
+
+INSERT INTO LINE_SEGMENT VALUES (36, 24, 4334, 1, 1, 8000, 100, 2, 2);
 COMMIT;
+
+
 -- WAGON_GAUGE depende de WAGON_MODEL e GAUGE
 INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (1245, 1);
 INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (1278, 1);
@@ -211,6 +273,9 @@ INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (1104, 1);
 INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (985, 1);
 INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (987, 1);
 INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (988, 2);
+INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (1525, 1);
+INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (1523, 2);
+INSERT INTO WAGON_GAUGE (wagon_id, gauge_id) VALUES (1212, 1);
 COMMIT;
 -- WAGON depende de WAGON_MODEL e USER (operator_id)
 -- ATENÇÃO: Devido a um erro no schema, WAGON.wagon_id deve corresponder a WAGON_MODEL.wagon_model_id
@@ -247,9 +312,24 @@ INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (181
 INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (1811012, 1325, 2, 1977);
 INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (1811013, 1325, 2, 1977);
 INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (1811014, 1325, 2, 1977);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330001, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330002, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330003, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330004, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330005, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330006, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330007, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330008, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330009, 1212, 2, 2005);
+INSERT INTO WAGON (wagon_id, wagon_model, operator_id, service_year) VALUES (3330010, 1212, 2, 2005);
 COMMIT;
+
 -- LOCOMOTIVE_DIESEL depende de LOCOMOTIVE
 INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (1903, 4882);
+INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (5034, 6700);
+INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (5036, 6700);
+INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (335.001, 6700);
+INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (335.003, 6700);
 COMMIT;
 --LOCOMOTIVE_ELECTRIC depende de LOCOMOTIVE
 INSERT INTO LOCOMOTIVE_ELECTRIC (locomotive_id, voltage, frequency_hz) VALUES (5621, 25, 50);
@@ -261,6 +341,10 @@ INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5621, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5623, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5630, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (1903, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5034, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5036, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.001, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.003, 1);
 COMMIT;
 -- WAREHOUSE_AISLE depende de WAREHOUSE
 INSERT INTO WAREHOUSE_AISLE (aisle_id, warehouse_id, aisle_no, unique_code) VALUES (1, 1, 1, 'A1');
@@ -284,6 +368,12 @@ INSERT INTO TRAIN (train_id, code, departure, destination, operator_id) VALUES (
 INSERT INTO TRAIN (train_id, code, departure, destination, operator_id) VALUES (5, 'T005', 17, 21, 2);
 INSERT INTO TRAIN (train_id, code, departure, destination, operator_id) VALUES (6, 'T006', 21, 16, 2);
 INSERT INTO TRAIN (train_id, code, departure, destination, operator_id) VALUES (7, 'T007', 16, 11, 2);
+INSERT INTO TRAIN (train_id, code, departure, destination, operator_id) VALUES (5421, 'Medway_5421', 50, 11, 2);
+INSERT INTO TRAIN (train_id, code, departure, destination, operator_id) VALUES (5435, 'Medway_5435', 11, 50, 2);
+INSERT INTO TRAIN (train_id, code, departure, destination, operator_id) VALUES (5437, 'Medway_5437', 11, 50, 2);
+
+COMMIT;
+
 COMMIT;
 -- PARKING_TRACK depende de LINE e FACILITY
 INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacity_wagons) VALUES (1, 1, 5, 'Track A', 10);
@@ -291,40 +381,95 @@ INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacit
 INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacity_wagons) VALUES (3, 3, 8, 'Track C', 15);
 INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacity_wagons) VALUES (4, 4, 11, 'Track D', 18);
 INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacity_wagons) VALUES (5, 5, 16, 'Track E', 12);
+INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacity_wagons) VALUES (6, 6, 48, 'Track F', 13);
+INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacity_wagons) VALUES (7, 7, 45, 'Track G', 14);
+INSERT INTO PARKING_TRACK (parking_track_id, line_id, facility_id, name, capacity_wagons) VALUES (8, 8, 43, 'Track H', 20);
 COMMIT;
 -- ============================================================
 -- NÍVEL 3: Tabelas que dependem do NÍVEL 2
 -- ============================================================
 
--- Ramal 1: São Bento - Campanhã
+-- ==========================================
+-- Ramal 1: São Bento (7) → Campanhã (5)
+-- ==========================================
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (1, 7);
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (1, 5);
 
--- Ramal 2: Campanhã - Nine
-INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (10, 5);
-INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (11, 20);
+-- ==========================================
+-- Ramal 2: Campanhã (5) → Contumil (13)
+-- ==========================================
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (3, 5);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (3, 13);
 
--- Ramal 3: Nine - Barcelos
+-- ==========================================
+-- Ramal 3: Contumil (13) → Nine (20)
+-- ==========================================
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (10, 13);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (10, 20);
+
+-- ==========================================
+-- Ramal 4: Nine (20) → Barcelos (8)
+-- ==========================================
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (15, 20);
-INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (16, 8);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (15, 8);
 
--- Ramal 4: Barcelos - Viana
+-- ==========================================
+-- Ramal 5: Barcelos (8) → Darque (12)
+-- ==========================================
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (14, 8);
-INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (13, 17);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (14, 12);
 
--- Ramal 5: Viana - Caminha
+-- ==========================================
+-- Ramal 6: Darque (12) → Viana do Castelo (17)
+-- ==========================================
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (12, 12);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (12, 17);
+
+-- ==========================================
+-- Ramal 7: Viana (17) → Caminha (21)
+-- ==========================================
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (20, 17);
-INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (22, 21);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (20, 21);
 
--- Ramal 6: Caminha - Torre
+-- ==========================================
+-- Ramal 8: Caminha (21) → S. Pedro da Torre (16)
+-- ==========================================
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (25, 21);
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (25, 16);
 
--- Ramal 7: Torre - Valença
+-- ==========================================
+-- Ramal 9: Torre (16) → Valença (11)
+-- ==========================================
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (26, 16);
 INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (26, 11);
 
+-- ==========================================
+-- Ramal 21: Contumil (13) → São Gemil (43)
+-- ==========================================
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (30, 13);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (30, 43);
+
+-- ==========================================
+-- Ramal 22: São Gemil (43) → São Mamede (45)
+-- ==========================================
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (31, 43);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (31, 45);
+
+-- ==========================================
+-- Ramal 23: São Mamede (45) → Leça do Balio (48)
+-- ==========================================
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (33, 45);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (33, 48);
+
+-- ==========================================
+-- Ramal 24: Leça do Balio (48) → Leixões (50)
+-- ==========================================
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (35, 48);
+INSERT INTO LINE_SEGMENT_FACILITY (line_segment_id, facility_id) VALUES (35, 50);
+
 COMMIT;
+
+
 -- WAREHOUSE_BAY depende de WAREHOUSE_AISLE
 INSERT INTO WAREHOUSE_BAY (bay_id, aisle_id, bay_no, capacity_box) VALUES (1, 1, 1, 500);
 INSERT INTO WAREHOUSE_BAY (bay_id, aisle_id, bay_no, capacity_box) VALUES (2, 2, 2, 600);
@@ -346,24 +491,116 @@ INSERT INTO QUARANTINE_HOLD (qhold_id, return_id, status) VALUES (3, 3, 'ACTIVE'
 INSERT INTO QUARANTINE_HOLD (qhold_id, return_id, status) VALUES (4, 4, 'RELEASED');
 INSERT INTO QUARANTINE_HOLD (qhold_id, return_id, status) VALUES (5, 5, 'ACTIVE');
 COMMIT;
+
 -- TRAIN_SERVICE depende de TRAIN e USER (train_driver_id)
 INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
-    (1, 1, TO_TIMESTAMP('2025-11-01 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-01 10:00:00', 'YYYY-MM-DD HH24:MI:SS'), 3, 'SCHEDULED');
+    (2001, 1, TO_TIMESTAMP('2025-10-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-03 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
 INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
-    (2, 2, TO_TIMESTAMP('2025-11-02 09:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-02 12:00:00', 'YYYY-MM-DD HH24:MI:SS'), 2, 'DEPARTED');
+    (2002, 2, TO_TIMESTAMP('2025-10-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-03 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
 INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
-    (3, 3, TO_TIMESTAMP('2025-11-03 07:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-03 11:00:00', 'YYYY-MM-DD HH24:MI:SS'), 5, 'ARRIVED');
+    (2003, 3, TO_TIMESTAMP('2025-10-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-03 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
 INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
-    (4, 4, TO_TIMESTAMP('2025-11-04 06:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-04 08:30:00', 'YYYY-MM-DD HH24:MI:SS'), 4, 'CANCELLED');
+    (2004, 4, TO_TIMESTAMP('2025-10-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-03 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
 INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
-    (5, 5, TO_TIMESTAMP('2025-11-05 05:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-05 07:00:00', 'YYYY-MM-DD HH24:MI:SS'), 1, 'SCHEDULED');
+    (2005, 5, TO_TIMESTAMP('2025-10-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-03 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
+INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
+    (2006, 6, TO_TIMESTAMP('2025-10-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-03 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
+INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
+    (2007, 7, TO_TIMESTAMP('2025-10-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-03 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
+INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
+    (2050, 5421, TO_TIMESTAMP('2025-10-06 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-06 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
+INSERT INTO TRAIN_SERVICE (service_id, train_id, departure_date, arrival_date, train_driver_id, status) VALUES
+    (2051, 5435, TO_TIMESTAMP('2025-10-06 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-10-06 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), NULL, 'SCHEDULED');
+
+-- TRAIN_SERVICE_COMPOSITION (aponta para SERVICE_LOCOMOTIVE existente)
+-- 2001
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2001, service_locomotive_id, 3330001 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2001;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2001, service_locomotive_id, 3330002 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2001;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2001, service_locomotive_id, 3330004 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2001;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2001, service_locomotive_id, 3330005 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2001;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2001, service_locomotive_id, 3330006 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2001;
+
+-- 2002
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2002, service_locomotive_id, 3563089 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2002;
+
+-- 2003
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2003, service_locomotive_id, 1811011 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2003;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2003, service_locomotive_id, 1811012 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2003;
+
+-- 2004
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2004, service_locomotive_id, 1811013 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2004;
+
+-- 2005
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2005, service_locomotive_id, 3563077 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2005;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2005, service_locomotive_id, 3563078 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2005;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2005, service_locomotive_id, 3563079 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2005;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2005, service_locomotive_id, 3563080 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2005;
+
+-- 2006
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2006, service_locomotive_id, 3330003 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2006;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2006, service_locomotive_id, 3330007 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2006;
+
+-- 2007
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2007, service_locomotive_id, 3563090 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2007;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2007, service_locomotive_id, 3563091 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2007;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2007, service_locomotive_id, 3563092 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2007;
+
+-- 2050
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2050, service_locomotive_id, 3330001 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2050;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2050, service_locomotive_id, 3330002 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2050;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2050, service_locomotive_id, 3330004 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2050;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2050, service_locomotive_id, 3330005 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2050;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2050, service_locomotive_id, 3330006 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2050;
+
+-- 2051
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2051, service_locomotive_id, 1811011 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2051;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2051, service_locomotive_id, 1811012 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2051;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2051, service_locomotive_id, 3563077 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2051;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2051, service_locomotive_id, 3563078 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2051;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2051, service_locomotive_id, 3563079 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2051;
+INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id)
+SELECT 2051, service_locomotive_id, 3563080 FROM SERVICE_LOCOMOTIVE WHERE service_id = 2051;
+
 COMMIT;
+
+
 -- PARKING_QUEUE depende de PARKING_TRACK e WAGON
-INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, status) VALUES (1, 1, 823045, 1, 'WAITING');
-INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, status) VALUES (2, 2, 741001, 1, 'WAITING');
-INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, status) VALUES (3, 3, 1811010, 1, 'WAITING');
-INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, status) VALUES (4, 4, 3563078, 1, 'WAITING');
-INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, status) VALUES (5, 5, 3563090, 1, 'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (1, 1, 823045, 1, 1,  'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (2, 2, 741001, 1, 1, 'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (3, 3, 1811010, 1, 1, 'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (4, 4, 3563078, 1, 1, 'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (5, 5, 3563090, 1, 1, 'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (6, 6, 3563090, 1, 1, 'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (7, 7, 3563090, 2000, 864, 'WAITING');
+INSERT INTO PARKING_QUEUE (parking_queue_id, parking_track_id, wagon_id, position_no, length_no, status) VALUES (8, 8, 3563090, 11000, 266, 'WAITING');
 
 -- INVENTORY_LOT depende de ITEM (sku)
 INSERT INTO INVENTORY_LOT (lot_id, sku, box_code, exp_date, received_date) VALUES (1, 'ELEC001', 'BX1001', TO_DATE('2026-05-01','YYYY-MM-DD'), TO_DATE('2025-09-01','YYYY-MM-DD'));
@@ -390,24 +627,69 @@ INSERT INTO INVENTORY_MOVE (move_id, lot_id, from_bay_id, to_bay_id, qty, reason
 INSERT INTO INVENTORY_MOVE (move_id, lot_id, from_bay_id, to_bay_id, qty, reason) VALUES (4, 4, 4, 5, 40, 'Return Handling');
 INSERT INTO INVENTORY_MOVE (move_id, lot_id, from_bay_id, to_bay_id, qty, reason) VALUES (5, 5, 5, 1, 20, 'Inventory Adjustment');
 COMMIT;
+
 -- SERVICE_LOCOMOTIVE depende de TRAIN_SERVICE e LOCOMOTIVE
-INSERT INTO SERVICE_LOCOMOTIVE (service_locomotive_id, service_id, locomotive_id, position_no) VALUES (1, 1, 5621, 1);
-INSERT INTO SERVICE_LOCOMOTIVE (service_locomotive_id, service_id, locomotive_id, position_no) VALUES (2, 2, 5623, 1);
-INSERT INTO SERVICE_LOCOMOTIVE (service_locomotive_id, service_id, locomotive_id, position_no) VALUES (3, 3, 5630, 1);
-INSERT INTO SERVICE_LOCOMOTIVE (service_locomotive_id, service_id, locomotive_id, position_no) VALUES (4, 4, 1903, 1);
+-- 2001
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2001, 5621, 1);
+
+-- 2002
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2002, 5623, 1);
+
+-- 2003
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2003, 5630, 1);
+
+-- 2004
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2004, 1903, 1);
+
+-- 2005
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2005, 5621, 1);
+
+-- 2006
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2006, 5623, 1);
+
+-- 2007
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2007, 5630, 1);
+
+-- 2050
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2050, 5621, 1);
+
+-- 2051
+INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)
+VALUES (2051, 5630, 1);
+
 COMMIT;
+
 -- TRAIN_STOP depende de TRAIN_SERVICE, FACILITY e PARKING_TRACK
 INSERT INTO TRAIN_STOP (train_stop_id, service_id, facility_id, parking_track, position, sched_arr, sched_dep, planned_stop_time) VALUES
-    (1, 1, 5, 1, 1, TO_TIMESTAMP('2025-11-01 08:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-01 08:45:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+    (1, 2001, 5, 1, 1, TO_TIMESTAMP('2025-11-01 08:30:00', 'YYYY-MM-DD HH24:MI:SS'),
+     TO_TIMESTAMP('2025-11-01 08:45:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+
 INSERT INTO TRAIN_STOP (train_stop_id, service_id, facility_id, parking_track, position, sched_arr, sched_dep, planned_stop_time) VALUES
-    (2, 2, 7, 2, 1, TO_TIMESTAMP('2025-11-02 09:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-02 09:50:00', 'YYYY-MM-DD HH24:MI:SS'), 20);
+    (2, 2002, 7, 2, 1, TO_TIMESTAMP('2025-11-02 09:30:00', 'YYYY-MM-DD HH24:MI:SS'),
+     TO_TIMESTAMP('2025-11-02 09:50:00', 'YYYY-MM-DD HH24:MI:SS'), 20);
+
 INSERT INTO TRAIN_STOP (train_stop_id, service_id, facility_id, parking_track, position, sched_arr, sched_dep, planned_stop_time) VALUES
-    (3, 3, 8, 3, 1, TO_TIMESTAMP('2025-11-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-03 08:15:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+    (3, 2003, 8, 3, 1, TO_TIMESTAMP('2025-11-03 08:00:00', 'YYYY-MM-DD HH24:MI:SS'),
+     TO_TIMESTAMP('2025-11-03 08:15:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+
 INSERT INTO TRAIN_STOP (train_stop_id, service_id, facility_id, parking_track, position, sched_arr, sched_dep, planned_stop_time) VALUES
-    (4, 4, 16, 4, 1, TO_TIMESTAMP('2025-11-04 06:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-04 06:45:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+    (4, 2004, 16, 4, 1, TO_TIMESTAMP('2025-11-04 06:30:00', 'YYYY-MM-DD HH24:MI:SS'),
+     TO_TIMESTAMP('2025-11-04 06:45:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+
 INSERT INTO TRAIN_STOP (train_stop_id, service_id, facility_id, parking_track, position, sched_arr, sched_dep, planned_stop_time) VALUES
-    (5, 5, 11, 5, 1, TO_TIMESTAMP('2025-11-05 05:30:00', 'YYYY-MM-DD HH24:MI:SS'), TO_TIMESTAMP('2025-11-05 05:45:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+    (5, 2005, 11, 5, 1, TO_TIMESTAMP('2025-11-05 05:30:00', 'YYYY-MM-DD HH24:MI:SS'),
+     TO_TIMESTAMP('2025-11-05 05:45:00', 'YYYY-MM-DD HH24:MI:SS'), 15);
+
 COMMIT;
+
 -- PICK_WAVE depende de CART
 INSERT INTO PICK_WAVE (wave_id, cart_id, strategy, status) VALUES (1, 1, 'FIFO', 'OPEN');
 INSERT INTO PICK_WAVE (wave_id, cart_id, strategy, status) VALUES (2, 2, 'LIFO', 'IN_PROGRESS');
@@ -415,17 +697,7 @@ INSERT INTO PICK_WAVE (wave_id, cart_id, strategy, status) VALUES (3, 3, 'ZONE',
 INSERT INTO PICK_WAVE (wave_id, cart_id, strategy, status) VALUES (4, 4, 'FIFO', 'OPEN');
 INSERT INTO PICK_WAVE (wave_id, cart_id, strategy, status) VALUES (5, 5, 'LIFO', 'CANCELLED');
 COMMIT;
--- ============================================================
--- NÍVEL 5: Tabelas que dependem do NÍVEL 4
--- ============================================================APPUSER
 
--- TRAIN_SERVICE_COMPOSITION depende de SERVICE_LOCOMOTIVE e WAGON
-INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id) VALUES (1, 1, 823045);
-INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id) VALUES (2, 2, 741001);
-INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id) VALUES (3, 3, 1811010);
-INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id) VALUES (4, 4, 3563078);
-INSERT INTO TRAIN_SERVICE_COMPOSITION (train_service_id, service_locomotive_id, wagon_id) VALUES (5, 4, 3563091);
-COMMIT;
 -- PICK_TASK depende de PICK_WAVE, ORDER_LINE e INVENTORY_BALANCE
 INSERT INTO PICK_TASK (pick_id, wave_id, order_line_id, balance_id, qty, pos_seq) VALUES (1, 1, 1, 1, 5, 1);
 INSERT INTO PICK_TASK (pick_id, wave_id, order_line_id, balance_id, qty, pos_seq) VALUES (2, 2, 2, 2, 10, 1);

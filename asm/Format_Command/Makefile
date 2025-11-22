@@ -1,42 +1,59 @@
-CC = riscv32-linux-gcc
-CFLAGS = -Wall -Wextra -fanalyzer -g
-ARCHFLAGS = -march=rv32imd -mabi=ilp32d
-LIBRV32 = ${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
+# Utests setup 
 
-TARGET = program.elf
 
-OBJS = main.o format_command.o
+CC=riscv32-linux-gcc
+CFLAGS=-Wall -Wextra -fanalyzer -g
+ARCHFLAGS=-march=rv32imd -mabi=ilp32d
+LIBRV32=${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
-$(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(ARCHFLAGS) $(OBJS) -o $(TARGET)
 
-main.o: main.c 
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c main.c
+space := $(subst ,, ) 		# space macro # not needded 
 
-format_command.o: format_command.s
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c format_command.s
+CURRENT_DIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
 
-clean:
-	rm -f *.o *.elf .gdbinit
+ifeq ($(REPO),)
+  REPO := $(shell dirname $(CURRENT_DIR))
+endif  
+EX_TEST:=$(subst utests,$(REPO),$(CURRENT_DIR)) 
 
-run: $(TARGET)
-	qemu-riscv32 -L $(LIBRV32) ./$(TARGET)
+FILES:=$(shell find $(EX_TEST) -type f \( -iname \*.c -o -iname \*.s \) )  ## all the source files 
+ifeq ($(strip $(FILES)),)
+  export FILES_NOT_FOUND=1 
+  $(error Could not find source files in $(EX_TEST) )
+endif 
+MAIN_FILE:=$(shell grep -l -E 'int[ \t\n]+main' $(FILES))  	##  the file where is "int main" 
+REAL_FILES:=$(filter-out $(MAIN_FILE),$(FILES))			## take it out of the list of files to compile 
+REAL_FILES:=$(filter-out %callfunc.s %unity.c,$(REAL_FILES))	## exclude callfunc.s and unity.c 
+ifeq ($(strip $(REAL_FILES)),)
+  export FILES_NOT_FOUND=1 
+  $(error Could not find source files in $(EX_TEST) )
+endif 
 
-debug: $(TARGET) .gdbinit
-	@echo "On another terminal, run:"
-	@echo "riscv32-linux-gdb --tui ./$(TARGET)"
-	@echo "or paste this command:"
-	@echo -n "cd $(CURDIR) ; riscv32-linux-gdb --tui ./$(TARGET)" | xclip -selection clipboard
-	qemu-riscv32 -L $(LIBRV32) -g 1234 $(TARGET) -S
+REAL_OBJS1:=$(notdir $(REAL_FILES))
+REAL_OBJS2:=$(subst .c,.o,$(REAL_OBJS1)) 
+REAL_OBJS:=$(subst .s,.o,$(REAL_OBJS2)) 
 
-define GDBINIT
-target extended-remote localhost:1234
-set sysroot ~/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
-break main
-continue
-endef
 
-export GDBINIT
+prog.elf: main.o  callfunc.o unity.o $(REAL_OBJS)   
+	$(CC) $(CFLAGS) $(ARCHFLAGS) main.o callfunc.o unity.o $(REAL_OBJS) -o prog.elf  
 
-.gdbinit:
-	@echo "$$GDBINIT" > .gdbinit
+main.o : main.c
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c $< 
+
+callfunc.o : callfunc.s
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c $< 
+
+unity.o : unity.c  
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c  $< -o unity.o  
+
+$(REAL_OBJS):  $(REAL_FILES)  
+	$(CC) $(CFLAGS) $(ARCHFLAGS)  -c $(REAL_FILES) 
+
+run: prog.elf 
+	qemu-riscv32 -L $(LIBRV32) prog.elf 
+
+clean: 
+	rm -f prog.elf *.o 	
+
+full-clean:  
+	rm -f prog.elf *.o unity.o  

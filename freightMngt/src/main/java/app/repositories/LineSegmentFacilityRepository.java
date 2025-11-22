@@ -35,6 +35,23 @@ public class LineSegmentFacilityRepository {
         return result;
     }
 
+    /**
+     * Gets all line segment facility links by facility ID.
+     *
+     * @param facilityId the facility ID
+     * @return list of line segment facility links for the facility
+     */
+    public List<LineSegmentFacility> getLinksByFacility(Integer facilityId) {
+        List<LineSegmentFacility> result = new ArrayList<>();
+        for (LineSegmentFacility lsf : lineSegmentFacilities) {
+            if (lsf.getFacility() != null && facilityId != null &&
+                facilityId.equals(lsf.getFacility().getFacilityId())) {
+                result.add(lsf);
+            }
+        }
+        return result;
+    }
+
     public boolean deleteLineSegmentFacility(Integer segmentId, Integer facilityId) {
         return lineSegmentFacilities.removeIf(lsf ->
             lsf.getLineSegment() != null && lsf.getFacility() != null &&

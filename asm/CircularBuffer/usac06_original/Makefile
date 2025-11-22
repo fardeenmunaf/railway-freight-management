@@ -5,7 +5,7 @@ ARCHFLAGS = -march=rv32imd -mabi=ilp32d
 LIBRV32 = ${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
 # Ficheiros do projeto
-OBJS = main.o enqueue_value.o
+OBJS = main.o dequeue_value.o
 TARGET = circular_buffer.elf
 
 # -------------------------------------------------------------------
@@ -18,8 +18,8 @@ $(TARGET): $(OBJS)
 main.o: main.c
 	$(CC) $(CFLAGS) $(ARCHFLAGS) -c main.c -o main.o
 
-enqueue_value.o: enqueue_value.s
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c enqueue_value.s -o enqueue_value.o
+dequeue_value.o: dequeue_value.s
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c dequeue_value.s -o dequeue_value.o
 
 # -------------------------------------------------------------------
 # Execução
@@ -34,4 +34,3 @@ run: $(TARGET)
 
 clean:
 	rm -f *.o *.elf .gdbinit
-

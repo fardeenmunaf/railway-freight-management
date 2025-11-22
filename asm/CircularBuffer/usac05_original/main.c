@@ -103,5 +103,4 @@ int main(void) {
 
     printf("\n=== Teste Concluído ===\n");
     return 0;
-}
-
+}                                                                                                                     
