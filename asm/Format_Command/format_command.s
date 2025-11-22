@@ -3,196 +3,181 @@
 
 format_command:
 
-    # Config Stack
+    # Configuração da pilha
+    addi    sp, sp, -16             # Reserva 16 bytes na pilha
+    sw      ra, 12(sp)              # Guarda endereço de retorno
+    sw      s0, 8(sp)               # Guarda s0
+    sw      s1, 4(sp)               # Guarda s1
+    sw      s2, 0(sp)               # Guarda s2
 
-    addi    sp, sp, -16
-    sw      ra, 12(sp)
-    sw      s0, 8(sp)
-    sw      s1, 4(sp)
-    sw      s2, 0(sp)
+    mv      s0, a0                  # s0 = ponteiro da string de entrada (op) - READ ONLY
+    mv      s1, a2                  # s1 = ponteiro da string de saída (cmd)
+    mv      s2, a1                  # s2 = valor n
 
-    mv      s0, a0      # s0 = op pointer (input)
-    mv      s1, a2      # s1 = cmd pointer (output)
-    mv      s2, a1      # s2 = n (temporarily saved)
+#-----------------------------------------------------ENCONTRAR INÍCIO (IGNORAR ESPAÇOS INICIAIS)----------------------------------------
 
+    mv t0, s0                       # t0 = posição atual na string de entrada
 
-#-----------------------------------------------------TRIM--------------------------------------------------------------------------
+find_start:
+    lbu t1, 0(t0)                   # lê o byte atual
+    beqz t1, unsuccess              # se '\0', string vazia ou só espaços → erro
+    li t2, 0x20                     # ASCII do espaço
+    beq t1, t2, skip_leading_space  # se for espaço, ignorar
+    j found_start                   # encontrou o primeiro caractere não-espaço
 
-# Primeiro, encontra a posiçao do primeiro char nao-espaço e altera o pointer para essa posiçao
+skip_leading_space:
+    addi t0, t0, 1                  # avançar para o próximo carácter
+    j find_start                    # repetir loop
 
-    mv t0, s0           # passar o ponteiro para t0 
+found_start:
+    # t0 aponta para o primeiro caractere não-espaço
+    # Agora vamos encontrar o último carácter válido
 
-trim_before:
-    lbu t1, 0(t0)                       # lê o byte atual da string
-    beq t1, zero, trim_before_done      # se for '\0', string vazia, termina
-    li t2, 0x20                         # ASCII do espaço ' '
-    beq t1, t2, trim_next               # se for espaço, avança
-    j trim_before_done                  # encontrou caractere não-espaço, termina
+    mv t3, t0                       # t3 = posição do último carácter válido
+    mv t4, t0                       # t4 = posição de varrimento atual
 
-trim_next:
-    addi t0, t0, 1              # avança o ponteiro
-    j trim_before               # repete o ciclo
+find_last_valid:
+    lbu t5, 0(t4)                   # lê o byte atual
+    beqz t5, process_command        # se '\0', terminou a varredura
+    li t6, 0x20                     # ASCII do espaço
+    bne t5, t6, update_last_valid   # se não for espaço, actualizar último válido
+    addi t4, t4, 1                  # avançar ponteiro
+    j find_last_valid               # continuar loop
 
-trim_before_done:
-    mv s0, t0                   # s0 agora aponta para o primeiro caractere não-espaço
+update_last_valid:
+    mv t3, t4                       # actualiza a posição do último carácter válido
+    addi t4, t4, 1                  # avançar ponteiro
+    j find_last_valid               # continuar loop
 
-# ----------------------------------------------------------------------------------------------------------------------------------
-# De seguida precisamos de dar encontrar o final da string e remover todos os espaços ate encontrar uma letra
+#-----------------------------------------------------PROCESSAR COMANDO----------------------------------------------------------
 
-    mv t3, s0                   # passar o ponteiro para t3
-    
-find_end:
-    lbu t4, 0(t3)                               # lê byte
-    beq t4, zero, back_to_last_valid_char       # se for '\0' chegamos ao final
-    addi t3, t3, 1                              # avança o ponteiro
-    j find_end                                  # volta ao loop
+process_command:
+    # t0 = primeiro carácter não-espaço
+    # t3 = último carácter não-espaço
+    # Calcula comprimento
+    sub t4, t3, t0                  # t4 = t3 - t0
+    addi t4, t4, 1                  # t4 = comprimento real
 
-back_to_last_valid_char:
-    addi t3, t3, -1                 # recua para o último caractere válido (antes de '\0')
+    # Verifica se o comprimento é 2 ou 3
+    li t5, 2
+    beq t4, t5, check_two_letter    # se 2 → comando de 2 letras
+    li t5, 3
+    beq t4, t5, check_three_letter# se 3 → comando de 3 letras
+    j unsuccess                     # comprimento inválido → erro
 
-trim_after:
-    blt t3, s0, trim_after_done     # se recuou até antes do início, parar (verificaçao de string vazia ou so com espaços)
-    lbu t4, 0(t3)                   # lê o caractere atual
-    li t5, 0x20                     # ASCII do espaço ' '
-    bne t4, t5, trim_after_done     # se não é espaço, terminou
-    addi t3, t3, -1                 # recua uma posiçao no ponteiro
-    j trim_after
+check_two_letter:
+    # Carrega e converte primeira letra para maiúscula
+    lbu t1, 0(t0)                   # primeiro char
+    jal ra, to_upper                # converte em maiúscula
+    mv a3, t1                       # guarda resultado em a3
 
-trim_after_done:
-    addi t3, t3, 1                  # nova posiçao de '\0'
-    sb zero, 0(t3)                  # adiciona '\0' a t3
+    # Carrega e converte segunda letra para maiúscula
+    lbu t1, 1(t0)                   # segundo char
+    jal ra, to_upper                # converte em maiúscula
+    mv a4, t1                       # guarda resultado em a4
 
-#------------------------------------------------------UPPER CASE-----------------------------------------------------------------
-    
-    mv t5, s0                       # copia ponteiro para t5
+    # Verifica comandos válidos de duas letras: RE, YE, GE, RB
+    li t2, 0x52                     # 'R'
+    bne a3, t2, check_ye_cmd        # se não for 'R' → verifica YE
+    li t2, 0x45                     # 'E'
+    beq a4, t2, valid_two_letter    # RE encontrado
+    li t2, 0x42                     # 'B'
+    beq a4, t2, valid_two_letter    # RB encontrado
+    j unsuccess                     # inválido
 
-upper_case:
-    lbu t6, 0(t5)                   # carrega byte para t6
-    beqz t6, compare_RE             # Se t6 igual a '\0', acabou o upper
-    li t1, 0x61                     # codigo ASCII de 'a'
-    li t2, 0x7A                     # codigo ASCII de 'z'  
-    bltu t6, t1, skip_upper_case    # nao é minuscula 
-    bgtu t6, t2, skip_upper_case    # nao é minuscula
-    addi t6, t6, -32                # converte em maiuscula
-    sb t6, 0(t5)                    # carrega o byte para t5
-    addi t5, t5, 1                  # anda o ponteiro para frente
-    j upper_case                    # continua o loop
+check_ye_cmd:
+    li t2, 0x59                     # 'Y'
+    bne a3, t2, check_ge_cmd        # se não for 'Y' → verifica GE
+    li t2, 0x45                     # 'E'
+    beq a4, t2, valid_two_letter    # YE encontrado
+    j unsuccess                     # inválido
 
-skip_upper_case:
-    addi t5, t5, 1                  # anda o ponteiro para frente
-    j upper_case                    # volta ao loop
+check_ge_cmd:
+    li t2, 0x47                     # 'G'
+    bne a3, t2, unsuccess           # se não for 'G' → inválido
+    li t2, 0x45                     # 'E'
+    beq a4, t2, valid_two_letter    # GE encontrado
+    j unsuccess                     # inválido
 
-#-----------------------------------------------------COMPARE--------------------------------------------------------------------
+check_three_letter:
+    # Carrega e converte caracteres para maiúscula
+    lbu t1, 0(t0)                   # primeiro char
+    jal ra, to_upper
+    mv a3, t1
+    lbu t1, 1(t0)                   # segundo char
+    jal ra, to_upper
+    mv a4, t1
+    lbu t1, 2(t0)                   # terceiro char
+    jal ra, to_upper
+    mv a5, t1
 
-compare_RE:
-    lbu t0, 0(s0)                   # carrega primeiro char de op
-    li t3, 0x52                     # 'R'
-    bne t0, t3, compare_YE          # nao é RE
+    # Verifica se é GTH
+    li t2, 0x47                     # 'G'
+    bne a3, t2, unsuccess
+    li t2, 0x54                     # 'T'
+    bne a4, t2, unsuccess
+    li t2, 0x48                     # 'H'
+    bne a5, t2, unsuccess
 
-    lbu t1, 1(s0)                   # carrega segundo char de op
-    li t4, 0x45                     # 'E'
-    bne t1, t4, compare_YE          # nao é RE
-
-    lbu t2, 2(s0)                   # carrega o 3 char (deve ser \0)
-    beqz t2, cmd_two_letter         # se for 0 é RE
-
-compare_YE:
-    lbu t0, 0(s0)                   # carrega primeiro char de op
-    li t3, 0x59                     # 'Y'
-    bne t0, t3, compare_GE          # nao é YE
-
-    lbu t1, 1(s0)                   # carrega segundo char de op
-    li t4, 0x45                     # 'E'
-    bne t1, t4, compare_GE          # nao é YE
-
-    lbu t2, 2(s0)                   # carrega o 3 char (deve ser \0)
-    beqz t2, cmd_two_letter         # se for 0 é YE
-
-compare_GE:
-    lbu t0, 0(s0)                   # carrega primeiro char de op
-    li t3, 0x47                     # 'G'
-    bne t0, t3, compare_RB          # nao é GE
-
-    lbu t1, 1(s0)                   # carrega segundo char de op
-    li t4, 0x45                     # 'E'
-    bne t1, t4, compare_RB          # nao é GE
-
-    lbu t2, 2(s0)                   # carrega o 3 char (deve ser \0)
-    beqz t2, cmd_two_letter         # se for 0 é GE
-
-compare_RB:
-    lbu t0, 0(s0)                   # carrega primeiro char de op
-    li t3, 0x52                     # 'R'
-    bne t0, t3, compare_GTH         # nao é RB 
-
-    lbu t1, 1(s0)                   # carrega segundo char de op
-    li t4, 0x42                     # 'B'
-    bne t1, t4, compare_GTH         # nao é RB
-
-    lbu t2, 2(s0)                   # carrega o 3 char (deve ser \0)
-    beqz t2, cmd_two_letter         # se for 0 é RB
-
-compare_GTH:
-    lbu t0, 0(s0)                   # carrega primeiro char de op
-    li t3, 0x47                     # 'G'
-    bne t0, t3, unsuccess           # nao é GTH
-
-    lbu t1, 1(s0)                   # carrega segundo char de op
-    li t4, 0x54                     # 'T'
-    bne t1, t4, unsuccess           # nao é GTH
-
-    lbu t2, 2(s0)                   # carrega o 3 char
-    li t5, 0x48                     # 'H'
-    bne t2, t5, unsuccess           # nao é GTH
-
-    lbu t3, 3(s0)                   # carrega o 4 char (deve ser \0)
-    beqz t3, cmd_three_letter       # se for 0 é GTH
-
-cmd_two_letter:
-
-    mv t3, s2                   # carrega n para t3
-    bltz t3, unsuccess          # n < 0
-    li t4, 99                   # t4 = 99
-    bgt t3, t4, unsuccess       # n > 99
-    sb t0, 0(s1)                # cmd[0] = primeiro char de op
-    sb t1, 1(s1)                # cmd[1] = segundo char de op
-    li t4, 0x2C                 # t4 = ','
-    sb t4, 2(s1)                # cmd [2] = ','
-    li t4, 10                   # t4 = 10
-    div t5, t3, t4              # t5 = t3 / 10 (dezenas)
-    rem t6, t3, t4              # t6 = t3 % 10 (unidades)
-    addi t5, t5, 0x30           # converte para ASCII
-    addi t6, t6, 0x30           # converte para ASCII
-    sb t5, 3(s1)                # cmd[3] = dezenas
-    sb t6, 4(s1)                # cmd[4] = unidades
-    sb zero, 5(s1)              # cmd [5] = '\0'
+    # GTH é válido - não precisa de número
+    sb a3, 0(s1)                    # cmd[0] = 'G'
+    sb a4, 1(s1)                    # cmd[1] = 'T'
+    sb a5, 2(s1)                    # cmd[2] = 'H'
+    sb zero, 3(s1)                  # cmd[3] = '\0'
     j success
 
-cmd_three_letter:
-    sb t0, 0(s1)                # cmd[0] = primeiro char de op
-    sb t1, 1(s1)                # cmd[1] = segundo char de op
-    sb t2, 2(s1)                # cmd[2] = terceiro char de op
-    sb zero, 3(s1)              # cmd [3] = '\0'
+valid_two_letter:
+    # Verifica se n está no intervalo [0, 99]
+    bltz s2, unsuccess              # n < 0 → erro
+    li t5, 99
+    bgt s2, t5, unsuccess           # n > 99 → erro
+
+    # Escreve comando no buffer de saída
+    sb a3, 0(s1)                    # cmd[0] = primeira letra
+    sb a4, 1(s1)                    # cmd[1] = segunda letra
+    li t5, 0x2C                     # ','
+    sb t5, 2(s1)                    # cmd[2] = ','
+
+    # Converte n em dois dígitos ASCII
+    li t5, 10
+    div t6, s2, t5                  # t6 = dezenas
+    rem a6, s2, t5                  # a6 = unidades
+    addi t6, t6, 0x30               # converte dezenas para ASCII
+    addi a6, a6, 0x30               # converte unidades para ASCII
+    sb t6, 3(s1)                    # cmd[3] = dezena
+    sb a6, 4(s1)                    # cmd[4] = unidade
+    sb zero, 5(s1)                  # cmd[5] = '\0'
     j success
+
+#-----------------------------------------------------HELPER: TO_UPPER--------------------------------------------------------------------
+# Entrada: t1 = carácter
+# Saída: t1 = carácter em maiúscula
+to_upper:
+    li t2, 0x61                     # 'a'
+    li t6, 0x7A                     # 'z'
+    bltu t1, t2, to_upper_done      # se menor que 'a' → não altera
+    bgtu t1, t6, to_upper_done      # se maior que 'z' → não altera
+    addi t1, t1, -32                # converte minúscula para maiúscula
+to_upper_done:
+    ret
 
 #----------------------------------------------------RETURN-------------------------------------------------------------------------
-# Restaurar a pilha, return 1 se bem sucedido, 0 se houver erro
 
 success:
-    lw      ra, 12(sp)
-    lw      s0, 8(sp)
-    lw      s1, 4(sp)
-    lw      s2, 0(sp)
-    addi    sp, sp, 16
-    li a0, 1
+    lw      ra, 12(sp)              # restaura ra
+    lw      s0, 8(sp)               # restaura s0
+    lw      s1, 4(sp)               # restaura s1
+    lw      s2, 0(sp)               # restaura s2
+    addi    sp, sp, 16              # desaloca pilha
+    li a0, 1                        # return 1 (sucesso)
     ret
 
 unsuccess:
-    sb zero, 0(s1)              # Clear cmd buffer (cmd[0] = '\0')
-    lw      ra, 12(sp)
-    lw      s0, 8(sp)
-    lw      s1, 4(sp)
-    lw      s2, 0(sp)
-    addi    sp, sp, 16
-    li a0, 0
+    sb zero, 0(s1)                  # limpa buffer de saída (cmd[0] = '\0')
+    lw      ra, 12(sp)              # restaura ra
+    lw      s0, 8(sp)               # restaura s0
+    lw      s1, 4(sp)               # restaura s1
+    lw      s2, 0(sp)               # restaura s2
+    addi    sp, sp, 16              # desaloca pilha
+    li a0, 0                        # return 0 (erro)
     ret
