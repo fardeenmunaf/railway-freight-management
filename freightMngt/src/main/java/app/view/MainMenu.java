@@ -10,8 +10,6 @@ public class MainMenu {
 
         System.out.println("Welcome to the Freight Management System Main Menu");
 
-
-        //Some menu options to example
         while (true) {
             System.out.println("-----------------------------------");
             System.out.println("|   Please select an option:      |");
@@ -25,15 +23,16 @@ public class MainMenu {
             System.out.println("| 8. 2DTree                       |");
             System.out.println("| 9. Nearest Station Search       |");
             System.out.println("| 10. Radius Search               |");
+            System.out.println("| 11. Range Query                 |");
             System.out.println("| 0. Exit                         |");
             System.out.println("-----------------------------------");
-            System.out.print("Enter your choice (0-10): ");
+            System.out.print("Enter your choice (0-11): ");
 
             String input = scanner.nextLine();
             try {
                 choice = Integer.parseInt(input);
-                if (choice < 0 || choice > 10) {
-                    System.out.println("Invalid choice. Please enter a number between 0 and 10.");
+                if (choice < 0 || choice > 11) {
+                    System.out.println("Invalid choice. Please enter a number between 0 and 11.");
                 } else if (choice == 0) {
                     System.out.println("Exiting the system. Goodbye!");
                     System.exit(0);
@@ -68,6 +67,9 @@ public class MainMenu {
                             break;
                         case 10:
                             RadiusSearchView.display(scanner);
+                            break;
+                        case 11:
+                            RangeQueryView.display(scanner);
                             break;
                         default:
                             System.out.println("Option not implemented yet.");

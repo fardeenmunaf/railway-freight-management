@@ -18,11 +18,9 @@ class RangeQueryServiceTest {
 
     @BeforeAll
     static void setup() {
-        // Criar tipos de facility
         FacilityType STATION = new FacilityType(2, "Station");
         FacilityType AIRPORT = new FacilityType(3, "Airport");
 
-        // Criar lista de estações
         stations = new ArrayList<>();
         stations.add(new Station(1, "Lisboa Oriente", STATION,
                 38.7680, -9.1010, true, "PT", "Europe/Lisbon", "WET",
@@ -43,22 +41,21 @@ class RangeQueryServiceTest {
                 41.2356, -8.6781, true, "PT", "Europe/Lisbon", "WET",
                 false, false, true));
 
-        // Construir a árvore 2D
         Balanced2DTree tree = new Balanced2DTree();
         tree.bulkBuild(stations);
 
-        // Inicializar service
         service = new RangeQueryService(tree);
     }
 
     @Test
     void testRectangularQuery() {
-        // Queremos apenas estações dentro de um retângulo
-        List<Station> result = service.rangeQuery(38.7, 38.8, -9.2, -9.0,
+        RangeQueryService.RangeQueryResult result = service.rangeQuery(38.7, 38.8, -9.2, -9.0,
                 null, null, null);
 
-        assertEquals(2, result.size());
-        for (Station s : result) {
+        List<Station> resultStations = result.stations;
+
+        assertEquals(2, resultStations.size());
+        for (Station s : resultStations) {
             assertTrue(s.getLat() >= 38.7 && s.getLat() <= 38.8);
             assertTrue(s.getLon() >= -9.2 && s.getLon() <= -9.0);
         }
@@ -66,36 +63,52 @@ class RangeQueryServiceTest {
 
     @Test
     void testCountryFilter() {
-        List<Station> result = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
+        RangeQueryService.RangeQueryResult result = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
                 null, null, "PT");
 
-        // Apenas estações PT
-        for (Station s : result) {
+        List<Station> resultStations = result.stations;
+
+        for (Station s : resultStations) {
             assertEquals("PT", s.getCountry());
         }
     }
 
     @Test
     void testMainStationFilter() {
-        List<Station> result = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
+        RangeQueryService.RangeQueryResult result = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
                 null, true, "PT");
 
-        // Apenas main stations
-        for (Station s : result) {
+        List<Station> resultStations = result.stations;
+
+        for (Station s : resultStations) {
             assertTrue(s.getIsMainStation());
         }
     }
 
     @Test
+    void testMultipleCountriesFilter() {
+        RangeQueryService.RangeQueryResult result = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
+                null, null, "PT,ES");
+
+        List<Station> resultStations = result.stations;
+
+        assertFalse(resultStations.isEmpty());
+
+        for (Station s : resultStations) {
+            assertTrue(s.getCountry().equals("PT") || s.getCountry().equals("ES"));
+        }
+    }
+
+    @Test
     void testPerformanceVsFullScan() {
-        // Medir tempo do range query
         long startKD = System.nanoTime();
-        List<Station> kdResult = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
+        RangeQueryService.RangeQueryResult kdResult = service.rangeQuery(36.0, 43.0, -10.0, -6.0,
                 null, null, null);
         long endKD = System.nanoTime();
 
-        // Medir tempo de full scan (simulação)
-        long startFull = System.nanoTime();
+        RangeQueryService.RangeQueryResult fullScanResult = kdResult;
+
+        // Simular full scan
         List<Station> fullScan = new ArrayList<>();
         for (Station s : stations) {
             if (s.getLat() >= 36.0 && s.getLat() <= 43.0 &&
@@ -105,15 +118,15 @@ class RangeQueryServiceTest {
         }
         long endFull = System.nanoTime();
 
-        // Resultados devem ser iguais
-        assertEquals(fullScan.size(), kdResult.size());
+        List<Station> kdStations = kdResult.stations;
 
-        // KD-tree deve ser mais rápida (em média)
+        assertEquals(fullScan.size(), kdStations.size());
+
         long kdTime = endKD - startKD;
-        long fullTime = endFull - startFull;
+        long fullTime = endFull - endKD;  // Ajustado para medir full scan depois do kd
 
         System.out.printf("Range query KD-tree: %d ns, full scan: %d ns%n", kdTime, fullTime);
 
-        assertTrue(kdTime <= fullTime * 5); // aceitável em micro-dataset
+        assertTrue(kdTime <= fullTime * 5);
     }
 }
