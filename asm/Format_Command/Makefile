@@ -1,59 +1,19 @@
-# Utests setup 
+CC        = riscv32-linux-gcc
+CFLAGS    = -Wall -Wextra -fanalyzer -g
+ARCHFLAGS = -march=rv32imd -mabi=ilp32d
+LIBRV32   = $(HOME)/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
+program.elf: main.o format_command.o
+	$(CC) $(CFLAGS) $(ARCHFLAGS) main.o format_command.o -o program.elf
 
-CC=riscv32-linux-gcc
-CFLAGS=-Wall -Wextra -fanalyzer -g
-ARCHFLAGS=-march=rv32imd -mabi=ilp32d
-LIBRV32=${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
+main.o: main.c asm.h
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c main.c
 
+format_command.o: format_command.s asm.h
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c format_command.s
 
-space := $(subst ,, ) 		# space macro # not needded 
+clean:
+	rm -f *.o *.elf
 
-CURRENT_DIR:=$(strip $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST)))))
-
-ifeq ($(REPO),)
-  REPO := $(shell dirname $(CURRENT_DIR))
-endif  
-EX_TEST:=$(subst utests,$(REPO),$(CURRENT_DIR)) 
-
-FILES:=$(shell find $(EX_TEST) -type f \( -iname \*.c -o -iname \*.s \) )  ## all the source files 
-ifeq ($(strip $(FILES)),)
-  export FILES_NOT_FOUND=1 
-  $(error Could not find source files in $(EX_TEST) )
-endif 
-MAIN_FILE:=$(shell grep -l -E 'int[ \t\n]+main' $(FILES))  	##  the file where is "int main" 
-REAL_FILES:=$(filter-out $(MAIN_FILE),$(FILES))			## take it out of the list of files to compile 
-REAL_FILES:=$(filter-out %callfunc.s %unity.c,$(REAL_FILES))	## exclude callfunc.s and unity.c 
-ifeq ($(strip $(REAL_FILES)),)
-  export FILES_NOT_FOUND=1 
-  $(error Could not find source files in $(EX_TEST) )
-endif 
-
-REAL_OBJS1:=$(notdir $(REAL_FILES))
-REAL_OBJS2:=$(subst .c,.o,$(REAL_OBJS1)) 
-REAL_OBJS:=$(subst .s,.o,$(REAL_OBJS2)) 
-
-
-prog.elf: main.o  callfunc.o unity.o $(REAL_OBJS)   
-	$(CC) $(CFLAGS) $(ARCHFLAGS) main.o callfunc.o unity.o $(REAL_OBJS) -o prog.elf  
-
-main.o : main.c
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c $< 
-
-callfunc.o : callfunc.s
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c $< 
-
-unity.o : unity.c  
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -I . -c  $< -o unity.o  
-
-$(REAL_OBJS):  $(REAL_FILES)  
-	$(CC) $(CFLAGS) $(ARCHFLAGS)  -c $(REAL_FILES) 
-
-run: prog.elf 
-	qemu-riscv32 -L $(LIBRV32) prog.elf 
-
-clean: 
-	rm -f prog.elf *.o 	
-
-full-clean:  
-	rm -f prog.elf *.o unity.o  
+run: program.elf
+	qemu-riscv32 -L $(LIBRV32) ./program.elf
