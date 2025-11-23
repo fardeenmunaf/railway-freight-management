@@ -162,11 +162,10 @@ public class TrainDispatchService {
                         calculated = true;
 
                     } catch (TravelTimeFeature.NoDirectConnectionException e) {
+
                         // No direct connection - fall through to manual calculation
-                        System.out.println("⚠ No connection found via TravelTime, using manual calculation");
                     } catch (TravelTimeFeature.InvalidSpeedException e) {
                         // Invalid speed - fall through to manual calculation
-                        System.out.println("⚠ Invalid speed in TravelTime, using manual calculation");
                     }
                 }
 
