@@ -1,10 +1,8 @@
 package app.utils;
 
 import app.model.Station; // Importar a classe de domínio Station
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -370,5 +368,65 @@ public class Balanced2DTreeBuilder {
             stations.addAll(node.bucket.stations);
             collectAllStations(node.right, stations);
         }
+        public List<Station> rangeSearch(double latMin, double latMax,
+                                         double lonMin, double lonMax,
+                                         Boolean isCity, Boolean isMainStation,
+                                         Set<String> countries) {
+
+            List<Station> results = new ArrayList<>();
+            rangeRecursive(root, latMin, latMax, lonMin, lonMax,
+                    isCity, isMainStation, countries, results);
+            return results;
+        }
+
+        private void rangeRecursive(Node2D node,
+                                    double latMin, double latMax,
+                                    double lonMin, double lonMax,
+                                    Boolean isCity, Boolean isMainStation,
+                                    Set<String> countries,
+                                    List<Station> results) {
+
+            if (node == null) return;
+
+            boolean isLat = node.isLatitude;
+            double minVal = isLat ? latMin : lonMin;
+            double maxVal = isLat ? latMax : lonMax;
+
+            // PRUNE LEFT
+            if (node.key > minVal)
+                rangeRecursive(node.left, latMin, latMax, lonMin, lonMax,
+                        isCity, isMainStation, countries, results);
+
+            // PROCESS NODE BUCKET
+            for (Station s : node.bucket.stations) {
+                double lat = s.getLat();
+                double lon = s.getLon();
+
+                if (lat >= latMin && lat <= latMax &&
+                        lon >= lonMin && lon <= lonMax) {
+
+                    // Apply filters
+                    if (isCity != null && !isCity.equals(s.getIsCity())) continue;
+                    if (isMainStation != null && !isMainStation.equals(s.getIsMainStation())) continue;
+
+                    // Country filter - supports multiple countries
+                    if (countries != null && !countries.isEmpty()) {
+                        String stationCountry = s.getCountry();
+                        if (stationCountry == null || !countries.contains(stationCountry.toUpperCase())) {
+                            continue;
+                        }
+                    }
+
+                    results.add(s);
+                }
+            }
+
+            // PRUNE RIGHT
+            if (node.key < maxVal)
+                rangeRecursive(node.right, latMin, latMax, lonMin, lonMax,
+                        isCity, isMainStation, countries, results);
+        }
+
+
     }
 }

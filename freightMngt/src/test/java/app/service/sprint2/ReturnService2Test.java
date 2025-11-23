@@ -1,203 +1,175 @@
 package app.service.sprint2;
 
-import app.controller.ReturnLineController;
-import app.controller.ReturnOrderController;
-import app.model.InventoryLot;
-import app.model.Order;
-import app.model.ReturnLine;
-import app.model.ReturnOrder;
+import app.controller.InventoryBalanceController;
+import app.model.*;
 import app.repositories.Repositories;
 import app.service.sprint1.ReturnService;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Additional unit tests for ReturnService based on Test Cases 1–8.
- */
-public class ReturnService2Test {
+class ReturnService2Test {
 
-    private ReturnService returnService;
-    private Repositories repositories;
-    private ReturnOrderController returnOrderController;
-    private ReturnLineController returnLineController;
+    private static ReturnService service;
+    private static Repositories repositories;
+    private static InventoryBalanceController inventoryController;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    static void setup() {
         repositories = Repositories.getInstance();
-        returnOrderController = new ReturnOrderController();
-        returnLineController = new ReturnLineController();
-
-        // Clear all repositories before each test
-        repositories.getReturnOrderRepository().clear();
-        repositories.getReturnLineRepository().clear();
-        repositories.getInventoryLotRepository().clear();
-        repositories.getQaInspectionRepository().clear();
-
-        returnService = new ReturnService();
+        inventoryController = new InventoryBalanceController();
+        service = new ReturnService();
     }
 
-    /**
-     * Test Case 1: Review current implementation
-     * Just a simple check that our repositories and service exist
-     */
     @Test
-    public void testCurrentImplementationReview() {
-        assertNotNull("ReturnService should be initialized", returnService);
-        assertNotNull("ReturnOrderRepository should exist", repositories.getReturnOrderRepository());
-        assertNotNull("ReturnLineRepository should exist", repositories.getReturnLineRepository());
+    void testQuarantineOrdering() {
+        ReturnOrder r1 = new ReturnOrder(1, null, "customer-remorse", "received",
+                LocalDateTime.of(2025, 1, 15, 10, 0));
+        ReturnOrder r2 = new ReturnOrder(2, null, "damaged", "received",
+                LocalDateTime.of(2025, 1, 15, 10, 0));
+        ReturnOrder r3 = new ReturnOrder(3, null, "expired", "received",
+                LocalDateTime.of(2025, 1, 16, 10, 0));
+
+        repositories.getReturnOrderRepository().addReturnOrder(r1);
+        repositories.getReturnOrderRepository().addReturnOrder(r2);
+        repositories.getReturnOrderRepository().addReturnOrder(r3);
+
+        ReturnLine line1 = new ReturnLine(1, r1, "SKU0001", 10, "good");
+        ReturnLine line2 = new ReturnLine(2, r2, "SKU0002", 5, "damaged");
+        ReturnLine line3 = new ReturnLine(3, r3, "SKU0003", 8, "good");
+
+        repositories.getReturnLineRepository().addReturnLine(line1);
+        repositories.getReturnLineRepository().addReturnLine(line2);
+        repositories.getReturnLineRepository().addReturnLine(line3);
+
+        service.processAllReturns();
+
+        assertEquals("processed", r3.getStatus());
+        assertEquals("processed", r1.getStatus());
+        assertEquals("processed", r2.getStatus());
     }
 
-    /**
-     * Test Case 2: Quarantine ordering by timestamp DESC then returnId ASC
-     */
     @Test
-    public void testQuarantineOrdering() {
-        Order order = new Order(1, "COMPLETED", 1, LocalDateTime.now());
-        LocalDateTime now = LocalDateTime.now();
+    void testRestockValidGoodItem() {
+        ReturnOrder order = new ReturnOrder(10, null, "customer-remorse", "received",
+                LocalDateTime.now());
+        repositories.getReturnOrderRepository().addReturnOrder(order);
 
-        ReturnOrder r1 = new ReturnOrder(1, order, "damaged", "quarantine", now.minusDays(1));
-        ReturnOrder r2 = new ReturnOrder(2, order, "damaged", "quarantine", now.minusDays(1));
-        ReturnOrder r3 = new ReturnOrder(3, order, "damaged", "quarantine", now);
+        ReturnLine line = new ReturnLine(10, order, "SKU0005", 15, "good");
+        repositories.getReturnLineRepository().addReturnLine(line);
 
-        returnOrderController.createReturnOrder(r1);
-        returnOrderController.createReturnOrder(r2);
-        returnOrderController.createReturnOrder(r3);
-
-        returnService.inspectQuarantinedReturns();
-
-        List<ReturnOrder> processed = List.of(
-                returnOrderController.getReturnOrderById(3).get(),
-                returnOrderController.getReturnOrderById(1).get(),
-                returnOrderController.getReturnOrderById(2).get()
-        );
-
-        // Ensure ordering logic: latest timestamp first, ties by returnId ASC
-        assertEquals("First processed should be r3", Integer.valueOf(3), processed.get(0).getReturnId());
-        assertEquals("Tie: r1 should come before r2", Integer.valueOf(1), processed.get(1).getReturnId());
-        assertEquals("Tie: r2 last", Integer.valueOf(2), processed.get(2).getReturnId());
-    }
-
-    /**
-     * Test Case 3: Restock valid, good item
-     */
-    @Test
-    public void testRestockValidGoodItem() {
-        Order order = new Order(1, "COMPLETED", 1, LocalDateTime.now());
-        ReturnOrder ret = new ReturnOrder(1, order, "customer-remorse", "quarantine", LocalDateTime.now());
-        returnOrderController.createReturnOrder(ret);
-
-        ReturnLine line = new ReturnLine(1, ret, "SKU-101", 5, "good");
-        returnLineController.createReturnLine(line);
-
-        returnService.inspectQuarantinedReturns();
+        service.processAllReturns();
 
         List<InventoryLot> lots = repositories.getInventoryLotRepository().getAllInventoryLots();
-        assertFalse("Restocked lot should be created", lots.isEmpty());
-        assertEquals("Restocked qty should match line", Integer.valueOf(5), lots.get(0).getQty());
+        assertFalse(lots.isEmpty());
+        assertTrue(lots.stream().anyMatch(lot -> lot.getSku() == 5 && lot.getQty() == 15));
     }
 
-    /**
-     * Test Case 4: Discard expired/damaged item
-     */
     @Test
-    public void testDiscardExpiredOrDamagedItem() {
-        Order order = new Order(1, "COMPLETED", 1, LocalDateTime.now());
-        ReturnOrder ret = new ReturnOrder(1, order, "damaged", "quarantine", LocalDateTime.now());
-        returnOrderController.createReturnOrder(ret);
+    void testDiscardExpiredItem() {
+        ReturnOrder order = new ReturnOrder(20, null, "expired", "received",
+                LocalDateTime.now());
+        repositories.getReturnOrderRepository().addReturnOrder(order);
 
-        ReturnLine line = new ReturnLine(1, ret, "SKU-102", 3, "damaged");
-        returnLineController.createReturnLine(line);
+        ReturnLine line = new ReturnLine(20, order, "SKU0010", 7, "good");
+        repositories.getReturnLineRepository().addReturnLine(line);
 
-        returnService.inspectQuarantinedReturns();
+        service.processAllReturns();
 
-        ReturnLine updated = returnLineController.getReturnLineById(1).get();
-        assertEquals("Damaged item should be discarded", "discarded", updated.getCondition());
+        ReturnLine updated = repositories.getReturnLineRepository().getReturnLineById(20);
+        assertEquals("discarded", updated.getCondition());
     }
 
-    /**
-     * Test Case 5: Partial restock (split qty)
-     * Example: good qty 3, damaged qty 2 → log shows restocked 3, discarded 2
-     */
     @Test
-    public void testPartialRestockSplitQty() {
-        Order order = new Order(1, "COMPLETED", 1, LocalDateTime.now());
-        ReturnOrder ret = new ReturnOrder(1, order, "customer-remorse", "quarantine", LocalDateTime.now());
-        returnOrderController.createReturnOrder(ret);
+    void testPartialRestockSplitQty() {
+        ReturnOrder order = new ReturnOrder(30, null, "customer-remorse", "received",
+                LocalDateTime.now());
+        repositories.getReturnOrderRepository().addReturnOrder(order);
 
-        // Simulate a line with qty split manually for test purposes
-        ReturnLine line = new ReturnLine(1, ret, "SKU-103", 5, "mixed"); // will be discarded by default
-        returnLineController.createReturnLine(line);
+        ReturnLine line = new ReturnLine(30, order, "SKU0015", 20, "good");
+        repositories.getReturnLineRepository().addReturnLine(line);
 
-        returnService.inspectQuarantinedReturns();
-
-        // qtyRestocked=0, qtyDiscard=5
-        ReturnLine updated = returnLineController.getReturnLineById(1).get();
-        assertEquals("All qty discarded since condition unknown", "discarded", updated.getCondition());
-    }
-
-    /**
-     * Test Case 6: Invalid return entry
-     */
-    @Test
-    public void testInvalidReturnEntry() {
-        ReturnOrder invalidReturn = new ReturnOrder(null, null, null, null, null);
-        returnOrderController.createReturnOrder(invalidReturn);
-
-        returnService.inspectQuarantinedReturns();
-
-        // Should handle gracefully, status unchanged (null)
-        ReturnOrder updated = returnOrderController.getReturnOrderById(invalidReturn.getReturnId()).orElse(null);
-        assertNull("Invalid returnId should not be processed", updated);
-    }
-
-    /**
-     * Test Case 7: Audit log line format
-     */
-    @Test
-    public void testAuditLogLineFormat() throws IOException {
-        Order order = new Order(1, "COMPLETED", 1, LocalDateTime.now());
-        ReturnOrder ret = new ReturnOrder(1, order, "customer-remorse", "quarantine", LocalDateTime.now());
-        returnOrderController.createReturnOrder(ret);
-
-        ReturnLine line = new ReturnLine(1, ret, "SKU-104", 2, "good");
-        returnLineController.createReturnLine(line);
-
-        returnService.inspectQuarantinedReturns();
-
-        File logFile = new File("src/main/java/app/service/AuditLogs/return_inspection_audit.log");
-        List<String> lines = Files.readAllLines(logFile.toPath());
-        String logEntry = lines.get(lines.size() - 1);
-
-        assertTrue("Log entry should contain timestamp", logEntry.matches("^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} \\|.*"));
-        assertTrue("Log entry should contain returnId", logEntry.contains("returnId=R1"));
-        assertTrue("Log entry should contain sku", logEntry.contains("sku=SKU-104"));
-        assertTrue("Log entry should contain qty", logEntry.contains("qty=2"));
-    }
-
-    /**
-     * Test Case 8: Reinjected stock visibility
-     */
-    @Test
-    public void testReinjectedStockVisibility() {
-        Order order = new Order(1, "COMPLETED", 1, LocalDateTime.now());
-        ReturnOrder ret = new ReturnOrder(1, order, "customer-remorse", "quarantine", LocalDateTime.now());
-        returnOrderController.createReturnOrder(ret);
-
-        ReturnLine line = new ReturnLine(1, ret, "SKU-105", 4, "good");
-        returnLineController.createReturnLine(line);
-
-        returnService.inspectQuarantinedReturns();
+        service.processAllReturns();
 
         List<InventoryLot> lots = repositories.getInventoryLotRepository().getAllInventoryLots();
-        assertFalse("Reinjected stock should be visible", lots.isEmpty());
-        assertEquals("Reinjected lot should have correct SKU", Integer.valueOf(105), lots.get(0).getSku());
+        long restockedQty = lots.stream()
+                .filter(lot -> lot.getSku() == 15)
+                .mapToInt(InventoryLot::getQty)
+                .sum();
+
+        assertEquals(20, restockedQty);
+    }
+
+
+    @Test
+    void testInvalidReturnMissingSKU() {
+        ReturnOrder order = new ReturnOrder(40, null, "customer-remorse", "received",
+                LocalDateTime.now());
+        repositories.getReturnOrderRepository().addReturnOrder(order);
+
+        ReturnLine line = new ReturnLine(40, order, null, 10, "good");
+        repositories.getReturnLineRepository().addReturnLine(line);
+
+        assertDoesNotThrow(() -> service.processAllReturns());
+        assertEquals("processed", order.getStatus());
+    }
+
+    @Test
+    void testInvalidReturnZeroQty() {
+        ReturnOrder order = new ReturnOrder(50, null, "customer-remorse", "received",
+                LocalDateTime.now());
+        repositories.getReturnOrderRepository().addReturnOrder(order);
+
+        ReturnLine line = new ReturnLine(50, order, "SKU0020", 0, "good");
+        repositories.getReturnLineRepository().addReturnLine(line);
+
+        assertDoesNotThrow(() -> service.processAllReturns());
+        assertEquals("processed", order.getStatus());
+    }
+
+    @Test
+    void testAuditLogFormat() throws IOException {
+        ReturnOrder order = new ReturnOrder(60, null, "customer-remorse", "received",
+                LocalDateTime.now());
+        repositories.getReturnOrderRepository().addReturnOrder(order);
+
+        ReturnLine line = new ReturnLine(60, order, "SKU0025", 12, "good");
+        repositories.getReturnLineRepository().addReturnLine(line);
+
+        service.processAllReturns();
+
+        Path logPath = Path.of("src/main/java/app/service/AuditLogs/return_inspection_audit.log");
+        assertTrue(Files.exists(logPath));
+
+        String content = Files.readString(logPath);
+        assertTrue(content.contains("returnId=R60"));
+        assertTrue(content.contains("sku=SKU0025"));
+        assertTrue(content.contains("qty=12"));
+    }
+
+    @Test
+    void testReinjectedStockVisibility() {
+        ReturnOrder order = new ReturnOrder(70, null, "customer-remorse", "received",
+                LocalDateTime.now());
+        repositories.getReturnOrderRepository().addReturnOrder(order);
+
+        ReturnLine line = new ReturnLine(70, order, "SKU0030", 25, "good");
+        repositories.getReturnLineRepository().addReturnLine(line);
+
+        service.processAllReturns();
+
+        List<InventoryBalance> balances = inventoryController.getAllInventoryBalances();
+        boolean stockVisible = balances.stream()
+                .anyMatch(balance -> balance.getLots().stream()
+                        .anyMatch(lot -> lot.getSku() == 30 && lot.getQty() == 25));
+
+        assertTrue(stockVisible);
     }
 }

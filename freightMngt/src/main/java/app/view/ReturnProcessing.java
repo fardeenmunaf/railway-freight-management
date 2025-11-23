@@ -1,5 +1,6 @@
 package app.view;
 
+import app.model.QaInspection;
 import app.model.ReturnLine;
 import app.model.ReturnOrder;
 import app.repositories.Repositories;
@@ -18,7 +19,8 @@ import java.util.stream.Collectors;
 public class ReturnProcessing {
     /**
      * Displays the return processing interface and handles user interaction.
-     * Allows users to import returns to quarantine or process existing quarantined returns.
+     * Allows users to import returns to quarantine, process quarantined returns,
+     * and process QA inspections.
      *
      * @param scanner the Scanner object used for reading user input
      */
@@ -34,11 +36,12 @@ public class ReturnProcessing {
             System.out.println("Choose an option:");
             System.out.println("1. Import/Queue returns to quarantine");
             System.out.println("2. Process quarantined returns");
-            System.out.println("3. Back to main menu");
+            System.out.println("3. Process QA inspections");
+            System.out.println("4. Back to main menu");
             System.out.print("Enter choice: ");
 
             String choice = scanner.nextLine().trim();
-            if ("b".equalsIgnoreCase(choice) || "3".equals(choice)) return;
+            if ("b".equalsIgnoreCase(choice) || "4".equals(choice)) return;
 
             switch (choice) {
                 case "1":
@@ -46,6 +49,9 @@ public class ReturnProcessing {
                     break;
                 case "2":
                     processQuarantinedReturns(scanner, returnService);
+                    break;
+                case "3":
+                    processQaInspections(scanner, returnService);
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.\n");
@@ -204,5 +210,69 @@ public class ReturnProcessing {
         System.out.printf("Items discarded: %d%n", discarded);
         System.out.println("Audit log updated with all actions.");
         System.out.println("Check: src/main/java/app/service/AuditLogs/return_inspection_audit.log");
+    }
+
+    /**
+     * Handles processing of QA Inspections.
+     */
+    private static void processQaInspections(Scanner scanner, ReturnService returnService) {
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("           PROCESS QA INSPECTIONS");
+        System.out.println("=".repeat(50));
+
+        Repositories repositories = Repositories.getInstance();
+        List<QaInspection> pendingInspections = repositories.getQaInspectionRepository().getAllQaInspections().stream()
+                .filter(q -> "pending".equalsIgnoreCase(q.getStatus()))
+                .sorted(Comparator.comparing(QaInspection::getInspectedAt)) // Process oldest first
+                .collect(Collectors.toList());
+
+        if (pendingInspections.isEmpty()) {
+            System.out.println("No pending QA inspections.");
+            System.out.print("\nPress Enter to continue...");
+            scanner.nextLine();
+            return;
+        }
+
+        for (QaInspection qa : pendingInspections) {
+            System.out.println("\nQA Inspection ID: Q" + qa.getQaId());
+            ReturnLine line = repositories.getReturnLineRepository().getReturnLineById(qa.getReturnLineId());
+            if (line == null) {
+                System.out.println("Invalid Return Line for this QA inspection. Skipping.");
+                continue;
+            }
+
+            System.out.printf("SKU: %s, Quantity: %d, Condition: %s%n",
+                    line.getSku(), line.getQty(),
+                    line.getCondition() != null ? line.getCondition() : "unknown");
+
+            System.out.println("Approve this QA inspection?");
+            System.out.println("1. Approve");
+            System.out.println("2. Reject");
+            System.out.println("3. Skip");
+            System.out.println("4. Stop processing QA inspections");
+            System.out.print("Enter choice: ");
+
+            String choice = scanner.nextLine().trim();
+            switch (choice) {
+                case "1":
+                    returnService.processQaResult(qa.getQaId(), true);
+                    System.out.println("QA Inspection Q" + qa.getQaId() + " approved and processed.");
+                    break;
+                case "2":
+                    returnService.processQaResult(qa.getQaId(), false);
+                    System.out.println("QA Inspection Q" + qa.getQaId() + " rejected and processed.");
+                    break;
+                case "3":
+                    System.out.println("QA Inspection Q" + qa.getQaId() + " skipped.");
+                    break;
+                case "4":
+                case "b":
+                    return;
+                default:
+                    System.out.println("Invalid choice. Skipping.");
+            }
+        }
+        System.out.print("\nPress Enter to continue...");
+        scanner.nextLine();
     }
 }

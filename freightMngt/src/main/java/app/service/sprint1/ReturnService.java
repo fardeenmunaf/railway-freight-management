@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class ReturnService {
@@ -17,12 +16,12 @@ public class ReturnService {
     private static final String AUDIT_LOG_FILE = "src/main/java/app/service/AuditLogs/return_inspection_audit.log";
     private final Repositories repositories;
     private final InventoryBalanceController inventoryController;
-
-    private final DateTimeFormatter LOG_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private final AuditLogger auditLogger;
 
     public ReturnService() {
         this.repositories = Repositories.getInstance();
         this.inventoryController = new InventoryBalanceController();
+        this.auditLogger = new AuditLogger();
     }
 
     public void quarantineReturns() {
@@ -44,17 +43,17 @@ public class ReturnService {
                 )
                 .collect(Collectors.toList());
 
-        AtomicInteger logCounter = new AtomicInteger(0);
-        quarantined.forEach(r -> processReturn(r, logCounter));
+        quarantined.forEach(this::processReturn);
+        auditLogger.flush();
     }
 
-    private void processReturn(ReturnOrder order, AtomicInteger logCounter) {
+    private void processReturn(ReturnOrder order) {
         if (order == null || order.getReturnId() == null) {
-            logWarning(null, null, "Invalid returnOrder or returnId null", logCounter);
+            auditLogger.log(new InspectionEvent(null, null, "Invalid", 0, "Invalid returnOrder or returnId null"));
             return;
         }
         if (order.getReceivedAt() == null) {
-            logWarning(order, null, "ReturnOrder.receivedAt is null", logCounter);
+            auditLogger.log(new InspectionEvent(order.getReturnId(), null, "Invalid", 0, "ReturnOrder.receivedAt is null"));
             return;
         }
 
@@ -63,25 +62,25 @@ public class ReturnService {
 
         for (ReturnLine line : lines) {
             if (line == null) {
-                logWarning(order, null, "Null return line", logCounter);
+                auditLogger.log(new InspectionEvent(order.getReturnId(), null, "Invalid", 0, "Null return line"));
                 continue;
             }
             if (line.getQty() == null || line.getQty() <= 0) {
-                logWarning(order, line, "Invalid qty <= 0", logCounter);
+                auditLogger.log(new InspectionEvent(order.getReturnId(), line.getSku(), "Invalid", 0, "Invalid qty <= 0"));
                 continue;
             }
             if (line.getSku() == null || line.getSku().trim().isEmpty()) {
-                logWarning(order, line, "Missing SKU", logCounter);
+                auditLogger.log(new InspectionEvent(order.getReturnId(), null, "Invalid", line.getQty(), "Missing SKU"));
                 continue;
             }
-            processReturnLine(order, line, logCounter);
+            processReturnLine(order, line);
         }
 
         order.setStatus("processed");
         repositories.getReturnOrderRepository().updateReturnOrder(order.getReturnId(), order);
     }
 
-    private void processReturnLine(ReturnOrder order, ReturnLine line, AtomicInteger logCounter) {
+    private void processReturnLine(ReturnOrder order, ReturnLine line) {
         String reason = Optional.ofNullable(order.getReason()).orElse("").toLowerCase();
         String condition = Optional.ofNullable(line.getCondition()).orElse("").toLowerCase();
 
@@ -91,28 +90,53 @@ public class ReturnService {
 
         switch (reason) {
             case "customer-remorse" -> {
-                if ("good".equals(condition) || condition.isEmpty()) qtyRestock = qtyTotal;
-                else qtyDiscard = qtyTotal;
+                if ("good".equals(condition) || condition.isEmpty()) {
+                    qtyRestock = qtyTotal;
+                } else {
+                    qtyDiscard = qtyTotal;
+                }
             }
             case "damaged", "expired" -> qtyDiscard = qtyTotal;
             case "cycle-count" -> {
                 sendToQaInspection(line);
-                logInspection(order, line, "Sent to QA Inspection", qtyTotal, logCounter);
+                auditLogger.log(new InspectionEvent(order.getReturnId(), line.getSku(), "QA Inspection", qtyTotal, "Sent to QA"));
                 return;
             }
             default -> qtyDiscard = qtyTotal;
         }
 
-        if (qtyRestock > 0 && restockItem(order, line)) {
-            logInspection(order, line, "Restocked (RET-" + order.getReturnId() + " → Lot)", qtyRestock, logCounter);
-        } else if (qtyRestock > 0) {
-            qtyDiscard += qtyRestock;
-        }
-
-        if (qtyDiscard > 0) {
+        if (qtyRestock > 0 && qtyDiscard > 0) {
             line.setQty(qtyDiscard);
             discardItem(line);
-            logInspection(order, line, "Discarded", qtyDiscard, logCounter);
+            auditLogger.log(new InspectionEvent(order.getReturnId(), line.getSku(), "Discarded", qtyDiscard, null));
+
+            ReturnLine restockLine = new ReturnLine();
+            restockLine.setReturnLineId(null);
+            restockLine.setReturnOrder(line.getReturnOrder());
+            restockLine.setSku(line.getSku());
+            restockLine.setQty(qtyRestock);
+            restockLine.setCondition("good");
+
+            repositories.getReturnLineRepository().addReturnLine(restockLine);
+
+            if (restockItem(order, restockLine)) {
+                auditLogger.log(new InspectionEvent(order.getReturnId(), restockLine.getSku(), "Restocked", qtyRestock, "RET-" + order.getReturnId() + " → Lot"));
+            } else {
+                auditLogger.log(new InspectionEvent(order.getReturnId(), restockLine.getSku(), "Invalid", qtyRestock, "Restock failed on partial line"));
+            }
+        } else if (qtyRestock > 0) {
+            if (restockItem(order, line)) {
+                auditLogger.log(new InspectionEvent(order.getReturnId(), line.getSku(), "Restocked", qtyRestock, "RET-" + order.getReturnId() + " → Lot"));
+            } else {
+                qtyDiscard += qtyRestock;
+                line.setQty(qtyDiscard);
+                discardItem(line);
+                auditLogger.log(new InspectionEvent(order.getReturnId(), line.getSku(), "Discarded", qtyDiscard, null));
+            }
+        } else if (qtyDiscard > 0) {
+            line.setQty(qtyDiscard);
+            discardItem(line);
+            auditLogger.log(new InspectionEvent(order.getReturnId(), line.getSku(), "Discarded", qtyDiscard, null));
         }
     }
 
@@ -135,35 +159,38 @@ public class ReturnService {
 
         ReturnOrder order = line.getReturnOrder() != null ?
                 repositories.getReturnOrderRepository().getReturnOrderById(line.getReturnOrder().getReturnId()) : null;
-
         qa.setStatus(approved ? "approved" : "rejected");
+
         if (approved) {
             restockItem(order, line);
-            logInspection(order, line, "Restocked (after QA)", line.getQty(), new AtomicInteger(0));
+            auditLogger.log(new InspectionEvent(order != null ? order.getReturnId() : null, line.getSku(), "Restocked", line.getQty(), "After QA - RET-" + (order != null ? order.getReturnId() : "?") + " → Lot"));
         } else {
             discardItem(line);
-            logInspection(order, line, "Discarded (after QA)", line.getQty(), new AtomicInteger(0));
+            auditLogger.log(new InspectionEvent(order != null ? order.getReturnId() : null, line.getSku(), "Discarded", line.getQty(), "After QA"));
         }
 
         repositories.getQaInspectionRepository().updateQaInspection(qaId, qa);
+        auditLogger.flush();
     }
 
     private boolean restockItem(ReturnOrder order, ReturnLine line) {
         try {
             int sku = Integer.parseInt(line.getSku().replaceAll("[^0-9]", ""));
+            LocalDateTime receivedAt = order != null ? order.getReceivedAt() : LocalDateTime.now();
+
             InventoryLot lot = new InventoryLot(
                     generateNewLotId(),
                     sku,
                     line.getQty(),
                     null,
-                    LocalDateTime.now()
+                    receivedAt
             );
             repositories.getInventoryLotRepository().addInventoryLot(lot);
             updateInventoryBalance(lot);
             insertIntoBay(lot);
             return true;
         } catch (Exception e) {
-            logWarning(order, line, "Restock failed: " + e.getMessage(), new AtomicInteger(0));
+            auditLogger.log(new InspectionEvent(order != null ? order.getReturnId() : null, line.getSku(), "Invalid", line.getQty(), "Restock failed: " + e.getMessage()));
             return false;
         }
     }
@@ -261,32 +288,59 @@ public class ReturnService {
                 .mapToInt(QaInspection::getQaId).max().orElse(0) + 1;
     }
 
-    private void logInspection(ReturnOrder order, ReturnLine line, String action, int qty, AtomicInteger logCounter) {
-        logToFile(order, line, "action=" + action, qty, logCounter);
-    }
-
-    private void logWarning(ReturnOrder order, ReturnLine line, String reason, AtomicInteger logCounter) {
-        logToFile(order, line, "action=Invalid | reason=" + reason,
-                line != null && line.getQty() != null ? line.getQty() : 0, logCounter);
-    }
-
-    private void logToFile(ReturnOrder order, ReturnLine line, String details, int qty, AtomicInteger counter) {
-        try (FileWriter writer = new FileWriter(AUDIT_LOG_FILE, true)) {
-            LocalDateTime ts = LocalDateTime.now().plusNanos(counter.getAndIncrement());
-            String log = String.format(
-                    "%s | returnId=%s | sku=%s | %s | qty=%d",
-                    ts.format(LOG_FMT),
-                    order != null && order.getReturnId() != null ? "R" + order.getReturnId() : "R?",
-                    line != null && line.getSku() != null ? line.getSku() : "UNKNOWN",
-                    details,
-                    qty
-            );
-            writer.write(log + System.lineSeparator());
-        } catch (IOException ignored) {}
-    }
-
     public void processAllReturns() {
         quarantineReturns();
         inspectQuarantinedReturns();
+    }
+
+    // Classe interna para eventos de auditoria
+    private static class InspectionEvent {
+        private final LocalDateTime timestamp;
+        private final Integer returnId;
+        private final String sku;
+        private final String action;
+        private final int quantity;
+        private final String details;
+
+        public InspectionEvent(Integer returnId, String sku, String action, int quantity, String details) {
+            this.timestamp = LocalDateTime.now();
+            this.returnId = returnId;
+            this.sku = sku;
+            this.action = action;
+            this.quantity = quantity;
+            this.details = details;
+        }
+
+        public String toLogLine() {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+            return String.format("%s | returnId=%s | sku=%s | action=%s | qty=%d%s",
+                    timestamp.format(fmt),
+                    returnId != null ? "R" + returnId : "R?",
+                    sku != null ? sku : "UNKNOWN",
+                    action,
+                    quantity,
+                    details != null && !details.isEmpty() ? " | " + details : ""
+            );
+        }
+    }
+
+    // Classe interna para gestão de auditoria
+    private static class AuditLogger {
+        private final Queue<InspectionEvent> eventQueue = new LinkedList<>();
+
+        public void log(InspectionEvent event) {
+            eventQueue.offer(event);
+        }
+
+        public void flush() {
+            try (FileWriter writer = new FileWriter(AUDIT_LOG_FILE, true)) {
+                while (!eventQueue.isEmpty()) {
+                    InspectionEvent event = eventQueue.poll();
+                    writer.write(event.toLogLine() + System.lineSeparator());
+                }
+            } catch (IOException e) {
+                // Log error appropriately
+            }
+        }
     }
 }

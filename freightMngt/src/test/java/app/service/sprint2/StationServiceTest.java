@@ -25,19 +25,12 @@ public class StationServiceTest {
 
     @Before
     public void setUp() {
-        // Limpar o repositório para garantir que os testes são isolados.
-        // Se esta linha for o problema, o utilizador deve ter um método de limpeza no controller.
-        // Repositories.getInstance().getFacilityRepository().clear();
 
         controller = new StationController();
         service = new StationService();
         facilityType = new FacilityType(1, "Railway Station");
 
         // Criar estações de teste
-        // NOTA: O StationController deve ser mockado ou deve ter um método de limpeza
-        // para garantir que apenas 4 estações são criadas antes de cada teste.
-
-        // Estações criadas: 4 (todas Main Stations)
         controller.createStation(new Station(
                 100, "Lisbon Santa Apolónia", facilityType,
                 38.7126, -9.1281, false,
@@ -126,17 +119,13 @@ public class StationServiceTest {
     @Test
     public void testSearchByLatitudeRange() {
         List<Station> results = service.searchByLatitudeRange(38.0, 42.0);
-        // Estações: Lisboa (38.7), Porto (41.1), Madrid (40.4) -> 3 estações
         assertEquals(3, results.size());
     }
 
     @Test
     public void testGetMainStations() {
-        // Este teste depende do StationController.getMainStations().
-        // Se o StationController não estiver a devolver as 4 estações criadas, este teste falha.
         List<Station> results = service.getMainStations();
 
-        // Assumindo que o StationController devolve as 4 estações criadas, todas Main Stations
         assertEquals(4, results.size());
         assertTrue(results.stream().allMatch(s -> Boolean.TRUE.equals(s.getIsMainStation())));
     }
@@ -144,7 +133,6 @@ public class StationServiceTest {
     @Test
     public void testGetStationCount() {
         int count = service.getStationCount();
-        // A StationService agora devolve o tamanho da 2D-Tree, que deve ser 4 (todas as estações têm coordenadas)
         assertEquals(4, count);
     }
 

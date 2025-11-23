@@ -52,7 +52,7 @@ int main() {
     printf("=== Data Extractor ===\n\n");
 
     // Ler a string toda, que pode conter um ou dois blocos (TEMP e/ou HUM)
-    printf("Enter input string (ex: \"TEMP &unit:celsius &value:23 #HUM &unit:percentage &value:45\"):\n");
+    printf("Enter input string (ex: \"TEMP&unit:celsius&value:23 #HUM&unit:percentage&value:45\"):\n");
     fgets(str, sizeof(str), stdin);
     trim(str);
 
