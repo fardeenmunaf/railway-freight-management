@@ -1,1 +1,36 @@
-2025-10-20 10:00 | returnId=R1 | sku=SKU-100 | action=Restocked | qty=8
+2025-11-23 03:15:21.930 | returnId=R14 | sku=SKU0001 | action=QA Inspection | qty=12 | Sent to QA
+2025-11-23 03:15:21.930 | returnId=R23 | sku=SKU0024 | action=Discarded | qty=14
+2025-11-23 03:15:21.930 | returnId=R27 | sku=SKU0013 | action=Discarded | qty=17
+2025-11-23 03:15:21.930 | returnId=R19 | sku=SKU0021 | action=QA Inspection | qty=15 | Sent to QA
+2025-11-23 03:15:21.938 | returnId=R3 | sku=SKU0003 | action=Restocked | qty=17 | RET-3 → Lot
+2025-11-23 03:15:21.938 | returnId=R22 | sku=SKU0003 | action=Discarded | qty=17
+2025-11-23 03:15:21.938 | returnId=R25 | sku=SKU0025 | action=Restocked | qty=2 | RET-25 → Lot
+2025-11-23 03:15:21.938 | returnId=R26 | sku=SKU0021 | action=Discarded | qty=1
+2025-11-23 03:15:21.938 | returnId=R30 | sku=SKU0005 | action=Restocked | qty=14 | RET-30 → Lot
+2025-11-23 03:15:21.940 | returnId=R29 | sku=SKU0020 | action=Restocked | qty=3 | RET-29 → Lot
+2025-11-23 03:15:21.940 | returnId=R20 | sku=SKU0016 | action=Restocked | qty=16 | RET-20 → Lot
+2025-11-23 03:15:21.940 | returnId=R12 | sku=SKU0024 | action=Discarded | qty=16
+2025-11-23 03:15:21.940 | returnId=R24 | sku=SKU0003 | action=Restocked | qty=14 | RET-24 → Lot
+2025-11-23 03:15:21.940 | returnId=R21 | sku=SKU0003 | action=QA Inspection | qty=14 | Sent to QA
+2025-11-23 03:15:21.940 | returnId=R10 | sku=SKU0024 | action=Restocked | qty=1 | RET-10 → Lot
+2025-11-23 03:15:21.940 | returnId=R9 | sku=SKU0011 | action=Discarded | qty=19
+2025-11-23 03:15:21.940 | returnId=R5 | sku=SKU0013 | action=Discarded | qty=5
+2025-11-23 03:15:21.940 | returnId=R11 | sku=SKU0002 | action=Discarded | qty=17
+2025-11-23 03:15:21.940 | returnId=R16 | sku=SKU0002 | action=QA Inspection | qty=8 | Sent to QA
+2025-11-23 03:15:21.940 | returnId=R1 | sku=SKU0009 | action=Restocked | qty=19 | RET-1 → Lot
+2025-11-23 03:15:21.940 | returnId=R17 | sku=SKU0004 | action=Discarded | qty=18
+2025-11-23 03:15:21.940 | returnId=R28 | sku=SKU0022 | action=Restocked | qty=11 | RET-28 → Lot
+2025-11-23 03:15:21.940 | returnId=R7 | sku=SKU0017 | action=Discarded | qty=11
+2025-11-23 03:15:21.944 | returnId=R15 | sku=SKU0023 | action=Discarded | qty=8
+2025-11-23 03:15:21.944 | returnId=R4 | sku=SKU0005 | action=Discarded | qty=8
+2025-11-23 03:15:21.944 | returnId=R13 | sku=SKU0017 | action=QA Inspection | qty=16 | Sent to QA
+2025-11-23 03:15:21.944 | returnId=R2 | sku=SKU0008 | action=Discarded | qty=18
+2025-11-23 03:15:21.944 | returnId=R8 | sku=SKU0023 | action=QA Inspection | qty=1 | Sent to QA
+2025-11-23 03:15:21.944 | returnId=R18 | sku=SKU0018 | action=Discarded | qty=18
+2025-11-23 03:15:21.944 | returnId=R6 | sku=SKU0021 | action=Restocked | qty=1 | RET-6 → Lot
+2025-11-23 03:15:44.896 | returnId=R14 | sku=SKU0001 | action=Restocked | qty=12 | After QA - RET-14 → Lot
+2025-11-23 03:15:45.606 | returnId=R19 | sku=SKU0021 | action=Discarded | qty=15 | After QA
+2025-11-23 03:15:46.270 | returnId=R21 | sku=SKU0003 | action=Restocked | qty=14 | After QA - RET-21 → Lot
+2025-11-23 03:15:46.903 | returnId=R16 | sku=SKU0002 | action=Discarded | qty=8 | After QA
+2025-11-23 03:15:47.563 | returnId=R13 | sku=SKU0017 | action=Restocked | qty=16 | After QA - RET-13 → Lot
+2025-11-23 03:15:48.218 | returnId=R8 | sku=SKU0023 | action=Discarded | qty=1 | After QA
