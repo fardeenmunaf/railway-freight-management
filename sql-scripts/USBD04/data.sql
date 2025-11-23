@@ -339,12 +339,14 @@ COMMIT;
 -- LOCOMOTIVE_GAUGE depende de LOCOMOTIVE e GAUGE
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5621, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5623, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5623, 2);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5630, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (1903, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5034, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5036, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.001, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.003, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.003, 2);
 COMMIT;
 -- WAREHOUSE_AISLE depende de WAREHOUSE
 INSERT INTO WAREHOUSE_AISLE (aisle_id, warehouse_id, aisle_no, unique_code) VALUES (1, 1, 1, 'A1');
