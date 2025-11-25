@@ -37,3 +37,12 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+
+### ARQCP FILES ###
+/src/main/java/app/utils/**/*.o
+/src/main/java/app/utils/**/program.elf
+/src/main/java/app/utils/**/**/*.o
+/src/main/java/app/utils/**/**/program.elf
+/src/main/java/app/utils/**/**/**/*.o
+/src/main/java/app/utils/**/**/**/program.elf

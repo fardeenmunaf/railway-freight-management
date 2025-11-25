@@ -1,0 +1,533 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+hide circle
+hide methods
+title "FreightMngt - Domain Model v2.3"
+
+' =========================
+' CATALOG / ITEMS (BDDAD)
+' =========================
+package "Catalog / Item" {
+  class Item {
+    +Long id
+    +String sku
+    +String name
+    +String category
+    +String unit
+    +BigDecimal volume
+    +BigDecimal unitWeight
+  }
+  class ItemCategory {
+    +Long id
+    +String name
+  }
+  Item " * " -- " 1 " ItemCategory : belongsTo
+}
+
+' =========================
+' SECURITY / USERS
+' =========================
+package "Security / Users" {
+  class User {
+    +Long id
+    +String username
+    +String email
+    +String fullName
+  }
+  class Role {
+    +Long id
+    +String name
+  }
+  class Permission {
+    +Long id
+    +String name
+  }
+  User "*" -- "*" Role : has
+  Role "*" -- "*" Permission : grants
+}
+
+' =========================
+' ORDERS / SALES
+' =========================
+package "Orders / Sales" {
+  class Order {
+    +Long id
+    +Date createdAt
+    +Date dueDate
+    +String status
+    +int priority
+  }
+  class OrderLine {
+    +Long id
+    +int lineNo
+    +int quantity
+    +BigDecimal unitPrice
+    +String sku
+  }
+  Order "1" *-- "*" OrderLine : contains
+  OrderLine "*" -- "1" Item : refersTo
+}
+
+' =========================
+' STOCK / INVENTORY (ESINF / BDDAD)
+' =========================
+package "Stock / Inventory" {
+  class InventoryBalance {
+    +Long id
+    +BigDecimal quantity
+    +Long itemId
+    +Long warehouseId
+  }
+  class InventoryLot {
+    +Long id
+    +String boxId
+    +String sku
+    +BigDecimal qtyAvailable
+    +Date expiryDate
+    +Date receivedAt
+    +Long warehouseId
+    +int aisle
+    +int bay
+  }
+  class InventoryMove {
+    +Long id
+    +Date movedAt
+    +String type
+    +String reason
+    +Long srcLotId
+    +Long dstLotId
+  }
+  InventoryBalance "1" -- "1" Item : balanceOf
+  InventoryLot "*" -- "1" Item : lotOf
+  InventoryMove "*" -- "*" InventoryLot : moves
+  InventoryMove "*" -- "*" InventoryBalance : adjusts
+}
+
+' =========================
+' WAREHOUSE / ESINF specifics
+' =========================
+package "Warehouse" {
+  class Warehouse {
+    +Long id
+    +String name
+    +String address
+    +int numAisles
+    +int numBaysPerAisle
+  }
+  class Aisle {
+    +Long id
+    +int number
+  }
+  class Bay {
+    +Long id
+    +int number
+    +int capacityBoxes
+  }
+  class Box {
+    +String boxId
+    +String sku
+    +int qty
+    +Date expiryDate
+    +Date receivedAt
+  }
+  class Trolley {
+    +Long id
+    +BigDecimal capacityKg
+  }
+  Warehouse "1" -- "*" Aisle : has
+  Aisle "1" -- "*" Bay : contains
+  Bay "*" -- "*" Box : stores
+  Box "*" -- "1" InventoryLot : represents
+}
+
+' =========================
+' PICKING / OPERATIONS (ESINF)
+' =========================
+package "Picking" {
+  class PickWave {
+    +Long id
+    +Date createdAt
+    +String createdBy
+  }
+  class PickTask {
+    +Long id
+    +String status
+    +Long trolleyId
+  }
+  class PickRoute {
+    +Long id
+    +String strategy
+    +BigDecimal totalDistance
+  }
+  class PickingPlan {
+    +Long id
+    +PackingHeuristic heuristic
+    +BigDecimal trolleyCapacity
+  }
+  class AllocationRow {
+    +Long id
+    +Long orderId
+    +int lineNo
+    +String sku
+    +int qty
+    +String boxId
+    +int aisle
+    +int bay
+  }
+  PickWave "1" -- "*" PickTask : groups
+  PickTask "*" -- "1" OrderLine : serves
+  PickRoute "1" -- "*" PickTask : routes
+  PickingPlan "1" -- "*" AllocationRow : generates
+  Trolley "0..*" -- "0..*" PickWave : usedIn
+}
+
+' =========================
+' QA / HOLD / RETURNS
+' =========================
+package "Quality / Hold / Returns" {
+  class QaInspection {
+    +Long id
+    +String result
+    +String notes
+    +Date inspectedAt
+  }
+  class QuarantineHold {
+    +Long id
+    +String reason
+    +Date createdAt
+  }
+  class ReturnOrder {
+    +Long id
+    +Date createdAt
+    +String reason
+  }
+  class ReturnLine {
+    +Long id
+    +String sku
+    +int qty
+    +Date expiryDate
+    +Date timestamp
+  }
+  QaInspection "*" -- "1" InventoryLot : inspects
+  QuarantineHold "*" -- "1" InventoryLot : holds
+  ReturnOrder "1" -- "*" ReturnLine : contains
+  ReturnOrder "*" -- "1" Order : references
+}
+
+' =========================
+' LOGISTICS / LINES (BDDAD)
+' =========================
+package "Logistics / Lines" {
+  class Line {
+    +Long id
+    +String name
+    +Long ownerId
+  }
+  class LineSegment {
+    +Long id
+    +int sequence
+    +BigDecimal lengthKm
+    +boolean doubleTrack
+    +boolean electrified
+    +String gauge
+  }
+  class LineSegmentFacility {
+    +Long id
+    +String role
+  }
+  class Gauge {
+    +Long id
+    +String name
+    +BigDecimal widthMm
+  }
+  class Owner {
+    +Long id
+    +String name
+  }
+  Line "1" -- "*" LineSegment : composes
+  LineSegment "1" -- "*" LineSegmentFacility : passesThrough
+  LineSegmentFacility "*" -- "1" Facility : placeOf
+  LineSegment "*" -- "1" Gauge : has
+  Line "1" -- "1" Owner : ownedBy
+}
+
+' =========================
+' FACILITIES / STATIONS (ARQCP / BDDAD)
+' =========================
+package "Facilities / Stations" {
+  class Facility {
+    +Long id
+    +String name
+    +String type
+    +String country
+    +Double lat
+    +Double lon
+  }
+  class FacilityType {
+    +Long id
+    +String name
+  }
+  class FacilityFeatureType {
+    +Long id
+    +String name
+  }
+  class Station {
+    +Long id
+    +String code
+    +String name
+    +int maxTracks
+    +String timeZoneGroup
+  }
+  Facility "*" -- "1" FacilityType : classifiedAs
+  Facility "*" -- "*" FacilityFeatureType : hasFeature
+  Facility "*" -- "*" Warehouse : contains
+  Facility "*" -- "*" Station : provides
+  Station "*" -- "0..99" Track : has
+}
+
+' =========================
+' ARQCP - STATION / TRACK / SENSORS / SIGNS
+' =========================
+package "ARQCP - Station Management" {
+  class Track {
+    +Long id
+    +int trackNumber
+    +String state  -- {Green,Red,Yellow,RedBlinking}
+  }
+  class LightSign {
+    +Long id
+    +String color
+    +String state
+  }
+  class Sensor {
+    +Long id
+    +String type  -- {Temperature, Humidity}
+    +Double lastValue
+    +Date lastUpdated
+  }
+  class SynopticBoard {
+    +Long id
+    +String layout
+  }
+  class StationManager {
+    +Long id
+    +String name
+    +void assignTrack(Train t, Track tr)
+    +void emitEmergencyStop(Train t)
+  }
+  class OperationLog {
+    +Long id
+    +Date timestamp
+    +String actor
+    +String action
+  }
+  Station "1" -- "*" Track : has
+  Track "1" -- "1" LightSign : signals
+  Station "1" -- "*" Sensor : has
+  Station "1" -- "1" SynopticBoard : has
+  StationManager "1" -- "1" SynopticBoard : operates
+  StationManager "1" -- "*" OperationLog : logs
+  OperationLog "*" -- "1" User : actor
+}
+
+' =========================
+' FLEET / LOCOMOTIVES & WAGONS (BDDAD)
+' =========================
+package "Fleet / Vehicles" {
+  class Locomotive {
+    +Long id
+    +String serial
+    +String type  -- {Diesel,Electric}
+    +BigDecimal powerKw
+    +String gauge
+    +boolean multiGauge
+    +Long operatorId
+  }
+  class LocomotiveType {
+    +Long id
+    +String name
+  }
+  class LocomotiveGauge {
+    +Long id
+    +String name
+  }
+  class Wagon {
+    +Long id
+    +String code
+    +String type
+    +BigDecimal payloadKg
+    +BigDecimal tareKg
+    +String gauge
+  }
+  class WagonType {
+    +Long id
+    +String name
+  }
+  class WagonModel {
+    +Long id
+    +String name
+  }
+  class WagonGauge {
+    +Long id
+    +String name
+  }
+
+  Locomotive "1" -- "1" LocomotiveType : type
+  Locomotive "*" -- "1" LocomotiveGauge : gauge
+  Wagon "*" -- "1" WagonGauge : gauge
+  Wagon "1" -- "1" WagonModel : model
+  Wagon "*" -- "1" WagonType : classifiedAs
+  Locomotive "*" -- "1" Owner : ownedBy
+  Wagon "*" -- "1" Owner : ownedBy
+}
+
+' =========================
+' TRAIN SERVICE / OPERATIONS (LAPR3 / BDDAD)
+' =========================
+package "Train Service / Operations" {
+  class Train {
+    +Long id
+    +String code
+    +Date plannedDeparture
+    +String status
+  }
+  class TrainService {
+    +Long id
+    +String name
+  }
+  class TrainServiceComposition {
+    +Long id
+    +String role
+  }
+  class TrainStop {
+    +Long id
+    +Date arrival
+    +Date departure
+    +boolean stops
+  }
+  class TrainComposition {
+    +Long id
+    +String compositionCode
+  }
+  class CompositionUnit {
+    +Long id
+    +String unitType  -- {Locomotive, Wagon}
+    +Long refId
+    +int position
+  }
+  class ScheduleEntry {
+    +Long id
+    +Long trainId
+    +Long segmentId
+    +Date estimatedArrival
+    +Date estimatedDeparture
+  }
+  Train "1" -- "*" TrainStop : stopsAt
+  TrainService "1" -- "*" Train : operates
+  TrainServiceComposition "*" -- "*" Train : composes
+  Train "1" -- "1" TrainComposition : composition
+  TrainComposition "1" -- "*" CompositionUnit : contains
+  Train "1" -- "*" ScheduleEntry : has
+}
+
+' =========================
+' MAINTENANCE / PARKING
+' =========================
+package "Maintenance / Parking" {
+  class ServiceLocomotive {
+    +Long id
+    +String description
+    +Date scheduledAt
+  }
+  class ParkingQueue {
+    +Long id
+  }
+  class ParkingTrack {
+    +Long id
+  }
+  ServiceLocomotive "*" -- "1" Locomotive : performedOn
+  ParkingQueue "*" -- "*" ParkingTrack : controls
+  ParkingTrack "*" -- "*" Train : receives
+}
+
+' =========================
+' SCHEDULER / LAPR3 - DISPATCH & CROSSING
+' =========================
+package "Scheduler / Dispatcher (LAPR3)" {
+  class RoutePlan {
+    +Long id
+    +Long trainId
+    +Date plannedDeparture
+    +String pathDescription
+  }
+  class RouteSegment {
+    +Long id
+    +Long lineSegmentId
+    +int order
+  }
+  class CrossingOperation {
+    +Long id
+    +Long segmentId
+    +Long trainA
+    +Long trainB
+    +String type
+    +Date scheduledAt
+  }
+  class EstimatedPassage {
+    +Long id
+    +Long trainId
+    +Long facilityId
+    +Date eta
+  }
+  RoutePlan "1" -- "*" RouteSegment : composes
+  RoutePlan "1" -- "*" CrossingOperation : requires
+  Train "1" -- "1" RoutePlan : has
+  Train "*" -- "*" EstimatedPassage : has
+}
+
+' =========================
+' SPATIAL / ESINF - STATIONS DATASET / INDEXES
+' =========================
+package "Spatial Indexes / ESINF" {
+  class StationDataset {
+    +Long id
+    +int rows
+  }
+  class TimeZoneIndex {
+    +Long id
+    +String tzGroup
+  }
+  class KDTree2D {
+    +Long id
+    +int size
+    +int height
+  }
+  class GeoQuery {
+    +Long id
+    +String queryType  -- {range, nearest, radius}
+  }
+  StationDataset "1" -- "*" Facility : contains
+  TimeZoneIndex "*" -- "*" Station : indexes
+  KDTree2D "1" -- "*" Station : spatialIndex
+  GeoQuery "1" -- "1" KDTree2D : uses
+}
+
+' =========================
+' AUX / METADATA
+' =========================
+package "Metadata / Config" {
+  class ConfigProperty {
+    +String key
+    +String value
+  }
+  class AuditEntry {
+    +Long id
+    +Date when
+    +String who
+    +String action
+  }
+}
+
+@enduml

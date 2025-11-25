@@ -3,9 +3,9 @@ package app.controller;
 import app.model.Item;
 import app.model.OrderLine;
 import app.model.PickTask;
-import app.service.Allocation;
-import app.service.PickRouteOptimizationService;
-import app.service.PickingPlan;
+import app.service.sprint1.Allocation;
+import app.service.sprint1.PickRouteOptimizationService;
+import app.service.sprint1.PickingPlan;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -199,7 +199,7 @@ public class PickRouteControllerTest {
         t3.setOrderLine(ol3);
 
         List<PickTask> tasks = Arrays.asList(t1, t2, t3);
-        PickingPlan.PickingPlanResult planResult = new PickingPlan.PickingPlanResult(tasks, new ArrayList<>());
+        PickingPlan.PickingPlanResult planResult = new PickingPlan.PickingPlanResult(tasks, new ArrayList<>(), new ArrayList<>());
 
         Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> results =
                 controller.calculateRoutesForPickTasks(planResult);

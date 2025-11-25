@@ -1,9 +1,9 @@
 package app.controller;
 
-import app.service.Allocation;
-import app.service.PickingPlan;
-import app.service.PickRouteOptimizationService;
-import app.service.PickRouteOptimizationService.*;
+import app.service.sprint1.Allocation;
+import app.service.sprint1.PickingPlan;
+import app.service.sprint1.PickRouteOptimizationService;
+import app.service.sprint1.PickRouteOptimizationService.*;
 
 import java.util.*;
 
@@ -124,6 +124,99 @@ public class PickRouteController {
 
         return bays;
     }
+
+    /**
+     * Compares two route strategies and returns a comparison result
+     */
+    public static class RouteComparison {
+        private final String betterStrategy;
+        private final int savedSteps;
+        private final boolean equal;
+
+        public RouteComparison(String betterStrategy, int savedSteps, boolean equal) {
+            this.betterStrategy = betterStrategy;
+            this.savedSteps = savedSteps;
+            this.equal = equal;
+        }
+
+        public String getBetterStrategy() { return betterStrategy; }
+        public int getSavedSteps() { return savedSteps; }
+        public boolean isEqual() { return equal; }
+    }
+
+    /**
+     * Compare two strategies and return the result
+     */
+    public RouteComparison compareStrategies(
+            PickRouteOptimizationService.RouteResult strategyA,
+            PickRouteOptimizationService.RouteResult strategyB) {
+
+        if (strategyA == null || strategyB == null) {
+            return null;
+        }
+
+        int distanceA = strategyA.getTotalDistance();
+        int distanceB = strategyB.getTotalDistance();
+
+        if (distanceA < distanceB) {
+            return new RouteComparison("Strategy A", distanceB - distanceA, false);
+        } else if (distanceB < distanceA) {
+            return new RouteComparison("Strategy B", distanceA - distanceB, false);
+        } else {
+            return new RouteComparison(null, 0, true);
+        }
+    }
+
+    /**
+     * Calculate total distances for all tasks
+     */
+    public static class TotalDistanceSummary {
+        private final int totalDistanceA;
+        private final int totalDistanceB;
+        private final RouteComparison comparison;
+
+        public TotalDistanceSummary(int totalDistanceA, int totalDistanceB, RouteComparison comparison) {
+            this.totalDistanceA = totalDistanceA;
+            this.totalDistanceB = totalDistanceB;
+            this.comparison = comparison;
+        }
+
+        public int getTotalDistanceA() { return totalDistanceA; }
+        public int getTotalDistanceB() { return totalDistanceB; }
+        public RouteComparison getComparison() { return comparison; }
+    }
+
+    /**
+     * Calculate total distances for all tasks routes
+     */
+    public TotalDistanceSummary calculateTotalDistances(
+            Map<Integer, Map<String, PickRouteOptimizationService.RouteResult>> allRoutes) {
+
+        int totalDistanceA = 0;
+        int totalDistanceB = 0;
+
+        for (Map<String, PickRouteOptimizationService.RouteResult> taskRoutes : allRoutes.values()) {
+            PickRouteOptimizationService.RouteResult strategyA = taskRoutes.get("strategyA");
+            PickRouteOptimizationService.RouteResult strategyB = taskRoutes.get("strategyB");
+
+            if (strategyA != null) totalDistanceA += strategyA.getTotalDistance();
+            if (strategyB != null) totalDistanceB += strategyB.getTotalDistance();
+        }
+
+        RouteComparison comparison = null;
+        if (totalDistanceA != 0 && totalDistanceB != 0) {
+            if (totalDistanceA < totalDistanceB) {
+                comparison = new RouteComparison("Strategy A", totalDistanceB - totalDistanceA, false);
+            } else if (totalDistanceB < totalDistanceA) {
+                comparison = new RouteComparison("Strategy B", totalDistanceA - totalDistanceB, false);
+            } else {
+                comparison = new RouteComparison(null, 0, true);
+            }
+        }
+
+        return new TotalDistanceSummary(totalDistanceA, totalDistanceB, comparison);
+    }
+
 
 
 }
