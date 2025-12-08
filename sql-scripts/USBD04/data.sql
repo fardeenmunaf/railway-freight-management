@@ -17,6 +17,7 @@ INSERT INTO COMPANY (company_id, name, short_name, vat) VALUES (1, 'Infraestrutu
 INSERT INTO COMPANY (company_id, name, short_name, vat) VALUES (2, 'Medway - Operador Ferroviário de Mercadorias, S.A', 'Medway', 'PT509017800');
 INSERT INTO COMPANY (company_id, name, short_name, vat) VALUES (3, 'Captrain Portugal S.A.', 'Captrain', 'PT507832388');
 COMMIT;
+
 -- Inserir 5 ROLE (sem FK)
 INSERT INTO "ROLE" (role_id, name) VALUES (1, 'ADMIN');
 INSERT INTO "ROLE" (role_id, name) VALUES (2, 'OPERATOR');
@@ -24,6 +25,7 @@ INSERT INTO "ROLE" (role_id, name) VALUES (3, 'DRIVER');
 INSERT INTO "ROLE" (role_id, name) VALUES (4, 'MECHANIC');
 INSERT INTO "ROLE" (role_id, name) VALUES (5, 'SUPERVISOR');
 COMMIT;
+
 -- Inserir 5 ITEM_CATEGORY (sem FK)
 INSERT INTO ITEM_CATEGORY (category_id, name) VALUES (1, 'Electronics');
 INSERT INTO ITEM_CATEGORY (category_id, name) VALUES (2, 'Food');
@@ -31,6 +33,7 @@ INSERT INTO ITEM_CATEGORY (category_id, name) VALUES (3, 'Clothing');
 INSERT INTO ITEM_CATEGORY (category_id, name) VALUES (4, 'Tools');
 INSERT INTO ITEM_CATEGORY (category_id, name) VALUES (5, 'Furniture');
 COMMIT;
+
 -- Inserir 5 FACILITY_TYPE (sem FK)
 INSERT INTO FACILITY_TYPE (facility_type_id, name) VALUES (1, 'Warehouse');
 INSERT INTO FACILITY_TYPE (facility_type_id, name) VALUES (2, 'Train Station');
@@ -38,6 +41,7 @@ INSERT INTO FACILITY_TYPE (facility_type_id, name) VALUES (3, 'Depot');
 INSERT INTO FACILITY_TYPE (facility_type_id, name) VALUES (4, 'Maintenance Yard');
 INSERT INTO FACILITY_TYPE (facility_type_id, name) VALUES (5, 'Intermodal Terminal');
 COMMIT;
+
 -- Inserir 5 LOCOMOTIVE_TYPE (sem FK)
 INSERT INTO LOCOMOTIVE_TYPE (locomotive_type_id, name) VALUES (1, 'Electric');
 INSERT INTO LOCOMOTIVE_TYPE (locomotive_type_id, name) VALUES (2, 'Diesel');
@@ -45,6 +49,7 @@ INSERT INTO LOCOMOTIVE_TYPE (locomotive_type_id, name) VALUES (3, 'Steam');
 INSERT INTO LOCOMOTIVE_TYPE (locomotive_type_id, name) VALUES (4, 'Hybrid');
 INSERT INTO LOCOMOTIVE_TYPE (locomotive_type_id, name) VALUES (5, 'Battery');
 COMMIT;
+
 -- Inserir 3 WAGON_TYPE (sem FK)
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (1, 'Cereal wagon');
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (2, 'Covered wagon with sliding door');
@@ -52,15 +57,17 @@ INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (3, 'Container wagon (max 40
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (4, 'Biodiesel wagaon');
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (5, 'Biodiesel wagaon');
 INSERT INTO WAGON_TYPE (wagon_type_id, name) VALUES (6, 'Wood wagon');
-
 COMMIT;
+
 -- Inserir FACILITY_FEATURE_TYPE (sem FK)
 INSERT INTO FACILITY_FEATURE_TYPE (feature_id, name) VALUES (1, 'Fuel Station');
 INSERT INTO FACILITY_FEATURE_TYPE (feature_id, name) VALUES (2, 'Repair Shop');
 INSERT INTO FACILITY_FEATURE_TYPE (feature_id, name) VALUES (3, 'Cafeteria');
 INSERT INTO FACILITY_FEATURE_TYPE (feature_id, name) VALUES (4, 'Restrooms');
 INSERT INTO FACILITY_FEATURE_TYPE (feature_id, name) VALUES (5, 'Parking Lot');
+INSERT INTO FACILITY_FEATURE_TYPE (feature_id, name) VALUES (6, 'Building');
 COMMIT;
+
 -- Inserir ORDER (sem FK)
 INSERT INTO "ORDER" (order_id, status, priority, due_date) VALUES (1, 'NEW', 5, TO_DATE('2025-11-15','YYYY-MM-DD'));
 INSERT INTO "ORDER" (order_id, status, priority, due_date) VALUES (2, 'PROCESSING', 3, TO_DATE('2025-11-20','YYYY-MM-DD'));
