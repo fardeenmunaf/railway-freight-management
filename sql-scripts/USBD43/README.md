@@ -2,11 +2,10 @@
 
 ## 📋 Overview
 
-The `INSERT_ELECTRIC_LOCOMOTIVE` function is a PL/SQL stored function designed to insert electric locomotive records into the railway database system. It validates electric-specific attributes (voltage and frequency) and ensures data integrity across multiple tables.
+The `insert_electric_locomotive` function is a PL/SQL stored function designed to insert electric locomotive records into the railway database system. It validates electric-specific attributes (voltage and frequency) and ensures data integrity across multiple tables.
 
 **Function Type:** PL/SQL Function  
 **Return Type:** NUMBER (Locomotive ID)  
-**Author Requirement:** Only assigned authors (USBD34-USBD45) can commit  
 **Dependency:** Function inputs only - no SYSDATE used for full testability
 
 ---
@@ -43,35 +42,35 @@ RETURN NUMBER
 
 ## 📝 Parameters
 
-| Parameter | Type | Required | Description                                           |
-|-----------|------|----------|-------------------------------------------------------|
-| `p_operator_id` | NUMBER | ✅ Yes | Company ID of operator (FK to USER table)             |
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `p_operator_id` | NUMBER | ✅ Yes | Company ID of operator (FK to USER table) |
 | `p_locomotive_type` | NUMBER | ✅ Yes | Type ID: 1=Electric, 2=Diesel (FK to LOCOMOTIVE_TYPE) |
-| `p_name` | VARCHAR2 | ✅ Yes | Locomotive name/identifier (NOT NULL)                 |
-| `p_brand` | VARCHAR2 | ✅ Yes | Manufacturer brand                                    |
-| `p_model` | VARCHAR2 | ✅ Yes | Model designation                                     |
-| `p_year` | NUMBER | ✅ Yes | Manufacturing year                                    |
-| `p_power_kw` | NUMBER | ✅ Yes | Power output in kilowatts                             |
-| `p_acc_ms2` | NUMBER | ✅ Yes | Acceleration in m/s²                                  |
-| `p_length_m` | NUMBER | ✅ Yes | Length in meters                                      |
-| `p_width_m` | NUMBER | ✅ Yes | Width in meters                                       |
-| `p_height_m` | NUMBER | ✅ Yes | Height in meters                                      |
-| `p_max_weight_t` | NUMBER | ✅ Yes | Maximum weight in tonnes                              |
-| `p_total_weight_t` | NUMBER | ✅ Yes | Total operating weight in tonnes                      |
-| `p_max_speed_kmh` | NUMBER | ✅ Yes | Maximum speed in km/h                                 |
-| `p_oper_speed_kmh` | NUMBER | ✅ Yes | Operational speed in km/h                             |
-| `p_num_bogies` | NUMBER | ✅ Yes | Number of bogies                                      |
-| `p_bogie_type` | VARCHAR2 | ✅ Yes | Bogie configuration (e.g., 'Bo-Bo')                   |
-| `p_traction_kn` | VARCHAR2 | ✅ Yes | Traction force in kilonewtons                         |
-| `p_voltage` | NUMBER | ✅ **REQUIRED FOR ELECTRIC** | Voltage in kV (NOT NULL for electric)                 |
-| `p_frequency_hz` | NUMBER | ✅ **REQUIRED FOR ELECTRIC** | Frequency in Hz (NOT NULL for electric)               |
+| `p_name` | VARCHAR2 | ✅ Yes | Locomotive name/identifier (NOT NULL) |
+| `p_brand` | VARCHAR2 | ✅ Yes | Manufacturer brand |
+| `p_model` | VARCHAR2 | ✅ Yes | Model designation |
+| `p_year` | NUMBER | ✅ Yes | Manufacturing year |
+| `p_power_kw` | NUMBER | ✅ Yes | Power output in kilowatts |
+| `p_acc_ms2` | NUMBER | ✅ Yes | Acceleration in m/s² |
+| `p_length_m` | NUMBER | ✅ Yes | Length in meters |
+| `p_width_m` | NUMBER | ✅ Yes | Width in meters |
+| `p_height_m` | NUMBER | ✅ Yes | Height in meters |
+| `p_max_weight_t` | NUMBER | ✅ Yes | Maximum weight in tonnes |
+| `p_total_weight_t` | NUMBER | ✅ Yes | Total operating weight in tonnes |
+| `p_max_speed_kmh` | NUMBER | ✅ Yes | Maximum speed in km/h |
+| `p_oper_speed_kmh` | NUMBER | ✅ Yes | Operational speed in km/h |
+| `p_num_bogies` | NUMBER | ✅ Yes | Number of bogies |
+| `p_bogie_type` | VARCHAR2 | ✅ Yes | Bogie configuration (e.g., 'Bo-Bo') |
+| `p_traction_kn` | VARCHAR2 | ✅ Yes | Traction force in kilonewtons |
+| `p_voltage` | NUMBER | ✅ **REQUIRED FOR ELECTRIC** | Voltage in kV (NOT NULL for electric) |
+| `p_frequency_hz` | NUMBER | ✅ **REQUIRED FOR ELECTRIC** | Frequency in Hz (NOT NULL for electric) |
 
 ---
 
 ## ✅ Validation Rules
 
 ### Electric-Specific Validation
-```
+```sql
 IF p_voltage IS NULL OR p_frequency_hz IS NULL THEN
     RAISE_APPLICATION_ERROR(-20001, 
         'Electric locomotive requires voltage and frequency.');
@@ -159,6 +158,7 @@ Frequency: 50 Hz
 - ✅ Automatic ID generation
 - ✅ Foreign key constraints pass
 - ✅ Data retrieval from both tables
+- ✅ Exception handling for errors
 
 **Execution:**
 ```sql
@@ -206,18 +206,34 @@ VERIFICATION - inserted_count = 0
 
 ---
 
-### TEST 3: Comprehensive Test Suite 🔬
+### TEST 3: Missing Frequency Validation ❌
 
 **File:** `testblock3.sql`
 
-**Purpose:** Run the frequency test, basically the same thing as the last one but for another parameter
+**Purpose:** Verify validation catches missing frequency (NULL)
 
-**Includes:**
+**Test Data:**
+```
+Name: E-Loco-No-Frequency
+Brand: Siemens
+Model: Test-Model
+Voltage: 25 kV
+Frequency: NULL  ← INTENTIONALLY NULL
+```
 
-3. **Test 3 - Missing Frequency**
-   - Frequency: NULL
-   - Expected: ✅ ORA-20001
+**Expected Result:**
+```
+✅ EXPECTED ERROR CAUGHT:
+   Error Code: -20001
+   Error Message: Electric locomotive requires voltage and frequency.
+   Status: VALIDATION WORKING CORRECTLY
+```
 
+**What it tests:**
+- ✅ Validation function detects NULL frequency
+- ✅ Correct error code (-20001) is raised
+- ✅ Transaction is rolled back automatically
+- ✅ No corrupted data in database
 
 **Execution:**
 ```sql
@@ -229,21 +245,20 @@ VERIFICATION - inserted_count = 0
 ## 🛠️ How to Use
 
 ### Prerequisites
-1. Schema must be initialized (`schema.sql`)
+1. Schema must be initialized
 2. COMPANY must exist
 3. USER/OPERATOR must exist (for FK constraint)
 4. LOCOMOTIVE_TYPE must exist (id=1 for Electric)
-
 
 ### Run Tests
 ```bash
 # Test 1: Valid insert
 sqlplus appuser/password @testblock1.sql
 
-# Test 2: Validation error
+# Test 2: Validation error (missing voltage)
 sqlplus appuser/password @testblock2.sql
 
-# Test 3: Comprehensive suite
+# Test 3: Validation error (missing frequency)
 sqlplus appuser/password @testblock3.sql
 ```
 
@@ -275,10 +290,10 @@ sqlplus appuser/password @testblock3.sql
 - **LOCOMOTIVE** - Main locomotive table
 - **LOCOMOTIVE_ELECTRIC** - Electric-specific attributes
 - **LOCOMOTIVE_TYPE** - Type reference (1=Electric, 2=Diesel)
-- **COMPANY** - Company/operator company
+- **USER** - Operator/company reference
 
 ---
 
-**Last Updated:** 2025-12-05  
+**Last Updated:** 2025-12-10  
 **Status:** Production Ready  
 **Version:** 1.0
