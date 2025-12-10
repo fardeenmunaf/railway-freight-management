@@ -3,14 +3,13 @@ package app.service.sprint3;
 import app.model.Station;
 import app.utils.graph.Edge;
 import app.utils.graph.Graph;
+import app.utils.graph.algorithms.TopologicalSort;
 
 import java.util.*;
 
 /**
- * Serviço que, dado um grafo dirigido de estações, calcula
- * uma ordenação topológica ou, se houver ciclos, devolve
- * as estações e arestas que pertencem a ciclos.
- * Complexidade temporal: O(V+E).
+ * Serviço que usa TopologicalSort de app.utils.graph.algorithms
+ * para calcular ordem de upgrades ou detetar ciclos.
  */
 public class StationDependencyService {
 
@@ -18,7 +17,7 @@ public class StationDependencyService {
         private final List<Station> topoOrder;
         private final Set<Station> cycleStations;
         private final Set<Edge<Station, ?>> cycleEdges;
-        private final String complexity; // "O(V+E)"
+        private final String complexity;
 
         public Result(List<Station> topoOrder,
                       Set<Station> cycleStations,
@@ -52,98 +51,26 @@ public class StationDependencyService {
     }
 
     /**
-     * Topological sort + deteção de ciclos.
-     * Complexidade: O(V+E).
+     * Delega para TopologicalSort.compute() de algorithms/
      */
     public Result planUpgrades(Graph<Station, ?> g) {
-        int n = g.numVertices();
+        return planUpgradesHelper(g);
+    }
 
-        // grafo vazio → ordem vazia, sem erros
-        if (n == 0) {
-            return new Result(
-                    Collections.emptyList(),
-                    Collections.emptySet(),
-                    Collections.emptySet(),
-                    "O(V+E)"
-            );
-        }
+    /**
+     * Método auxiliar que captura o tipo genérico E
+     */
+    private <E> Result planUpgradesHelper(Graph<Station, E> g) {
+        TopologicalSort<Station, E> topoSort = new TopologicalSort<>();
+        TopologicalSort.Result<Station, E> result = topoSort.compute(g);
 
-        // lista de vértices e índice de cada um
-        List<Station> vertices = new ArrayList<>(g.vertices());
-        Map<Station, Integer> indexOf = new HashMap<>();
-        for (int i = 0; i < vertices.size(); i++) {
-            indexOf.put(vertices.get(i), i);
-        }
-
-        // in-degree inicial
-        int[] inDegree = new int[n];
-        for (int i = 0; i < n; i++) {
-            Station v = vertices.get(i);
-            inDegree[i] = g.inDegree(v);
-        }
-
-        // Kahn
-        Queue<Station> q = new ArrayDeque<>();
-        for (int i = 0; i < n; i++) {
-            if (inDegree[i] == 0) {
-                q.add(vertices.get(i));
-            }
-        }
-
-        List<Station> topoOrder = new ArrayList<>(n);
-
-        while (!q.isEmpty()) {
-            Station v = q.poll();
-            topoOrder.add(v);
-
-            for (Edge<Station, ?> e : g.outgoingEdges(v)) {
-                Station w = e.getVDest();
-                Integer idxW = indexOf.get(w);
-                if (idxW == null) {
-                    continue; // segurança
-                }
-                inDegree[idxW]--;
-                if (inDegree[idxW] == 0) {
-                    q.add(w);
-                }
-            }
-        }
-
-        // se apanhou todos → sem ciclos
-        if (topoOrder.size() == n) {
-            return new Result(
-                    topoOrder,
-                    Collections.emptySet(),
-                    Collections.emptySet(),
-                    "O(V+E)"
-            );
-        }
-
-        // há ciclos → obter vértices e arestas em ciclos
-        Set<Station> cycleStations = new HashSet<>();
-        Set<Edge<Station, ?>> cycleEdges = new HashSet<>();
-
-        // vértices que sobraram com in-degree > 0 são candidatos a ciclos
-        for (int i = 0; i < n; i++) {
-            if (inDegree[i] > 0) {
-                Station v = vertices.get(i);
-                cycleStations.add(v);
-            }
-        }
-
-        // arestas entre vértices em ciclo
-        for (Station v : cycleStations) {
-            for (Edge<Station, ?> e : g.outgoingEdges(v)) {
-                Station w = e.getVDest();
-                if (cycleStations.contains(w)) {
-                    cycleEdges.add(e);
-                }
-            }
-        }
+        // Cast seguro porque Set<Edge<Station,E>> é covariante para Set<Edge<Station,?>>
+        @SuppressWarnings("unchecked")
+        Set<Edge<Station, ?>> cycleEdges = (Set<Edge<Station, ?>>) (Set<?>) result.getCycleEdges();
 
         return new Result(
-                Collections.emptyList(), // sem ordem válida
-                cycleStations,
+                result.hasCycles() ? Collections.emptyList() : new ArrayList<>(result.getTopoOrder()),
+                result.getCycleStations(),
                 cycleEdges,
                 "O(V+E)"
         );

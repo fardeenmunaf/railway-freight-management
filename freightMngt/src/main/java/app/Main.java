@@ -1,6 +1,5 @@
 package app;
 
-import app.model.Facility;
 import app.model.FacilityType;
 import app.model.Station;
 import app.repositories.Repositories;
@@ -22,144 +21,103 @@ public class Main {
     private static final String BELGIAN_LINES_CSV    = "src/main/java/app/sampleDataset/lines.csv";
 
     public static void main(String[] args) {
-        AppInitializer appInitializer = new AppInitializer();
 
-        System.out.println("Initializing dataset...");
-        appInitializer.run();
+        System.out.println("\n=== Initializing Dataset ===");
+        new AppInitializer().run();
+        new WagonsUnloading().unloadAllWagons();
+        System.out.println("Dataset loaded.\n");
 
-        WagonsUnloading wagonsUnloading = new WagonsUnloading();
-        wagonsUnloading.unloadAllWagons();
-
-        System.out.println("Dataset initialized successfully.\n\n");
-        System.out.println("\n\n\n");
-
-        // =========================================
-        // US USEI11 — Directed Line Upgrade Plan
-        // =========================================
+        // --------------------------------------------------------------------
+        // USEI11 - Belgian Station Upgrade Scheduling (Topo Sort + Cycle Check)
+        // --------------------------------------------------------------------
         Repositories repos = Repositories.getInstance();
 
-        // 1) Carregar estações belgas de stations.csv como Station
         List<Station> belgianStations = loadBelgianStations(repos);
-
-        // 2) Carregar dependências (arestas) de lines.csv
         List<int[]> dependencies = loadBelgianDependencies();
 
-        // 3) Construir grafo dirigido Station -> Station
+        System.out.println("Loaded Stations: " + belgianStations.size());
+        System.out.println("Loaded Dependencies: " + dependencies.size() + "\n");
+
         StationGraphBuilder builder = new StationGraphBuilder();
         MatrixGraph<Station, Double> graph = builder.buildGraph(belgianStations, dependencies);
 
-        // 4) Topological sort + deteção de ciclos
         StationDependencyService service = new StationDependencyService();
         StationDependencyService.Result result = service.planUpgrades(graph);
 
-        System.out.println("Topological sort / cycle detection complexity: " + result.getComplexity());
+        System.out.println("Algorithm Complexity: " + result.getComplexity());
 
         if (!result.hasCycles()) {
-            System.out.println("Valid upgrade order of stations:");
+            //-----------------------------------------------------------
+            // No cycles → show valid installation sequence
+            //-----------------------------------------------------------
+            System.out.println("\nValid upgrade order of stations:\n");
+            int i = 1;
             for (Station s : result.getTopoOrder()) {
-                System.out.println(
-                        s.getFacilityId() + " - " + s.getName()
-                                + " (" + s.getLat() + ", " + s.getLon() + ")"
-                );
+                System.out.printf("%3d. %4d - %s\n", i++, s.getFacilityId(), s.getName());
             }
         } else {
-            System.out.println("Graph has cycles, no valid order.");
+            //-----------------------------------------------------------
+            // Cycles Detected → show all cycle components
+            //-----------------------------------------------------------
+            System.out.println("\nGRAPH HAS CYCLES — upgrade schedule impossible.\n");
 
-            System.out.println("Stations in cycles:");
-            result.getCycleStations().forEach(s ->
-                    System.out.println(s.getFacilityId() + " - " + s.getName()));
+            System.out.println("Stations involved in cycles (" + result.getCycleStations().size() + "):");
+            result.getCycleStations().stream()
+                    .sorted((a,b)->a.getFacilityId()-b.getFacilityId())
+                    .forEach(s -> System.out.println(" • " + s.getFacilityId() + " - " + s.getName()));
 
-            System.out.println("Edges in cycles:");
+            System.out.println("\nCycle Edges (" + result.getCycleEdges().size() + "):");
             result.getCycleEdges().forEach(e ->
-                    System.out.println(
-                            e.getVOrig().getFacilityId()
-                                    + " -> "
-                                    + e.getVDest().getFacilityId()
-                    ));
+                    System.out.println(" → " + e.getVOrig().getFacilityId() + " -> " + e.getVDest().getFacilityId()));
         }
 
-        // ============================
-        // resto da aplicação
-        // ============================
+        System.out.println("\n=== Application Ready ===\n");
         MainMenu.display();
     }
 
-    /**
-     * Lê stations.csv e cria Station com FacilityId = Station id.
-     */
+    /* Load Belgian Stations */
     private static List<Station> loadBelgianStations(Repositories repos) {
         List<Map<String, String>> rows = CsvReader.readCsv(BELGIAN_STATIONS_CSV, ",");
         List<Station> result = new ArrayList<>();
 
-        // criar / obter FacilityType "Station"
-        FacilityType stationType = repos.getFacilityTypeRepository()
-                .getFacilityTypeByName("Station");
+        FacilityType stationType = repos.getFacilityTypeRepository().getFacilityTypeByName("Station");
         if (stationType == null) {
             stationType = new FacilityType(2, "Station");
             repos.getFacilityTypeRepository().addFacilityType(stationType);
         }
 
         for (Map<String, String> row : rows) {
-            String idStr = row.get("Station id");
-            String name = row.get("Station");
-            Double lat = parseDouble(row.get("Lat"));
-            Double lon = parseDouble(row.get("Lon"));
-
-            if (idStr == null || name == null || lat == null || lon == null) {
-                continue;
-            }
-
-            int id = Integer.parseInt(idStr.trim());
-
-            Station s = new Station(
-                    id,
-                    name,
-                    stationType,
-                    lat,
-                    lon,
-                    false,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-
-            // guarda também no FacilityRepository se quiseres reutilizar noutros casos
-            repos.getFacilityRepository().addFacility(s);
-            result.add(s);
+            try {
+                int id = Integer.parseInt(row.get("Station id").trim());
+                Station s = new Station(
+                        id, row.get("Station"), stationType,
+                        parseDouble(row.get("Lat")), parseDouble(row.get("Lon")),
+                        false,null,null,null,null,null,null
+                );
+                repos.getFacilityRepository().addFacility(s);
+                result.add(s);
+            } catch (Exception ignored) {}
         }
-
         return result;
     }
 
-    /**
-     * Lê lines.csv e devolve lista de pares (departure_stid, arrival_stid).
-     */
+    /* Load edges from lines.csv */
     private static List<int[]> loadBelgianDependencies() {
-        List<Map<String, String>> rows = CsvReader.readCsv(BELGIAN_LINES_CSV, ",");
-        return rows.stream()
+        return CsvReader.readCsv(BELGIAN_LINES_CSV, ",").stream()
                 .map(row -> {
-                    String fromStr = row.get("departure_stid");
-                    String toStr = row.get("arrival_stid");
-                    if (fromStr == null || toStr == null) {
-                        return null;
-                    }
-                    int from = Integer.parseInt(fromStr.trim());
-                    int to = Integer.parseInt(toStr.trim());
-                    return new int[]{from, to};
+                    try {
+                        return new int[]{
+                                Integer.parseInt(row.get("departure_stid").trim()),
+                                Integer.parseInt(row.get("arrival_stid").trim())
+                        };
+                    } catch (Exception e) { return null; }
                 })
                 .filter(x -> x != null)
                 .collect(Collectors.toList());
     }
 
     private static Double parseDouble(String value) {
-        if (value == null || value.trim().isEmpty()) return null;
-        try {
-            return Double.parseDouble(value.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        try { return value == null ? null : Double.parseDouble(value.trim()); }
+        catch (Exception e) { return null; }
     }
 }
