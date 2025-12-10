@@ -2,7 +2,7 @@ package app.service.sprint2;
 
 /**
  * Simple registry for shared services used by console views.
- * Holds a lazily initialized singleton StationService instance, so
+ * Holds a singleton StationService instance, so
  * indexes and spatial trees are built once and reused across views.
  */
 public final class ServiceRegistry {
