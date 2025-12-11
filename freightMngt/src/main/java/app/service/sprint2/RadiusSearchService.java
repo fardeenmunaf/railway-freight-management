@@ -20,7 +20,7 @@ public class RadiusSearchService {
     private final Balanced2DTreeBuilder.Balanced2DTree tree;
 
     /**
-     * Inject the already built 2D tree; view/controller or StationService is responsible for building it.
+     * Inject the already built 2D tree; StationService is responsible for building it.
      *
      * @param tree The 2D tree containing station data
      */
