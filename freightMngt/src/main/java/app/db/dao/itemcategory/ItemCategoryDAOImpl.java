@@ -1,0 +1,134 @@
+package app.db.dao.itemcategory;
+
+import app.db.DatabaseConnection;
+import app.model.ItemCategory;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Implementação DAO para gestão de ItemCategory na base de dados Oracle.
+ * Implementa operações CRUD para a entidade ItemCategory.
+ *
+ * @author G113 2DK
+ * @version 1.0
+ */
+public class ItemCategoryDAOImpl implements ItemCategoryDAO {
+
+    private final Connection connection;
+
+    public ItemCategoryDAOImpl() {
+        this.connection = DatabaseConnection.getInstance().getConnection();
+    }
+
+    @Override
+    public void create(ItemCategory itemCategory) throws SQLException {
+        String sql = "INSERT INTO ITEM_CATEGORY (CATEGORY_ID, NAME) VALUES (?, ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            if (itemCategory.getCategoryId() == null) {
+                itemCategory.setCategoryId(getNextId());
+            }
+
+            pstmt.setInt(1, itemCategory.getCategoryId());
+            pstmt.setString(2, itemCategory.getName());
+
+            pstmt.executeUpdate();
+        }
+    }
+
+    @Override
+    public ItemCategory get(int id) throws SQLException {
+        String sql = "SELECT CATEGORY_ID, NAME FROM ITEM_CATEGORY WHERE CATEGORY_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToItemCategory(rs);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public List<ItemCategory> getAll() throws SQLException {
+        List<ItemCategory> categories = new ArrayList<>();
+        String sql = "SELECT CATEGORY_ID, NAME FROM ITEM_CATEGORY ORDER BY CATEGORY_ID";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                categories.add(mapResultSetToItemCategory(rs));
+            }
+        }
+
+        return categories;
+    }
+
+    @Override
+    public void update(ItemCategory itemCategory) throws SQLException {
+        String sql = "UPDATE ITEM_CATEGORY SET NAME = ? WHERE CATEGORY_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, itemCategory.getName());
+            pstmt.setInt(2, itemCategory.getCategoryId());
+
+            pstmt.executeUpdate();
+        }
+    }
+
+    @Override
+    public void delete(int id) throws SQLException {
+        String sql = "DELETE FROM ITEM_CATEGORY WHERE CATEGORY_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+        }
+    }
+
+    @Override
+    public ItemCategory getByName(String name) throws SQLException {
+        String sql = "SELECT CATEGORY_ID, NAME FROM ITEM_CATEGORY WHERE NAME = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, name);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToItemCategory(rs);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private int getNextId() throws SQLException {
+        String sql = "SELECT NVL(MAX(CATEGORY_ID), 0) + 1 AS NEXT_ID FROM ITEM_CATEGORY";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getInt("NEXT_ID");
+            }
+        }
+
+        return 1;
+    }
+
+    private ItemCategory mapResultSetToItemCategory(ResultSet rs) throws SQLException {
+        return new ItemCategory(
+                rs.getInt("CATEGORY_ID"),
+                rs.getString("NAME")
+        );
+    }
+}
+
