@@ -4,17 +4,17 @@ import java.util.Objects;
 
 /**
  * @param <V> Vertex value type
- * @param <E> Edge value type
+ * @param <E> graph.Edge value type
  * @author DEI-ESINF
  */
 public class Edge<V, E> {
     final private V vOrig;        // vertex origin
     final private V vDest;        // vertex destination
-    private E weight;        // Edge weight
+    private E weight;        // graph.Edge weight
 
 
     public Edge(V vOrig, V vDest, E weight) {
-        if ((vOrig == null) || (vDest == null)) throw new RuntimeException("Edge vertices cannot be null!");
+        if ((vOrig == null) || (vDest == null)) throw new RuntimeException("graph.Edge vertices cannot be null!");
         this.vOrig = vOrig;
         this.vDest = vDest;
         this.weight = weight;

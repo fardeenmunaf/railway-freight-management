@@ -1,21 +1,19 @@
 package app.utils.graph.map;
 
-import app.utils.graph.Edge;
 import app.utils.graph.CommonGraph;
+import app.utils.graph.Edge;
 import app.utils.graph.Graph;
 
 import java.util.*;
 
-
 /**
  * @param <V> Vertex value type
- * @param <E> Edge value type
+ * @param <E> graph.Edge value type
  * @author DEI-ESINF
  */
 public class MapGraph<V, E> extends CommonGraph<V, E> {
 
-
-    final private Map<V, MapVertex<V, E>> mapVertices;  // all the Vertices of the graph
+    final private Map<V, MapVertex<V, E>> mapVertices;   // Vertex set
 
     // Constructs an empty graph (either undirected or directed)
     public MapGraph(boolean directed) {
@@ -23,18 +21,25 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
         mapVertices = new LinkedHashMap<>();
     }
 
-    public MapGraph(Graph<V,E> g) {
+    public MapGraph(Graph<V, E> g) {
         this(g.isDirected());
         copy(g, this);
     }
 
     @Override
-    public boolean validVertex(V vert) { return (mapVertices.get(vert) != null);   }
+    public boolean validVertex(V vert) {
+        return (mapVertices.get(vert) != null);
+    }
 
     @Override
     public Collection<V> adjVertices(V vert) {
-        
-        throw new UnsupportedOperationException("Not supported yet.");
+
+        if (!validVertex(vert))
+            return null;
+
+        MapVertex<V, E> mv = mapVertices.get(vert);
+
+        return mv.getAllAdjVerts();
     }
 
     @Override
@@ -106,13 +111,25 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
     @Override
     public Collection<Edge<V, E>> incomingEdges(V vert) {
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        if (!validVertex(vert))
+            return null;
+
+        ArrayList<Edge<V, E>> incoming = new ArrayList<>();
+
+        for (MapVertex<V, E> mv : mapVertices.values()) {
+            Edge<V, E> edge = mv.getEdge(vert);
+            if (edge != null)
+                incoming.add(edge);
+        }
+
+        return incoming;
     }
 
     @Override
     public boolean addVertex(V vert) {
 
-        if (vert == null) throw new RuntimeException("Vertices cannot be null!");
+        if (vert == null)
+            throw new RuntimeException("Vertices cannot be null!");
         if (validVertex(vert))
             return false;
 
@@ -127,7 +144,8 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
     @Override
     public boolean addEdge(V vOrig, V vDest, E weight) {
 
-        if (vOrig == null || vDest == null) throw new RuntimeException("Vertices cannot be null!");
+        if (vOrig == null || vDest == null)
+            throw new RuntimeException("Vertices cannot be null!");
         if (edge(vOrig, vDest) != null)
             return false;
 
@@ -144,11 +162,11 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
         mvo.addAdjVert(mvd.getElement(), newEdge);
         numEdges++;
 
-        //if graph is not direct insert other edge in the opposite direction 
+        // if graph is not direct insert other edge in the opposite direction
         if (!isDirected)
             // if vDest different vOrig
             if (edge(vDest, vOrig) == null) {
-                Edge<V, E> otherEdge = new Edge<>( mvd.getElement(), mvo.getElement(), weight);
+                Edge<V, E> otherEdge = new Edge<>(mvd.getElement(), mvo.getElement(), weight);
                 mvd.addAdjVert(mvo.getElement(), otherEdge);
                 numEdges++;
             }
@@ -159,18 +177,19 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
     @Override
     public boolean removeVertex(V vert) {
 
-        if (vert == null) throw new RuntimeException("Vertices cannot be null!");
+        if (vert == null)
+            throw new RuntimeException("Vertices cannot be null!");
         if (!validVertex(vert))
             return false;
 
-        //remove all edges that point to vert
+        // remove all edges that point to vert
         for (Edge<V, E> edge : incomingEdges(vert)) {
             removeEdge(edge.getVOrig(), vert);
         }
 
         MapVertex<V, E> mv = mapVertices.get(vert);
 
-        //The edges that live from vert are removed with the vertex
+        // The edges that live from vert are removed with the vertex
         numEdges -= mv.numAdjVerts();
         mapVertices.remove(vert);
         vertices.remove(vert);
@@ -183,7 +202,8 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
     @Override
     public boolean removeEdge(V vOrig, V vDest) {
 
-        if (vOrig == null || vDest == null) throw new RuntimeException("Vertices cannot be null!");
+        if (vOrig == null || vDest == null)
+            throw new RuntimeException("Vertices cannot be null!");
         if (!validVertex(vOrig) || !validVertex(vDest))
             return false;
 
@@ -197,7 +217,7 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
         mvo.remAdjVert(vDest);
         numEdges--;
 
-        //if graph is not directed
+        // if graph is not directed
         if (!isDirected) {
             edge = edge(vDest, vOrig);
             if (edge != null) {
@@ -209,25 +229,25 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
         return true;
     }
 
-    //Returns a clone of the graph
+    // Returns a clone of the graph
     @Override
     public MapGraph<V, E> clone() {
 
         MapGraph<V, E> g = new MapGraph<>(this.isDirected);
 
-        copy(this,g);
+        copy(this, g);
 
         return g;
     }
 
-    //string representation
+    // string representation
     @Override
     public String toString() {
         String s;
         if (numVerts == 0) {
-            s = "\nGraph not defined!!";
+            s = "\ngraph.Graph not defined!!";
         } else {
-            s = "Graph: " + numVerts + " vertices, " + numEdges + " edges\n";
+            s = "graph.Graph: " + numVerts + " vertices, " + numEdges + " edges\n";
             for (MapVertex<V, E> mv : mapVertices.values())
                 s += mv + "\n";
         }

@@ -6,7 +6,7 @@ import java.util.function.Predicate;
 
 /**
  * @param <V> Vertex value type
- * @param <E> Edge value type
+ * @param <E> graph.Edge value type
  * @author DEI-ESINF
  */
 public interface Graph<V, E> extends Cloneable {
@@ -53,7 +53,7 @@ public interface Graph<V, E> extends Cloneable {
     /** Find the first vertex for which Predicate is true.
      *  An example to get the Person vertex with a particular name:
      *  <pre>
-     *      Graph<Person, Integer> g = new ...;
+     *      graph.Graph<Person, Integer> g = new ...;
      *      g.vertex( p -> p.getName().equals(name) );
      * </pre>
      * @param p predicate (should be given in lambda form)
