@@ -18,7 +18,8 @@ CREATE OR REPLACE FUNCTION insert_electric_locomotive(
     p_bogie_type IN VARCHAR2,
     p_traction_kn IN VARCHAR2,
     p_voltage IN NUMBER,
-    p_frequency_hz IN NUMBER
+    p_frequency_hz IN NUMBER,
+    p_start_facility IN NUMBER
 )
 RETURN NUMBER
 IS
@@ -54,6 +55,7 @@ BEGIN
         num_bogies,
         bogie_type,
         traction_kn,
+        start_facility,
         created_at
     )
     VALUES(
@@ -75,6 +77,7 @@ BEGIN
         p_num_bogies,
         p_bogie_type,
         p_traction_kn,
+        p_start_facility,
         CURRENT_TIMESTAMP
     )
     RETURNING locomotive_id INTO v_loco_id;

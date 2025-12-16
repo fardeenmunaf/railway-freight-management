@@ -33,7 +33,8 @@ CREATE OR REPLACE FUNCTION insert_electric_locomotive(
     p_bogie_type IN VARCHAR2,
     p_traction_kn IN VARCHAR2,
     p_voltage IN NUMBER,
-    p_frequency_hz IN NUMBER
+    p_frequency_hz IN NUMBER,
+    p_start_facility IN NUMBER   
 )
 RETURN NUMBER
 ```
@@ -64,6 +65,7 @@ RETURN NUMBER
 | `p_traction_kn` | VARCHAR2 | ✅ Yes | Traction force in kilonewtons |
 | `p_voltage` | NUMBER | ✅ **REQUIRED FOR ELECTRIC** | Voltage in kV (NOT NULL for electric) |
 | `p_frequency_hz` | NUMBER | ✅ **REQUIRED FOR ELECTRIC** | Frequency in Hz (NOT NULL for electric) |
+| `p_start_facility` | NUMBER | ✅ Yes | Starting facility ID |
 
 ---
 
@@ -117,6 +119,7 @@ END IF;
 - `locomotive_type` (FK to LOCOMOTIVE_TYPE, CHECK 1-2)
 - `name` (NOT NULL)
 - Basic specifications (brand, model, year, power, etc.)
+- starting facility
 - `created_at` (CURRENT_TIMESTAMP)
 
 ### LOCOMOTIVE_ELECTRIC Table
@@ -143,6 +146,7 @@ Brand: Siemens
 Model: Vectron-V1
 Voltage: 25 kV
 Frequency: 50 Hz
+Start Facility: 50
 ```
 
 **Expected Result:**
@@ -180,6 +184,7 @@ Brand: Siemens
 Model: Vectron-Test
 Voltage: NULL  ← INTENTIONALLY NULL
 Frequency: 50 Hz
+Start Facility: 50
 ```
 
 **Expected Result:**
@@ -219,6 +224,7 @@ Brand: Siemens
 Model: Test-Model
 Voltage: 25 kV
 Frequency: NULL  ← INTENTIONALLY NULL
+Start Facility: 50
 ```
 
 **Expected Result:**
