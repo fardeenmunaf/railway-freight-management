@@ -16,21 +16,35 @@ BEGIN
         RAISE_APPLICATION_ERROR(-20001, 'Required field is missing');
     END IF;
 
-    IF NOT EXISTS (SELECT 1
-                   FROM FACILITY_TYPE ft
-                   WHERE ft.facility_type_id = p_facility_type_id) THEN
-        RAISE_APPLICATION_ERROR(-20002, 'Facility type not found');
-    END IF;
+    DECLARE
+        v_facility_type_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_facility_type_count
+        FROM FACILITY_TYPE ft
+        WHERE ft.facility_type_id = p_facility_type_id;
+
+        IF v_facility_type_count = 0 THEN
+            RAISE_APPLICATION_ERROR(-20002, 'Facility type not found');
+        END IF;
+    END;
 
     IF NVL(p_is_intermodal, 0) NOT IN (0, 1) THEN
         RAISE_APPLICATION_ERROR(-20004, 'is_intermodal must be 0 or 1');
     END IF;
 
-    IF EXISTS (SELECT 1
-               FROM FACILITY f
-               WHERE UPPER(f.name) = UPPER(p_name)) THEN
-        RAISE_APPLICATION_ERROR(-20003, 'Duplicate facility name');
-    END IF;
+    DECLARE
+        v_duplicate_count NUMBER;
+    BEGIN
+        SELECT COUNT(*)
+        INTO v_duplicate_count
+        FROM FACILITY f
+        WHERE UPPER(f.name) = UPPER(p_name);
+
+        IF v_duplicate_count > 0 THEN
+            RAISE_APPLICATION_ERROR(-20003, 'Duplicate facility name');
+        END IF;
+    END;
 
     INSERT INTO FACILITY (name,
                           facility_type_id,
@@ -60,4 +74,5 @@ BEGIN
 EXCEPTION
     WHEN DUP_VAL_ON_INDEX THEN
         RAISE_APPLICATION_ERROR(-20003, 'Duplicate facility name');
-END;
+END usbd35_register_facility;
+/
