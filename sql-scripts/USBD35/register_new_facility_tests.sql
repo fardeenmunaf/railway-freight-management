@@ -45,8 +45,23 @@ END;
 --------------------------------------------------------------------------------
 -- USBD35 – Clean up test data before running tests
 --------------------------------------------------------------------------------
-DELETE FROM FACILITY WHERE name IN ('New Logistics Hub', 'Duplicate Name Test', 'Boundary Coords Facility', 'Default Intermodal Facility');
-COMMIT;
+DECLARE
+    v_count NUMBER;
+BEGIN
+    -- Delete any test facilities from previous runs (using pattern matching)
+    DELETE FROM FACILITY
+    WHERE UPPER(name) LIKE 'TEST\_USBD35\_%' ESCAPE '\';
+
+    v_count := SQL%ROWCOUNT;
+    IF v_count > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Cleaned up ' || v_count || ' existing test facility/facilities');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('No existing test facilities found to clean up');
+    END IF;
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('');
+END;
+/
 
 --------------------------------------------------------------------------------
 -- USBD35 – TEST 1: Valid Facility Registration Test
@@ -66,7 +81,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('============================================================');
 
     rc := usbd35_register_facility(
-        p_name             => 'New Logistics Hub',
+        p_name             => 'TEST_USBD35_Facility_001',
         p_facility_type_id => 1,
         p_lat              => 40.0000,
         p_lon              => -8.0000,
@@ -161,7 +176,7 @@ BEGIN
 
     -- First insert should succeed
     rc := usbd35_register_facility(
-        p_name             => 'Duplicate Name Test',
+        p_name             => 'TEST_USBD35_Duplicate_002',
         p_facility_type_id => 2,
         p_lat              => 41.0,
         p_lon              => -8.5,
@@ -176,7 +191,7 @@ BEGIN
 
     -- Second insert with same name should fail
     rc := usbd35_register_facility(
-        p_name => 'Duplicate Name Test',
+        p_name => 'TEST_USBD35_Duplicate_002',
         p_facility_type_id => 2,
         p_lat => 41.1,
         p_lon => -8.6,
@@ -210,7 +225,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('============================================================');
 
     rc := usbd35_register_facility(
-        p_name             => 'Boundary Coords Facility',
+        p_name             => 'TEST_USBD35_Boundary_003',
         p_facility_type_id => 3,
         p_lat              => -90,
         p_lon              => 180,
@@ -351,7 +366,7 @@ BEGIN
 
     -- Call without p_is_intermodal parameter, should default to 0
     rc := usbd35_register_facility(
-        p_name             => 'Default Intermodal Facility',
+        p_name             => 'TEST_USBD35_Default_004',
         p_facility_type_id => 2,
         p_lat              => 41.5,
         p_lon              => -8.3
@@ -375,13 +390,27 @@ END;
 --------------------------------------------------------------------------------
 -- USBD35 – Clean up test data after running tests
 --------------------------------------------------------------------------------
-DELETE FROM FACILITY WHERE name IN ('New Logistics Hub', 'Duplicate Name Test', 'Boundary Coords Facility', 'Default Intermodal Facility');
-COMMIT;
-
+DECLARE
+    v_count NUMBER;
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('============================================================');
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('Final Cleanup');
+    DBMS_OUTPUT.PUT_LINE('========================================');
+
+    -- Delete all test facilities (using pattern matching)
+    DELETE FROM FACILITY
+    WHERE UPPER(name) LIKE 'TEST\_USBD35\_%' ESCAPE '\';
+
+    v_count := SQL%ROWCOUNT;
+    IF v_count > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('Cleaned up ' || v_count || ' test facility/facilities');
+    END IF;
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('========================================');
     DBMS_OUTPUT.PUT_LINE('All tests completed!');
-    DBMS_OUTPUT.PUT_LINE('============================================================');
+    DBMS_OUTPUT.PUT_LINE('========================================');
 END;
 /
 
