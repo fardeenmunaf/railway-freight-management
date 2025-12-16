@@ -170,6 +170,7 @@ CREATE TABLE LOCOMOTIVE
     num_bogies            NUMBER                              NOT NULL,
     bogie_type            VARCHAR2(60)                        NOT NULL,
     traction_kn           VARCHAR2(60)                        NOT NULL,
+    start_facility        NUMBER                              NOT NULL,
     created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at            TIMESTAMP DEFAULT NULL
 );
@@ -208,6 +209,7 @@ CREATE TABLE WAGON
     wagon_model  NUMBER                              NOT NULL,
     operator_id  NUMBER                              NOT NULL,
     service_year NUMBER(4)                           NOT NULL,
+    start_facility NUMBER                            NOT NULL,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at   TIMESTAMP DEFAULT NULL
 );
