@@ -17,11 +17,11 @@ BEGIN
             120,
             2,
             2020,
-            999999  -- gauge inexistente
+            999999,  -- gauge inexistente
+            50
         );
     EXCEPTION
         WHEN OTHERS THEN
-            -- aqui assumes que o erro é FK de gauge; em produção convém testar SQLCODE
             RAISE_APPLICATION_ERROR(-20001, 'Gauge inválido na criação de wagon.');
     END;
 

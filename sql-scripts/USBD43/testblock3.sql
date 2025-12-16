@@ -30,7 +30,8 @@ BEGIN
         P_BOGIE_TYPE        => 'B-B',
         P_TRACTION_KN       => '250 kN',
         P_VOLTAGE           => 25,
-        P_FREQUENCY_HZ      => NULL       -- MISSING!
+        P_FREQUENCY_HZ      => NULL,      -- MISSING!
+        p_START_FACILITY    => 50
     );
 END;
 /
