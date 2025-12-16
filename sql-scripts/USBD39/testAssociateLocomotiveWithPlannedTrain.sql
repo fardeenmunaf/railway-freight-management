@@ -1,4 +1,4 @@
-SET SERVEROUTPUT ON;
+-- SET SERVEROUTPUT ON;
 DECLARE
     v_result NUMBER;
     v_count NUMBER;
