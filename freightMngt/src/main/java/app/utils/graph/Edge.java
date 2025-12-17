@@ -1,4 +1,4 @@
-package graph;
+package app.utils.graph;
 
 import java.util.Objects;
 

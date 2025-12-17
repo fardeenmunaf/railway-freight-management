@@ -1,8 +1,8 @@
-package graph.map;
+package app.utils.graph.map;
 
-import graph.Edge;
-import graph.CommonGraph;
-import graph.Graph;
+import app.utils.graph.Edge;
+import app.utils.graph.CommonGraph;
+import app.utils.graph.Graph;
 
 import java.util.*;
 

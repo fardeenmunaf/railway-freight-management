@@ -1,6 +1,6 @@
-package graph;
+package app.utils.graph;
 
-import graph.matrix.MatrixGraph;
+import app.utils.graph.matrix.MatrixGraph;
 
 import java.util.ArrayList;
 import java.util.Comparator;
