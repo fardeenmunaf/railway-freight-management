@@ -1,8 +1,8 @@
-package graph.map;
+package app.utils.graph.map;
 
-import graph.Algorithms;
-import graph.Graph;
-import graph.matrix.MatrixGraph;
+import app.utils.graph.Algorithms;
+import app.utils.graph.Graph;
+import app.utils.graph.matrix.MatrixGraph;
 import org.junit.Before;
 import org.junit.Test;
 

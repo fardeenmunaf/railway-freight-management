@@ -1,7 +1,7 @@
-package graph.matrix;
+package app.utils.graph.matrix;
 
-import graph.Algorithms;
-import graph.Graph;
+import app.utils.graph.Algorithms;
+import app.utils.graph.Graph;
 import org.junit.Before;
 import org.junit.Test;
 
