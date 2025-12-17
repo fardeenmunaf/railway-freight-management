@@ -1,8 +1,8 @@
-package graph.matrix;
+package app.utils.graph.matrix;
 
-import graph.CommonGraph;
-import graph.Edge;
-import graph.Graph;
+import app.utils.graph.CommonGraph;
+import app.utils.graph.Edge;
+import app.utils.graph.Graph;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,6 +1,6 @@
-package graph.map;
+package app.utils.graph.map;
 
-import graph.Edge;
+import app.utils.graph.Edge;
 
 import java.util.*;
 
