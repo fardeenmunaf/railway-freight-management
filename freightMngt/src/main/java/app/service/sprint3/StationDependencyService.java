@@ -1,27 +1,30 @@
 package app.service.sprint3;
 
 import app.model.Station;
+import app.utils.graph.Algorithms;
 import app.utils.graph.Edge;
 import app.utils.graph.Graph;
-import app.utils.graph.algorithms.TopologicalSort;
 
 import java.util.*;
 
 /**
- * Serviço que usa TopologicalSort de app.utils.graph.algorithms
+ * Serviço que usa Algorithms.topologicalSortWithCycles
  * para calcular ordem de upgrades ou detetar ciclos.
  */
 public class StationDependencyService {
 
-    public static class Result {
+    /**
+     * Resultado do planeamento de upgrades, parametrizado pelo tipo de peso E.
+     */
+    public static class Result<E> {
         private final List<Station> topoOrder;
         private final Set<Station> cycleStations;
-        private final Set<Edge<Station, ?>> cycleEdges;
+        private final Set<Edge<Station, E>> cycleEdges;
         private final String complexity;
 
         public Result(List<Station> topoOrder,
                       Set<Station> cycleStations,
-                      Set<Edge<Station, ?>> cycleEdges,
+                      Set<Edge<Station, E>> cycleEdges,
                       String complexity) {
             this.topoOrder = topoOrder;
             this.cycleStations = cycleStations;
@@ -37,7 +40,7 @@ public class StationDependencyService {
             return cycleStations;
         }
 
-        public Set<Edge<Station, ?>> getCycleEdges() {
+        public Set<Edge<Station, E>> getCycleEdges() {
             return cycleEdges;
         }
 
@@ -51,27 +54,25 @@ public class StationDependencyService {
     }
 
     /**
-     * Delega para TopologicalSort.compute() de algorithms/
+     * Delega para Algorithms.topologicalSortWithCycles()
      */
-    public Result planUpgrades(Graph<Station, ?> g) {
+    public <E> Result<E> planUpgrades(Graph<Station, E> g) {
         return planUpgradesHelper(g);
     }
 
     /**
      * Método auxiliar que captura o tipo genérico E
      */
-    private <E> Result planUpgradesHelper(Graph<Station, E> g) {
-        TopologicalSort<Station, E> topoSort = new TopologicalSort<>();
-        TopologicalSort.Result<Station, E> result = topoSort.compute(g);
+    private <E> Result<E> planUpgradesHelper(Graph<Station, E> g) {
+        Algorithms.TopologicalSortResult<Station, E> result =
+                Algorithms.topologicalSortWithCycles(g);
 
-        // Cast seguro porque Set<Edge<Station,E>> é covariante para Set<Edge<Station,?>>
-        @SuppressWarnings("unchecked")
-        Set<Edge<Station, ?>> cycleEdges = (Set<Edge<Station, ?>>) (Set<?>) result.getCycleEdges();
-
-        return new Result(
-                result.hasCycles() ? Collections.emptyList() : new ArrayList<>(result.getTopoOrder()),
+        return new Result<>(
+                result.hasCycles()
+                        ? Collections.emptyList()
+                        : new ArrayList<>(result.getTopoOrder()),
                 result.getCycleStations(),
-                cycleEdges,
+                result.getCycleEdges(),
                 "O(V+E)"
         );
     }

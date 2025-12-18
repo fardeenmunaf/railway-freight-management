@@ -25,14 +25,15 @@ public class MainMenu {
             System.out.println("| 10. Radius Search               |");
             System.out.println("| 11. Range Query                 |");
             System.out.println("| 12. Train Dispatch Scheduler    |");
+            System.out.println("| 13. Station Upgrade             |");
             System.out.println("| 0. Exit                         |");
             System.out.println("-----------------------------------");
-            System.out.print("Enter your choice (0-12): ");
+            System.out.print("Enter your choice (0-13): ");
 
             String input = scanner.nextLine();
             try {
                 choice = Integer.parseInt(input);
-                if (choice < 0 || choice > 12) {
+                if (choice < 0 || choice > 13) {
                     System.out.println("Invalid choice. Please enter a number between 0 and 12.");
                 } else if (choice == 0) {
                     System.out.println("Exiting the system. Goodbye!");
@@ -75,7 +76,9 @@ public class MainMenu {
                         case 12:
                             TrainDispatchScheduler.display(scanner);
                             break;
-
+                        case 13:
+                            StationUpgradeView.display(scanner);
+                            break;
                         default:
                             System.out.println("Option not implemented yet.");
                             break;

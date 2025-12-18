@@ -1,12 +1,10 @@
 package app.utils.graph;
 
-
 import app.utils.graph.matrix.MatrixGraph;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.function.BinaryOperator;
+import java.util.Comparator;
 
 /**
  *
@@ -14,6 +12,28 @@ import java.util.function.BinaryOperator;
  *
  */
 public class Algorithms {
+
+    /**
+     * Result para Topological Sort + deteção de ciclos.
+     */
+    public static class TopologicalSortResult<V, E> {
+        private final LinkedList<V> topoOrder;
+        private final Set<V> cycleStations;
+        private final Set<Edge<V, E>> cycleEdges;
+
+        public TopologicalSortResult(LinkedList<V> topoOrder,
+                                     Set<V> cycleStations,
+                                     Set<Edge<V, E>> cycleEdges) {
+            this.topoOrder = topoOrder;
+            this.cycleStations = cycleStations;
+            this.cycleEdges = cycleEdges;
+        }
+
+        public LinkedList<V> getTopoOrder() { return topoOrder; }
+        public Set<V> getCycleStations() { return cycleStations; }
+        public Set<Edge<V, E>> getCycleEdges() { return cycleEdges; }
+        public boolean hasCycles() { return !cycleStations.isEmpty(); }
+    }
 
     /**
      * Performs breadth-first search of a graph.Graph starting in a vertex
@@ -70,7 +90,7 @@ public class Algorithms {
      *
      * @param g    graph.Graph instance
      * @param vert vertex of graph g that will be the source of the search
-     * 
+     *
      * @return a LinkedList with the vertices of depth-first search
      */
     public static <V, E> LinkedList<V> DepthFirstSearch(Graph<V, E> g, V vert) {
@@ -97,7 +117,7 @@ public class Algorithms {
      * @param paths   ArrayList with all the paths (in correct order)
      */
     private static <V, E> void allPaths(Graph<V, E> g, V vOrig, V vDest, boolean[] visited,
-            LinkedList<V> path, ArrayList<LinkedList<V>> paths) {
+                                        LinkedList<V> path, ArrayList<LinkedList<V>> paths) {
         path.add(vOrig);
         visited[g.key(vOrig)] = true;
 
@@ -149,8 +169,8 @@ public class Algorithms {
      * @param dist     minimum distances
      */
     private static <V, E> void shortestPathDijkstra(Graph<V, E> g, V vOrig,
-            Comparator<E> ce, BinaryOperator<E> sum, E zero,
-            boolean[] visited, V[] pathKeys, E[] dist) {
+                                                    Comparator<E> ce, BinaryOperator<E> sum, E zero,
+                                                    boolean[] visited, V[] pathKeys, E[] dist) {
         int vkey = g.key(vOrig);
         dist[vkey] = zero;
         pathKeys[vkey] = null;
@@ -194,8 +214,8 @@ public class Algorithms {
      *         otherwise
      */
     public static <V, E> E shortestPath(Graph<V, E> g, V vOrig, V vDest,
-            Comparator<E> ce, BinaryOperator<E> sum, E zero,
-            LinkedList<V> shortPath) {
+                                        Comparator<E> ce, BinaryOperator<E> sum, E zero,
+                                        LinkedList<V> shortPath) {
         if (!g.validVertex(vOrig) || !g.validVertex(vDest))
             return null;
 
@@ -233,8 +253,8 @@ public class Algorithms {
      * @return if vOrig exists in the graph true, false otherwise
      */
     public static <V, E> boolean shortestPaths(Graph<V, E> g, V vOrig,
-            Comparator<E> ce, BinaryOperator<E> sum, E zero,
-            ArrayList<LinkedList<V>> paths, ArrayList<E> dists) {
+                                               Comparator<E> ce, BinaryOperator<E> sum, E zero,
+                                               ArrayList<LinkedList<V>> paths, ArrayList<E> dists) {
         if (!g.validVertex(vOrig))
             return false;
 
@@ -280,7 +300,7 @@ public class Algorithms {
      * @param path     stack with the minimum path (correct order)
      */
     private static <V, E> void getPath(Graph<V, E> g, V vOrig, V vDest,
-            V[] pathKeys, LinkedList<V> path) {
+                                       V[] pathKeys, LinkedList<V> path) {
         if (vOrig.equals(vDest))
             path.push(vOrig);
         else {
@@ -293,7 +313,7 @@ public class Algorithms {
 
     /**
      * Calculates the minimum distance graph using Floyd-Warshall
-     * 
+     *
      * @param g   initial graph
      * @param ce  comparator between elements of type E
      * @param sum sum two elements of type E
@@ -331,4 +351,85 @@ public class Algorithms {
         return new MatrixGraph<>(g.isDirected(), g.vertices(), m);
     }
 
+
+    /**
+     * Topological sort + deteção de ciclos.
+     * @param g grafo dirigido
+     * @return resultado com ordem topológica ou ciclos
+     */
+    public static <V, E> TopologicalSortResult<V, E> topologicalSortWithCycles(Graph<V, E> g) {
+        if (!g.isDirected())
+            throw new IllegalArgumentException("Topological sort requires directed graph");
+
+        LinkedList<V> topoOrder = new LinkedList<>();
+        Set<V> visited = new HashSet<>();
+        Set<V> recStack = new HashSet<>();
+
+        Set<V> cycleStations = new HashSet<>();
+        Set<Edge<V, E>> cycleEdges = new HashSet<>();
+
+        Deque<V> stack = new ArrayDeque<>();
+
+        for (V v : g.vertices()) {
+            if (!visited.contains(v)) {
+                dfsTopological(g, v, visited, recStack, stack, topoOrder, cycleStations);
+            }
+        }
+
+        if (!cycleStations.isEmpty()) {
+            collectCycleEdges(g, cycleStations, cycleEdges);
+            return new TopologicalSortResult<>(new LinkedList<>(), cycleStations, cycleEdges);
+        }
+
+        return new TopologicalSortResult<>(topoOrder, Collections.emptySet(), Collections.emptySet());
+    }
+
+    private static <V, E> void dfsTopological(Graph<V, E> g, V v,
+                                              Set<V> visited,
+                                              Set<V> recStack,
+                                              Deque<V> stack,
+                                              LinkedList<V> topoOrder,
+                                              Set<V> cycleStations) {
+
+        visited.add(v);
+        recStack.add(v);
+        stack.push(v);
+
+        for (V adj : g.adjVertices(v)) {
+
+            if (recStack.contains(adj)) {
+                // Encontrou back-edge v -> adj: marcar todos os vértices do ciclo
+                cycleStations.add(adj);
+                for (V x : stack) {
+                    cycleStations.add(x);
+                    if (x.equals(adj)) {
+                        break;
+                    }
+                }
+            }
+
+            if (!visited.contains(adj)) {
+                dfsTopological(g, adj, visited, recStack, stack, topoOrder, cycleStations);
+            }
+        }
+
+        stack.pop();
+        recStack.remove(v);
+        topoOrder.addFirst(v);
+    }
+
+    /**
+     * Recolhe todas as arestas cujo destino e origem fazem parte de ciclos.
+     */
+    private static <V, E> void collectCycleEdges(Graph<V, E> g,
+                                                 Set<V> cycleStations,
+                                                 Set<Edge<V, E>> cycleEdges) {
+        for (V v : cycleStations) {
+            for (Edge<V, E> e : g.outgoingEdges(v)) {
+                if (cycleStations.contains(e.getVDest())) {
+                    cycleEdges.add(e);
+                }
+            }
+        }
+    }
 }
