@@ -307,18 +307,27 @@ public class AppInitializer implements Runnable {
         lisboa.setFacilityId(1);
         lisboa.setName("Lisboa Santa Apolónia");
         lisboa.setFacilityType(stationType);
+        lisboa.setLat(38.7223);
+        lisboa.setLon(-9.1393);
+        lisboa.setIsIntermodal(false);
         repositories.getFacilityRepository().addFacility(lisboa);
 
         Facility porto = new Facility();
         porto.setFacilityId(2);
         porto.setName("Porto Campanhã");
         porto.setFacilityType(stationType);
+        porto.setLat(41.1496);
+        porto.setLon(-8.5850);
+        porto.setIsIntermodal(false);
         repositories.getFacilityRepository().addFacility(porto);
 
         Facility coimbra = new Facility();
         coimbra.setFacilityId(3);
         coimbra.setName("Coimbra-B");
         coimbra.setFacilityType(stationType);
+        coimbra.setLat(40.2085);
+        coimbra.setLon(-8.4295);
+        coimbra.setIsIntermodal(false);
         repositories.getFacilityRepository().addFacility(coimbra);
 
         // 5-6. Criar segmentos

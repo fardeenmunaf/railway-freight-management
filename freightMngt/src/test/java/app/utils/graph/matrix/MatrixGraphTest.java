@@ -1,7 +1,8 @@
 package graph.matrix;
 
-import graph.Edge;
-import graph.Graph;
+import app.utils.graph.matrix.MatrixGraph;
+import app.utils.graph.Edge;
+import app.utils.graph.Graph;
 
 import org.junit.Before;
 import org.junit.Test;
