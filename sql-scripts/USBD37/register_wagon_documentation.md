@@ -22,7 +22,8 @@ CREATE OR REPLACE FUNCTION register_wagon_full (
   p_max_speed_kmh IN WAGON_MODEL.max_speed_kmh%TYPE,
   p_operator_id IN WAGON.operator_id%TYPE,
   p_service_year IN WAGON.service_year%TYPE,
-  p_gauges IN GAUGE.gauge_id%TYPE
+  p_gauges IN GAUGE.gauge_id%TYPE,
+  p_start_facility_id IN WAGON.START_FACILITY%TYPE
 )
 RETURN NUMBER
 ```
@@ -53,6 +54,7 @@ RETURN NUMBER
 | `p_operator_id` | NUMBER | Identifier of the operator managing the wagon |
 | `p_service_year` | NUMBER | Year the wagon entered service |
 | `p_gauges` | NUMBER | Track gauge identifier (foreign key reference) |
+| `p_start_facility_id` | NUMBER | Identifier of the facility where the wagon starts service |
 
 ## Return Value
 
@@ -93,8 +95,8 @@ WHERE name = p_model_name
 A new physical wagon instance is created in the `WAGON` table:
 
 ```sql
-INSERT INTO WAGON (wagon_model, operator_id, service_year)
-VALUES (v_model_id, p_operator_id, p_service_year)
+INSERT INTO WAGON (wagon_model, operator_id, service_year, start_facility)
+VALUES (v_model_id, p_operator_id, p_service_year, p_start_facility_id)
 RETURNING wagon_id INTO v_wagon_id;
 ```
 
@@ -165,7 +167,8 @@ BEGIN
     120,                -- Max speed (km/h)
     2,                  -- Operator ID
     2020,               -- Service year
-    1                   -- Gauge ID
+    1,                  -- Gauge ID
+    50                 -- Start Facility ID
   );
   DBMS_OUTPUT.put_line('Wagon id = ' || v_id);
   COMMIT;
@@ -210,7 +213,8 @@ BEGIN
       120,                  -- Max speed (km/h)
       2,                    -- Operator ID
       2020,                 -- Service year
-      999999                -- INVALID: Non-existent gauge ID
+      999999,               -- INVALID: Non-existent gauge ID
+      50                   -- Start Facility ID
     );
   EXCEPTION
     WHEN OTHERS THEN
@@ -263,7 +267,8 @@ BEGIN
     120,                  -- Max speed (km/h)
     2,                    -- Operator ID
     2020,                 -- Service year
-    1                     -- Gauge ID
+    1,                    -- Gauge ID
+    50                   -- Start Facility ID
   );
   DBMS_OUTPUT.put_line('Wagon id = ' || v_id);
   COMMIT;

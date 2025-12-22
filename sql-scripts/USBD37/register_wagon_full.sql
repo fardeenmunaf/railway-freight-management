@@ -13,7 +13,8 @@ CREATE OR REPLACE FUNCTION register_wagon_full (
     p_max_speed_kmh   IN WAGON_MODEL.max_speed_kmh%TYPE,
     p_operator_id     IN WAGON.operator_id%TYPE,
     p_service_year    IN WAGON.service_year%TYPE,
-    p_gauges          IN GAUGE.gauge_id%TYPE
+    p_gauges          IN GAUGE.gauge_id%TYPE,
+    p_start_facility_id IN WAGON.START_FACILITY%TYPE
 )
 RETURN NUMBER
 IS
@@ -55,8 +56,8 @@ BEGIN
     ------------------------------------------------------------------
     -- 2. Criar o WAGON físico para esse modelo
     ------------------------------------------------------------------
-    INSERT INTO WAGON (wagon_model, operator_id, service_year)
-    VALUES (v_model_id, p_operator_id, p_service_year)
+    INSERT INTO WAGON (wagon_model, operator_id, service_year,start_facility)
+    VALUES (v_model_id, p_operator_id, p_service_year , p_start_facility_id)
     RETURNING wagon_id INTO v_wagon_id;
 
     ------------------------------------------------------------------

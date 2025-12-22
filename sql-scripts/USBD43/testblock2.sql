@@ -36,7 +36,8 @@ BEGIN
         P_BOGIE_TYPE        => 'B-B',
         P_TRACTION_KN       => '250 kN',
         P_VOLTAGE           => NULL,     -- REQUIRED - should trigger error
-        P_FREQUENCY_HZ      => 50
+        P_FREQUENCY_HZ      => 50,
+        P_START_FACILITY    => 50
     );
 END;
 /
