@@ -1,7 +1,3 @@
--- USBD35 - Testes corrigidos para a função:
---   usbd35_register_facility(...) RETURN FACILITY.facility_id%TYPE
--- Nota: estes testes assumem que a função já está criada no schema APPUSER
-
 ALTER SESSION SET CURRENT_SCHEMA = APPUSER;
 
 BEGIN
