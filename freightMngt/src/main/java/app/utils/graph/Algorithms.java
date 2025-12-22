@@ -291,6 +291,89 @@ public class Algorithms {
     }
 
     /**
+     * Computes shortest-path using Bellman-Ford algorithm (supports negative weights)
+     * Detects negative cycles in the graph
+     *
+     * @param g         Graph instance
+     * @param vOrig     Origin vertex
+     * @param vDest     Destination vertex
+     * @param ce        Comparator between elements of type E
+     * @param sum       Binary operator to sum edges
+     * @param zero      Neutral element for sum
+     * @param shortPath Returns the vertices which make the shortest path
+     * @return path cost, or null if negative cycle detected or no path exists
+     */
+    public static <V, E> E bellmanFord(Graph<V, E> g, V vOrig, V vDest,
+                                       Comparator<E> ce, BinaryOperator<E> sum, E zero,
+                                       LinkedList<V> shortPath) {
+        // Validate origin and destination vertices
+        if (!g.validVertex(vOrig) || !g.validVertex(vDest))
+            return null;
+
+        shortPath.clear();
+        int numVerts = g.numVertices();
+
+        // Arrays to store distances and path predecessors
+        @SuppressWarnings("unchecked")
+        E[] dist = (E[]) new Object[numVerts];
+        @SuppressWarnings("unchecked")
+        V[] pathKeys = (V[]) new Object[numVerts];
+
+        // Initialize: distance to origin is zero
+        dist[g.key(vOrig)] = zero;
+
+        // Relax all edges |V|-1 times (main Bellman-Ford loop)
+        for (int i = 0; i < numVerts - 1; i++) {
+            for (V v : g.vertices()) {
+                int vKey = g.key(v);
+                // Only process vertices that have been reached
+                if (dist[vKey] != null) {
+                    // Check each outgoing edge for possible improvement
+                    for (Edge<V, E> edge : g.outgoingEdges(v)) {
+                        int adjKey = g.key(edge.getVDest());
+                        E newDist = sum.apply(dist[vKey], edge.getWeight());
+
+                        // Update if new distance is shorter
+                        if (dist[adjKey] == null || ce.compare(newDist, dist[adjKey]) < 0) {
+                            dist[adjKey] = newDist;
+                            pathKeys[adjKey] = v;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check for negative cycles (one more relaxation iteration)
+        for (V v : g.vertices()) {
+            int vKey = g.key(v);
+            if (dist[vKey] != null) {
+                for (Edge<V, E> edge : g.outgoingEdges(v)) {
+                    int adjKey = g.key(edge.getVDest());
+                    E newDist = sum.apply(dist[vKey], edge.getWeight());
+
+                    // If we can still improve, negative cycle exists
+                    if (dist[adjKey] == null || ce.compare(newDist, dist[adjKey]) < 0) {
+                        return null; // Negative cycle detected
+                    }
+                }
+            }
+        }
+
+        // Retrieve the final distance to destination
+        E lengthPath = dist[g.key(vDest)];
+
+        // Reconstruct path if destination is reachable
+        if (lengthPath != null) {
+            getPath(g, vOrig, vDest, pathKeys, shortPath);
+            return lengthPath;
+        }
+
+        return null; // No path exists
+    }
+
+
+
+    /**
      * Calculates the minimum distance graph using Floyd-Warshall
      * 
      * @param g   initial graph
