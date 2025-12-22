@@ -9,7 +9,7 @@ END;
 ------------------------------------------------------------
 DECLARE
     v_count NUMBER;
-    v_line_id NUMBER := 999;
+    v_line_id NUMBER := 9999;  -- Changed from 999 to 9999 to avoid conflicts
     v_gauge_id NUMBER := 1;
     v_facility_id NUMBER := 999;
     v_owner_id NUMBER := 1;
@@ -68,33 +68,72 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('========================================');
     DBMS_OUTPUT.PUT_LINE('Setup completed successfully!');
     DBMS_OUTPUT.PUT_LINE('========================================');
-    DBMS_OUTPUT.PUT_LINE('');
 END;
 /
 
 ------------------------------------------------------------
--- Cleanup: Remove any previous test data
+-- Cleanup: Remove any previous test data - AGGRESSIVE MODE
 ------------------------------------------------------------
+ROLLBACK;  -- Rollback any uncommitted transactions first
+
 DECLARE
     v_count NUMBER;
+    v_total NUMBER := 0;
+    v_segment_count NUMBER;
+    v_siding_count NUMBER;
+    v_max_segment_id NUMBER;
+    v_max_position NUMBER;
 BEGIN
-    -- Delete test sidings
-    DELETE FROM PARKING_TRACK WHERE name LIKE 'SIDING\_TEST%' ESCAPE '\';
+    DBMS_OUTPUT.PUT_LINE('');
+    DBMS_OUTPUT.PUT_LINE('Cleaning up previous test data - AGGRESSIVE MODE...');
+
+    -- Check what exists before cleanup
+    SELECT COUNT(*), NVL(MAX(segment_id), 0), NVL(MAX(position), 0)
+    INTO v_segment_count, v_max_segment_id, v_max_position
+    FROM LINE_SEGMENT WHERE line_id = 9999;
+
+    SELECT COUNT(*) INTO v_siding_count FROM PARKING_TRACK WHERE line_id = 9999;
+
+    DBMS_OUTPUT.PUT_LINE('  Before cleanup: ' || v_segment_count || ' segment(s) (max id: ' || v_max_segment_id || ', max pos: ' || v_max_position || '), ' || v_siding_count || ' siding(s)');
+
+    -- Delete in correct order (FK dependency)
+    DELETE FROM PARKING_TRACK WHERE line_id = 9999;
     v_count := SQL%ROWCOUNT;
+    v_total := v_total + v_count;
     IF v_count > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('Cleaned up ' || v_count || ' test siding(s)');
+        DBMS_OUTPUT.PUT_LINE('  Deleted ' || v_count || ' siding(s)');
     END IF;
 
-    -- Delete test segments (use line_id 999 and specific track numbers used in tests)
-    DELETE FROM LINE_SEGMENT
-    WHERE line_id = 999
-    AND track_number IN (1, 2, 3, 4);
+    DELETE FROM LINE_SEGMENT WHERE line_id = 9999;
     v_count := SQL%ROWCOUNT;
+    v_total := v_total + v_count;
     IF v_count > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('Cleaned up ' || v_count || ' test segment(s)');
+        DBMS_OUTPUT.PUT_LINE('  Deleted ' || v_count || ' segment(s)');
     END IF;
 
+    -- Force commit to make changes visible
     COMMIT;
+
+    -- Wait a moment for Oracle to process (workaround for DataGrip caching)
+    DBMS_LOCK.SLEEP(1);
+
+    IF v_total = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('  No previous test data found');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('  Total: ' || v_total || ' record(s) cleaned up');
+    END IF;
+
+    -- Verify cleanup after commit
+    SELECT COUNT(*) INTO v_segment_count FROM LINE_SEGMENT WHERE line_id = 9999;
+    SELECT COUNT(*) INTO v_siding_count FROM PARKING_TRACK WHERE line_id = 9999;
+
+    IF v_segment_count > 0 OR v_siding_count > 0 THEN
+        DBMS_OUTPUT.PUT_LINE('  ⚠ WARNING: After cleanup: ' || v_segment_count || ' segment(s), ' || v_siding_count || ' siding(s) STILL EXIST!');
+        RAISE_APPLICATION_ERROR(-20999, 'CLEANUP FAILED - Data still exists after delete and commit!');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('  ✓ Cleanup verified: Line 9999 is completely clean');
+    END IF;
+
     DBMS_OUTPUT.PUT_LINE('');
 END;
 /
@@ -110,7 +149,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('============================================================');
 
     v_id := add_segment_with_siding(
-            p_line_id         => 999,
+            p_line_id         => 9999,
             p_length_km       => 3000,
             p_electrif_type   => 1,
             p_gauge_id        => 1,
@@ -121,42 +160,11 @@ BEGIN
             );
 
     DBMS_OUTPUT.PUT_LINE('✓ TESTE 1 PASSED - Segmento sem siding criado. ID = ' || v_id);
-    DBMS_OUTPUT.PUT_LINE('  Line ID: 999');
+    DBMS_OUTPUT.PUT_LINE('  Line ID: 9999');
     DBMS_OUTPUT.PUT_LINE('  Track Number: 1');
     DBMS_OUTPUT.PUT_LINE('  Length: 3000 km');
     DBMS_OUTPUT.PUT_LINE('');
-END;
-/
-
-------------------------------------------------------------
--- TESTE 2: Inserir segmento com siding
-------------------------------------------------------------
-DECLARE
-    v_id NUMBER;
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('============================================================');
-    DBMS_OUTPUT.PUT_LINE('TESTE 2: Inserir segmento com siding');
-    DBMS_OUTPUT.PUT_LINE('============================================================');
-
-    v_id := add_segment_with_siding(
-            p_line_id                => 999,
-            p_length_km              => 3500,
-            p_electrif_type          => 1,
-            p_gauge_id               => 1,
-            p_max_weight_kg_m        => 8000,
-            p_speed_limit_kmh        => 120,
-            p_track_number           => 2,
-            p_has_siding             => 1,
-            p_siding_facility_id     => 999,
-            p_siding_name            => 'SIDING_TEST',
-            p_siding_capacity_wagons => 10
-            );
-
-    DBMS_OUTPUT.PUT_LINE('✓ TESTE 2 PASSED - Segmento + siding criado. ID = ' || v_id);
-    DBMS_OUTPUT.PUT_LINE('  Line ID: 999');
-    DBMS_OUTPUT.PUT_LINE('  Track Number: 2');
-    DBMS_OUTPUT.PUT_LINE('  Siding: SIDING_TEST (Capacity: 10 wagons)');
-    DBMS_OUTPUT.PUT_LINE('');
+    COMMIT;  -- Commit test data immediately
 END;
 /
 
@@ -171,7 +179,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('============================================================');
 
     v_id := add_segment_with_siding(
-                p_line_id         => 999,
+                p_line_id         => 9999,
                 p_length_km       => 4000,
                 p_electrif_type   => 1,
                 p_gauge_id        => 1,
@@ -230,7 +238,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('============================================================');
 
     v_id := add_segment_with_siding(
-                p_line_id                => 999,
+                p_line_id                => 9999,
                 p_length_km              => 3600,
                 p_electrif_type          => 1,
                 p_gauge_id               => 1,
@@ -239,7 +247,7 @@ BEGIN
                 p_track_number           => 4,
                 p_has_siding             => 1,
                 p_siding_facility_id     => 999,
-                p_siding_name            => 'SIDING_TEST',  -- já existe
+                p_siding_name            => 'TEST_USBD44_SIDING_001',  -- mesmo nome do TEST 2
                 p_siding_capacity_wagons => 10
                 );
 
@@ -255,26 +263,33 @@ END;
 ------------------------------------------------------------
 DECLARE
     v_count NUMBER;
+    v_total NUMBER := 0;
 BEGIN
     DBMS_OUTPUT.PUT_LINE('');
     DBMS_OUTPUT.PUT_LINE('========================================');
     DBMS_OUTPUT.PUT_LINE('Final Cleanup');
     DBMS_OUTPUT.PUT_LINE('========================================');
 
-    -- Delete test sidings
-    DELETE FROM PARKING_TRACK WHERE name LIKE 'SIDING\_TEST%' ESCAPE '\';
+    -- Delete ALL sidings from line 9999 first (FK dependency)
+    DELETE FROM PARKING_TRACK WHERE line_id = 9999;
     v_count := SQL%ROWCOUNT;
+    v_total := v_total + v_count;
     IF v_count > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('Cleaned up ' || v_count || ' test siding(s)');
+        DBMS_OUTPUT.PUT_LINE('  Deleted ' || v_count || ' siding(s) from line 9999');
     END IF;
 
-    -- Delete test segments
-    DELETE FROM LINE_SEGMENT
-    WHERE line_id = 999
-    AND track_number IN (1, 2, 3, 4);
+    -- Delete ALL segments from line 9999
+    DELETE FROM LINE_SEGMENT WHERE line_id = 9999;
     v_count := SQL%ROWCOUNT;
+    v_total := v_total + v_count;
     IF v_count > 0 THEN
-        DBMS_OUTPUT.PUT_LINE('Cleaned up ' || v_count || ' test segment(s)');
+        DBMS_OUTPUT.PUT_LINE('  Deleted ' || v_count || ' segment(s) from line 9999');
+    END IF;
+
+    IF v_total = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('  No test data to clean up');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('  Total: ' || v_total || ' record(s) cleaned up');
     END IF;
 
     COMMIT;
