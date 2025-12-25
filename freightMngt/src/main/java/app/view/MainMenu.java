@@ -1,5 +1,6 @@
 package app.view;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 public class MainMenu {
@@ -95,6 +96,8 @@ public class MainMenu {
                 }
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Please enter a number.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }
