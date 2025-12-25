@@ -352,7 +352,6 @@ public class Algorithms {
 
                     // If we can still improve, negative cycle exists
                     if (dist[adjKey] == null || ce.compare(newDist, dist[adjKey]) < 0) {
-                        // ⭐ CORREÇÃO: Preencher shortPath com vértices do ciclo
                         shortPath.add(v);
                         shortPath.add(edge.getVDest());
                         return null; // Negative cycle detected
