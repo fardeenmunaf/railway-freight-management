@@ -287,4 +287,114 @@ public class MapAlgorithmsTest {
                 paths = Algorithms.allPaths(incompleteMap, "Porto", "Faro");
                 assertEquals("There should be 0 paths", 0, paths.size());
         }
+
+        /**
+         * USEI 15
+         * Test of bellmanFord method, of class Algorithms.
+         */
+        @Test
+        public void testBellmanFord() {
+                System.out.println("Test of bellmanFord");
+
+                LinkedList<String> shortPath = new LinkedList<>();
+
+                // Test with non-existent vertex
+                Integer lenPath = Algorithms.bellmanFord(completeMap, "Porto", "LX", Integer::compare, Integer::sum, 0, shortPath);
+                assertNull("Length path should be null if vertex does not exist", lenPath);
+                assertEquals("Shortest Path does not exist", 0, shortPath.size());
+
+                // Test with same origin and destination
+                lenPath = Algorithms.bellmanFord(completeMap, "Porto", "Porto", Integer::compare, Integer::sum, 0, shortPath);
+                assertEquals("Length path should be 0 if vertices are the same", Integer.valueOf(0), lenPath);
+                assertEquals("Shortest Path only contains Porto", Arrays.asList("Porto"), shortPath);
+
+                // Test normal shortest path
+                lenPath = Algorithms.bellmanFord(incompleteMap, "Porto", "Lisboa", Integer::compare, Integer::sum, 0, shortPath);
+                assertEquals("Length path should be 335", Integer.valueOf(335), lenPath);
+                assertEquals("Shortest Path Porto - Lisboa", Arrays.asList("Porto", "Aveiro", "Coimbra", "Lisboa"), shortPath);
+
+                // Test another path
+                lenPath = Algorithms.bellmanFord(completeMap, "Porto", "Castelo Branco", Integer::compare, Integer::sum, 0, shortPath);
+                assertEquals("Length path should be 335", Integer.valueOf(335), lenPath);
+                assertEquals("Shortest Path Porto - Castelo Branco",
+                        Arrays.asList("Porto", "Aveiro", "Viseu", "Guarda", "Castelo Branco"), shortPath);
+
+                // Test with no path available
+                lenPath = Algorithms.bellmanFord(incompleteMap, "Porto", "Faro", Integer::compare, Integer::sum, 0, shortPath);
+                assertNull("Length path should be null if no path exists", lenPath);
+
+                // Test with negative weights - create a graph with negative edge
+                Graph<String, Integer> negativeGraph = new MapGraph<>(true);
+                negativeGraph.addVertex("A");
+                negativeGraph.addVertex("B");
+                negativeGraph.addVertex("C");
+                negativeGraph.addEdge("A", "B", 5);
+                negativeGraph.addEdge("B", "C", -2);
+                negativeGraph.addEdge("A", "C", 4);
+
+                lenPath = Algorithms.bellmanFord(negativeGraph, "A", "C", Integer::compare, Integer::sum, 0, shortPath);
+                assertEquals("Should handle negative weights", Integer.valueOf(3), lenPath);
+                assertEquals("Should find path through B", Arrays.asList("A", "B", "C"), shortPath);
+        }
+
+        /**
+         * Test of topologicalSortWithCycles method, of class Algorithms.
+         */
+        @Test
+        public void testTopologicalSortWithCycles() {
+                System.out.println("Test of topologicalSortWithCycles");
+
+                // Test with directed acyclic graph (DAG)
+                Graph<String, Integer> dag = new MapGraph<>(true);
+                dag.addVertex("A");
+                dag.addVertex("B");
+                dag.addVertex("C");
+                dag.addVertex("D");
+                dag.addVertex("E");
+                dag.addEdge("A", "B", 1);
+                dag.addEdge("A", "C", 1);
+                dag.addEdge("B", "D", 1);
+                dag.addEdge("C", "D", 1);
+                dag.addEdge("D", "E", 1);
+
+                Algorithms.TopologicalSortResult<String, Integer> result = Algorithms.topologicalSortWithCycles(dag);
+                assertNotNull("Result should not be null", result);
+                assertFalse("Should not have cycles", result.hasCycles());
+                assertEquals("Should have 5 vertices in topological order", 5, result.getTopoOrder().size());
+                assertEquals("First vertex should be A", "A", result.getTopoOrder().getFirst());
+                assertEquals("Last vertex should be E", "E", result.getTopoOrder().getLast());
+                assertTrue("Cycle stations should be empty", result.getCycleStations().isEmpty());
+                assertTrue("Cycle edges should be empty", result.getCycleEdges().isEmpty());
+
+                // Test with graph containing cycle
+                Graph<String, Integer> cyclicGraph = new MapGraph<>(true);
+                cyclicGraph.addVertex("A");
+                cyclicGraph.addVertex("B");
+                cyclicGraph.addVertex("C");
+                cyclicGraph.addVertex("D");
+                cyclicGraph.addEdge("A", "B", 1);
+                cyclicGraph.addEdge("B", "C", 1);
+                cyclicGraph.addEdge("C", "D", 1);
+                cyclicGraph.addEdge("D", "B", 1); // Creates cycle B -> C -> D -> B
+
+                result = Algorithms.topologicalSortWithCycles(cyclicGraph);
+                assertNotNull("Result should not be null", result);
+                assertTrue("Should detect cycles", result.hasCycles());
+                assertTrue("Topological order should be empty when cycles exist", result.getTopoOrder().isEmpty());
+                assertFalse("Cycle stations should not be empty", result.getCycleStations().isEmpty());
+                assertFalse("Cycle edges should not be empty", result.getCycleEdges().isEmpty());
+                assertTrue("B should be in cycle", result.getCycleStations().contains("B"));
+                assertTrue("C should be in cycle", result.getCycleStations().contains("C"));
+                assertTrue("D should be in cycle", result.getCycleStations().contains("D"));
+
+                // Test with undirected graph - should throw exception
+                try {
+                        Algorithms.topologicalSortWithCycles(completeMap);
+                        fail("Should throw IllegalArgumentException for undirected graph");
+                } catch (IllegalArgumentException e) {
+                        assertEquals("Should have correct error message",
+                                "Topological sort requires directed graph", e.getMessage());
+                }
+        }
+
 }

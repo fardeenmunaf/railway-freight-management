@@ -71,7 +71,7 @@ public class StationLoaderService {
      * @param filePath caminho completo para o ficheiro CSV de estações
      * @throws IOException caso ocorra erro na leitura do ficheiro
      */
-    private void loadStations(String filePath) throws IOException {
+    void loadStations(String filePath) throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             boolean firstLine = true;
@@ -101,7 +101,7 @@ public class StationLoaderService {
      * @param filePath caminho completo para o ficheiro CSV de linhas
      * @throws IOException caso ocorra erro na leitura do ficheiro
      */
-    private void loadLines(String filePath) throws IOException {
+    void loadLines(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             reader.readLine();
@@ -340,9 +340,9 @@ public class StationLoaderService {
      */
     public static class PathResult {
         /** Sequência de estações do caminho */
-        private final LinkedList<Station> path;
+        final LinkedList<Station> path;
         /** Custo total do caminho */
-        private final Double totalCost;
+        final Double totalCost;
         /** Indica existência de ciclo negativo */
         private final boolean hasNegativeCycle;
         /** Estações envolvidas no ciclo negativo */
