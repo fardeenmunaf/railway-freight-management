@@ -88,26 +88,31 @@ public class RailHubCentralityAnalysis {
     }
 
     /**
-     * Computes betweenness centrality using Brandes algorithm.
+     * Computes betweenness centrality using Brandes algorithm (weighted version).
      *
      * Betweenness: measures how often a station appears in shortest paths
      * between other pairs of stations.
      *
-     * Brandes Algorithm (1994):
-     * - For each vertex s, executes BFS to find shortest paths
+     * Uses the WEIGHTED version because our graph has costs/distances on edges.
+     * This ensures shortest paths consider actual costs, not just hop count.
+     *
+     * Brandes Algorithm with Dijkstra:
+     * - For each vertex s, executes Dijkstra to find shortest paths
      * - Accumulates dependencies along the paths
      *
-     * Complexity: O(VE) for unweighted graphs, O(VE + V^2 log V) for weighted
+     * Complexity: O(VE + V^2 log V) for weighted graphs
      */
     private void computeBetweenness() {
-        // TODO: Implement Brandes algorithm
-        // Pseudocode:
-        // 1. For each vertex s in the graph:
-        //    a. Initialize structures (stack S, queue Q, distances, predecessors, sigma)
-        //    b. BFS from s (or Dijkstra if weighted)
-        //    c. Compute sigma[w] = number of shortest paths from s to w
-        //    d. Accumulation: traverse S in reverse order, accumulate dependencies
-        // 2. Normalize: divide by 2 if undirected graph
+        // TODO: Implement Brandes algorithm (WEIGHTED version)
+        // Our graph has Double weights (costs/distances), so we MUST use the weighted version:
+        //
+        // Map<Station, Double> result = Algorithms.brandesBetweennessWeighted(
+        //     graph,
+        //     Double::compare,   // Compare doubles
+        //     Double::sum,        // Sum doubles
+        //     0.0                 // Zero element
+        // );
+        // betweennessMap.putAll(result);
     }
 
     /**
