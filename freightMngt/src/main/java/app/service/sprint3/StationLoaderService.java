@@ -1,8 +1,6 @@
 package app.service.sprint3;
 
 import app.model.Station;
-import app.utils.graph.Algorithms;
-import app.utils.graph.Edge;
 import app.utils.graph.Graph;
 import app.utils.graph.map.MapGraph;
 
@@ -16,21 +14,19 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Serviço para carregamento de estações e linhas ferroviárias a partir de ficheiros CSV
- * e cálculo de caminhos mais curtos entre estações usando algoritmos adequados.
+ * Serviço para carregamento de estações e linhas ferroviárias a partir de ficheiros CSV.
  *
  * Funcionalidades principais:
- * 
- *   <li>Carregamento de estações de { stations.csv}</li>
- *   <li>Carregamento de ligações de { lines.csv}</li>
- *   <li>Cálculo automático de caminho mais curto (Dijkstra ou Bellman-Ford)</li>
- *   <li>Detecção de ciclos negativos no grafo</li>
+ * <ul>
+ *   <li>Carregamento de estações de stations.csv</li>
+ *   <li>Carregamento de ligações de lines.csv</li>
+ *   <li>Fornecimento de dados para outros serviços (USEI13 e USEI15)</li>
  * </ul>
  *
  * Implementa padrão Singleton - o grafo é carregado uma vez e compartilhado
- * entre todos os serviços (USEI13 e USEI15). Não permite instâncias independentes.
+ * entre todos os serviços. Não permite instâncias independentes.
  *
- * @author Fardeen
+ * @author G113 2DK
  * @version 1.0
  */
 public class StationLoaderService {
@@ -206,128 +202,6 @@ public class StationLoaderService {
     }
 
     /**
-     * Calcula o caminho mais curto entre duas estações escolhendo automaticamente
-     * o algoritmo adequado (Dijkstra ou Bellman-Ford).
-     *
-     * Estratégia:
-     * 
-     *   <li>Tenta Dijkstra primeiro (mais eficiente)</li>
-     *   <li>Se falhar ou caminho tiver pesos negativos → Bellman-Ford</li>
-     *   <li>Detecta ciclos negativos e reporta estações/arestas envolvidas</li>
-     * </ul>
-     *
-     * @param departureId ID da estação de partida
-     * @param arrivalId ID da estação de chegada
-     * @return resultado com caminho, custo, algoritmo usado e detecção de ciclos,
-     *         ou { null} se estações não existirem
-     */
-    public PathResultWithAlgorithm calculateBestPath(Integer departureId, Integer arrivalId) {
-        Station start = stationMap.get(departureId);
-        Station end = stationMap.get(arrivalId);
-        if (start == null || end == null) return null;
-
-        // 1. Encontra caminho com Dijkstra PRIMEIRO
-        LinkedList<Station> path = new LinkedList<>();
-        Double cost = Algorithms.shortestPath(graph, start, end, Double::compare, Double::sum, 0.0, path);
-
-        if (cost == null) {
-            // SEM CAMINHO - tenta Bellman-Ford para ciclo negativo
-            LinkedList<Station> pathBF = new LinkedList<>();
-            Double costBF = Algorithms.bellmanFord(graph, start, end, Double::compare, Double::sum, 0.0, pathBF);
-            if (costBF == null) {
-                Set<Station> cycleStations = findNegativeCycleStations(start);
-                Set<Edge<Station, Double>> cycleEdges = findNegativeCycleEdges(cycleStations);
-                PathResult result = new PathResult(new LinkedList<>(), null, true, cycleStations, cycleEdges);
-                return new PathResultWithAlgorithm(result, "Bellman-Ford", true);
-            }
-            // Bellman-Ford encontrou caminho
-            PathResult result = new PathResult(pathBF, costBF, false, Collections.emptySet(), Collections.emptySet());
-            return new PathResultWithAlgorithm(result, "Bellman-Ford", false);
-        }
-
-        // 2. Dijkstra encontrou caminho - VERIFICA se tem negativos
-        boolean hasNegativeInPath = hasNegativeEdgesInPath(path);
-
-        PathResult result = new PathResult(path, cost, false, Collections.emptySet(), Collections.emptySet());
-        String algorithm = hasNegativeInPath ? "Bellman-Ford" : "Dijkstra";
-
-        return new PathResultWithAlgorithm(result, algorithm, false);
-    }
-
-    /**
-     * Verifica se o caminho específico contém arestas com custo negativo.
-     *
-     * @param path lista ordenada de estações do caminho
-     * @return { true} se alguma aresta consecutiva tem custo negativo
-     */
-    private boolean hasNegativeEdgesInPath(List<Station> path) {
-        for (int i = 0; i < path.size() - 1; i++) {
-            Station from = path.get(i);
-            Station to = path.get(i + 1);
-            for (Edge<Station, Double> edge : graph.outgoingEdges(from)) {
-                if (edge.getVDest().equals(to) && edge.getWeight() < 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Encontra estações alcançáveis a partir de uma estação inicial usando DFS.
-     *
-     * @param current estação inicial
-     * @param reachable conjunto de estações alcançáveis (output)
-     */
-    private static void dfsReachable(Station current, Set<Station> reachable) {
-        if (reachable.contains(current)) return;
-        reachable.add(current);
-        for (Edge<Station, Double> e : graph.outgoingEdges(current)) {
-            dfsReachable(e.getVDest(), reachable);
-        }
-    }
-
-    /**
-     * Identifica estações envolvidas em ciclos negativos alcançáveis da estação inicial.
-     *
-     * @param start estação inicial para determinar componente conectado
-     * @return conjunto de estações envolvidas em arestas negativas
-     */
-    private static Set<Station> findNegativeCycleStations(Station start) {
-        Set<Station> reachable = new HashSet<>();
-        dfsReachable(start, reachable);
-
-        Set<Station> cycleStations = new HashSet<>();
-        for (Station v : reachable) {
-            for (Edge<Station, Double> e : graph.outgoingEdges(v)) {
-                if (e.getWeight() < 0 && reachable.contains(e.getVDest())) {
-                    cycleStations.add(v);
-                    cycleStations.add(e.getVDest());
-                }
-            }
-        }
-        return cycleStations;
-    }
-
-    /**
-     * Encontra arestas negativas entre as estações especificadas.
-     *
-     * @param cycleStations estações candidatas ao ciclo negativo
-     * @return conjunto de arestas negativas que formam o ciclo
-     */
-    private static Set<Edge<Station, Double>> findNegativeCycleEdges(Set<Station> cycleStations) {
-        Set<Edge<Station, Double>> edges = new HashSet<>();
-        for (Station v : cycleStations) {
-            for (Edge<Station, Double> e : graph.outgoingEdges(v)) {
-                if (cycleStations.contains(e.getVDest()) && e.getWeight() < 0) {
-                    edges.add(e);
-                }
-            }
-        }
-        return edges;
-    }
-
-    /**
      * Retorna o grafo da rede ferroviária.
      * Forces initialization if not yet loaded.
      *
@@ -353,126 +227,5 @@ public class StationLoaderService {
             getInstance(); // Force initialization
         }
         return stationMap;
-    }
-
-    /**
-     * Resultado do cálculo de caminho mais curto com informação do algoritmo utilizado.
-     */
-    public static class PathResultWithAlgorithm {
-        /** Resultado detalhado do caminho */
-        private final PathResult pathResult;
-        /** Nome do algoritmo utilizado */
-        private final String algorithmUsed;
-        /** Indica se foi detetado ciclo negativo */
-        private final boolean hasNegativeCycle;
-
-        /**
-         * Construtor do resultado com algoritmo.
-         *
-         * @param pathResult resultado do caminho
-         * @param algorithmUsed nome do algoritmo ("Dijkstra" ou "Bellman-Ford")
-         * @param hasNegativeCycle true se ciclo negativo foi detetado
-         */
-        public PathResultWithAlgorithm(PathResult pathResult, String algorithmUsed, boolean hasNegativeCycle) {
-            this.pathResult = pathResult;
-            this.algorithmUsed = algorithmUsed;
-            this.hasNegativeCycle = hasNegativeCycle;
-        }
-
-        /** @return resultado detalhado do caminho */
-        public PathResult getPathResult() { return pathResult; }
-        /** @return nome do algoritmo utilizado */
-        public String getAlgorithmUsed() { return algorithmUsed; }
-        /** @return true se ciclo negativo foi detetado */
-        public boolean hasNegativeCycle() { return hasNegativeCycle; }
-    }
-
-    /**
-     * Resultado detalhado do cálculo de caminho mais curto.
-     */
-    public static class PathResult {
-        /** Sequência de estações do caminho */
-        final LinkedList<Station> path;
-        /** Custo total do caminho */
-        final Double totalCost;
-        /** Indica existência de ciclo negativo */
-        private final boolean hasNegativeCycle;
-        /** Estações envolvidas no ciclo negativo */
-        private final Set<Station> cycleStations;
-        /** Arestas do ciclo negativo */
-        private final Set<Edge<Station, Double>> cycleEdges;
-
-        /**
-         * Construtor do resultado do caminho.
-         *
-         * @param path sequência de estações
-         * @param totalCost custo total
-         * @param hasNegativeCycle true se ciclo negativo
-         * @param cycleStations estações do ciclo
-         * @param cycleEdges arestas do ciclo
-         */
-        public PathResult(LinkedList<Station> path, Double totalCost, boolean hasNegativeCycle,
-                          Set<Station> cycleStations, Set<Edge<Station, Double>> cycleEdges) {
-            this.path = path;
-            this.totalCost = totalCost;
-            this.hasNegativeCycle = hasNegativeCycle;
-            this.cycleStations = cycleStations;
-            this.cycleEdges = cycleEdges;
-        }
-
-        /**
-         * Formata o resultado para apresentação.
-         *
-         * Caso normal: mostra caminho com custo de cada aresta
-         * Ciclo negativo: lista estações e arestas envolvidas
-         *
-         * @return string formatada com caminho e custos
-         */
-        public String formatPath() {
-            if (hasNegativeCycle) {
-                StringBuilder sb = new StringBuilder("Ciclo negativo detetado envolvendo:\n");
-                sb.append("Estações: ");
-                sb.append(cycleStations.stream().map(Station::getName).collect(Collectors.joining(", ")));
-                sb.append("\n\nArestas: ");
-                sb.append(cycleEdges.stream()
-                        .map(e -> String.format("%s(%d)->%s(%d):%.2f",
-                                e.getVOrig().getName(), e.getVOrig().getFacilityId(),
-                                e.getVDest().getName(), e.getVDest().getFacilityId(), e.getWeight()))
-                        .collect(Collectors.joining(", ")));
-                return sb.toString();
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            // Caminho com custos individuais
-            double total = 0.0;
-            for (int i = 0; i < path.size() - 1; i++) {
-                Station from = path.get(i);
-                Station to = path.get(i + 1);
-
-                // Encontra aresta exata
-                Edge<Station, Double> edge = null;
-                for (Edge<Station, Double> e : graph.outgoingEdges(from)) {
-                    if (e.getVDest().equals(to)) {
-                        edge = e;
-                        break;
-                    }
-                }
-
-                double cost = edge != null ? edge.getWeight() : 0.0;
-                total += cost;
-
-                sb.append(String.format("%s(ID:%d) -> %s(ID:%d) [%.2f]",
-                        from.getName(), from.getFacilityId(),
-                        to.getName(), to.getFacilityId(), cost));
-
-                if (i < path.size() - 2) {
-                    sb.append(" -> ");
-                }
-            }
-
-            sb.append("\nCusto total: ").append(String.format("%.2f", total));
-            return sb.toString();
-        }
     }
 }
