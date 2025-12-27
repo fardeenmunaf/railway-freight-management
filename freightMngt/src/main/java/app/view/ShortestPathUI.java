@@ -3,7 +3,6 @@ package app.view;
 import app.service.sprint3.StationLoaderService;
 import app.service.sprint3.StationLoaderService.PathResultWithAlgorithm;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -13,13 +12,12 @@ public class ShortestPathUI {
     private final Scanner scanner;
 
     private ShortestPathUI(Scanner scanner) {
-        this.service = new StationLoaderService();
+        this.service = StationLoaderService.getInstance();
         this.scanner = scanner;
     }
 
-    public static void display(Scanner scanner) throws IOException {
+    public static void display(Scanner scanner) {
         ShortestPathUI ui = new ShortestPathUI(scanner);
-        ui.service.initialize();
         System.out.println("Dados carregados com sucesso!");
         System.out.println("Total de estações: " + ui.service.getTotalStations());
         System.out.println("Total de linhas: " + ui.service.getTotalConnections());

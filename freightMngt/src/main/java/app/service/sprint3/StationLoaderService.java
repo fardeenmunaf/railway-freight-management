@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
  *   <li>Detecção de ciclos negativos no grafo</li>
  * </ul>
  *
+ * Implementa padrão Singleton - o grafo é carregado uma vez e compartilhado
+ * entre todos os serviços (USEI13 e USEI15). Não permite instâncias independentes.
+ *
  * @author Fardeen
  * @version 1.0
  */
@@ -38,28 +41,70 @@ public class StationLoaderService {
     /** Caminho para o ficheiro CSV das linhas */
     private static final String LINES_PATH = "src/main/java/app/sampleDataset/lines.csv";
 
-    /** Grafo não-direcionado representa a rede ferroviária  */
+    /** Singleton instance - lazy initialized */
+    private static StationLoaderService instance;
+
+    /** Grafo não-direcionado representa a rede ferroviária (shared across all services) */
     private static Graph<Station, Double> graph;
 
-    /** Mapa que associa ID da estação ao objeto Station */
-    private Map<Integer, Station> stationMap;
+    /** Mapa que associa ID da estação ao objeto Station (shared across all services) */
+    private static Map<Integer, Station> stationMap;
+
+    /** Flag indicating if data has been loaded */
+    private static boolean initialized = false;
 
     /**
-     * Construtor que inicializa o grafo não-direcionado e o mapa de estações. (ida e volta)
+     * Private constructor - enforces singleton pattern.
+     * Use getInstance() to access the service.
      */
-    public StationLoaderService() {
-        this.graph = new MapGraph<>(false);
-        this.stationMap = new HashMap<>();
+    private StationLoaderService() {
+        // Singleton - no public instantiation
     }
 
     /**
-     * Inicializa o serviço carregando estações e linhas dos ficheiros padrão.
+     * Returns the singleton instance, creating it if necessary.
+     * The graph is loaded lazily on first access.
      *
-     * @throws IOException caso ocorra erro na leitura dos ficheiros CSV
+     * @return shared instance of StationLoaderService
      */
-    public void initialize() throws IOException {
+    public static synchronized StationLoaderService getInstance() {
+        if (instance == null) {
+            instance = new StationLoaderService();
+            // Initialize static graph and stationMap
+            graph = new MapGraph<>(false);
+            stationMap = new HashMap<>();
+            try {
+                loadData();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to initialize StationLoaderService singleton", e);
+            }
+        }
+        return instance;
+    }
+
+    /**
+     * Forces a reload of the singleton instance.
+     * Useful when CSV data has changed or for testing.
+     */
+    public static synchronized void resetInstance() {
+        instance = null;
+        graph = null;
+        stationMap = null;
+        initialized = false;
+    }
+
+    /**
+     * Loads stations and lines from CSV files (internal use only).
+     *
+     * @throws IOException if CSV files cannot be read
+     */
+    private static void loadData() throws IOException {
+        if (initialized) {
+            return; // Already loaded
+        }
         loadStations(STATIONS_PATH);
         loadLines(LINES_PATH);
+        initialized = true;
     }
 
     /**
@@ -71,7 +116,7 @@ public class StationLoaderService {
      * @param filePath caminho completo para o ficheiro CSV de estações
      * @throws IOException caso ocorra erro na leitura do ficheiro
      */
-    void loadStations(String filePath) throws IOException {
+    private static void loadStations(String filePath) throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             boolean firstLine = true;
@@ -101,7 +146,7 @@ public class StationLoaderService {
      * @param filePath caminho completo para o ficheiro CSV de linhas
      * @throws IOException caso ocorra erro na leitura do ficheiro
      */
-    void loadLines(String filePath) throws IOException {
+    private static void loadLines(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             reader.readLine();
@@ -237,7 +282,7 @@ public class StationLoaderService {
      * @param current estação inicial
      * @param reachable conjunto de estações alcançáveis (output)
      */
-    private void dfsReachable(Station current, Set<Station> reachable) {
+    private static void dfsReachable(Station current, Set<Station> reachable) {
         if (reachable.contains(current)) return;
         reachable.add(current);
         for (Edge<Station, Double> e : graph.outgoingEdges(current)) {
@@ -251,7 +296,7 @@ public class StationLoaderService {
      * @param start estação inicial para determinar componente conectado
      * @return conjunto de estações envolvidas em arestas negativas
      */
-    private Set<Station> findNegativeCycleStations(Station start) {
+    private static Set<Station> findNegativeCycleStations(Station start) {
         Set<Station> reachable = new HashSet<>();
         dfsReachable(start, reachable);
 
@@ -273,7 +318,7 @@ public class StationLoaderService {
      * @param cycleStations estações candidatas ao ciclo negativo
      * @return conjunto de arestas negativas que formam o ciclo
      */
-    private Set<Edge<Station, Double>> findNegativeCycleEdges(Set<Station> cycleStations) {
+    private static Set<Edge<Station, Double>> findNegativeCycleEdges(Set<Station> cycleStations) {
         Set<Edge<Station, Double>> edges = new HashSet<>();
         for (Station v : cycleStations) {
             for (Edge<Station, Double> e : graph.outgoingEdges(v)) {
@@ -287,19 +332,27 @@ public class StationLoaderService {
 
     /**
      * Retorna o grafo da rede ferroviária.
+     * Forces initialization if not yet loaded.
      *
      * @return grafo com estações e conexões
      */
-    public Graph<Station, Double> getGraph() {
+    public static Graph<Station, Double> getGraph() {
+        if (instance == null) {
+            getInstance(); // Force initialization
+        }
         return graph;
     }
 
     /**
      * Retorna o mapa de estações indexado por ID.
+     * Forces initialization if not yet loaded.
      *
      * @return mapa ID → Station
      */
-    public Map<Integer, Station> getStationMap() {
+    public static Map<Integer, Station> getStationMap() {
+        if (instance == null) {
+            getInstance(); // Force initialization
+        }
         return stationMap;
     }
 
