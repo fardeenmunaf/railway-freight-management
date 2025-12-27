@@ -1,0 +1,23 @@
+graph MST {
+  layout=neato;
+  node [shape=circle, fontsize=10];
+  edge [fontsize=8];
+
+  "Lisboa Santa Apol..." [pos="-1017409,14,4279766,13!"];
+  "Porto Campanhã" [pos="-960591,41,4549594,27!"];
+  "Coimbra-B" [pos="-936234,60,4444072,78!"];
+  "Aveiro" [pos="-962417,06,4492820,92!"];
+  "Braga" [pos="-938037,98,4592428,52!"];
+  "Faro" [pos="-883012,50,4092124,48!"];
+
+  "Lisboa Santa Apol..." -- "Coimbra-B" [label="200,00"];
+  "Lisboa Santa Apol..." -- "Faro" [label="280,00"];
+  "Porto Campanhã" -- "Braga" [label="55,00"];
+  "Porto Campanhã" -- "Aveiro" [label="75,00"];
+  "Coimbra-B" -- "Aveiro" [label="60,00"];
+  "Coimbra-B" -- "Lisboa Santa Apol..." [label="200,00"];
+  "Aveiro" -- "Coimbra-B" [label="60,00"];
+  "Aveiro" -- "Porto Campanhã" [label="75,00"];
+  "Braga" -- "Porto Campanhã" [label="55,00"];
+  "Faro" -- "Lisboa Santa Apol..." [label="280,00"];
+}

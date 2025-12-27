@@ -1,0 +1,12 @@
+graph MST {
+  layout=neato;
+  node [shape=circle, fontsize=10];
+  edge [fontsize=8];
+
+  "Station \"With Qu..." [pos="111320.00,110540.00!"];
+  "Station\\With\\Ba..." [pos="222640.00,221080.00!"];
+  "Very Long Station..." [pos="333960.00,331620.00!"];
+
+  "Station \"With Qu..." -- "Station\\With\\Ba..." [label="10.00"];
+  "Station\\With\\Ba..." -- "Very Long Station..." [label="15.00"];
+}
