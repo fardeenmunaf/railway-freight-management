@@ -66,18 +66,15 @@ public class StationLoaderService {
      * The graph is loaded lazily on first access.
      *
      * @return shared instance of StationLoaderService
+     * @throws IOException if CSV files cannot be read
      */
-    public static synchronized StationLoaderService getInstance() {
+    public static synchronized StationLoaderService getInstance() throws IOException {
         if (instance == null) {
             instance = new StationLoaderService();
             // Initialize static graph and stationMap
             graph = new MapGraph<>(false);
             stationMap = new HashMap<>();
-            try {
-                loadData();
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to initialize StationLoaderService singleton", e);
-            }
+            loadData();
         }
         return instance;
     }
@@ -335,8 +332,9 @@ public class StationLoaderService {
      * Forces initialization if not yet loaded.
      *
      * @return grafo com estações e conexões
+     * @throws IOException if CSV files cannot be read
      */
-    public static Graph<Station, Double> getGraph() {
+    public static Graph<Station, Double> getGraph() throws IOException {
         if (instance == null) {
             getInstance(); // Force initialization
         }
@@ -348,8 +346,9 @@ public class StationLoaderService {
      * Forces initialization if not yet loaded.
      *
      * @return mapa ID → Station
+     * @throws IOException if CSV files cannot be read
      */
-    public static Map<Integer, Station> getStationMap() {
+    public static Map<Integer, Station> getStationMap() throws IOException {
         if (instance == null) {
             getInstance(); // Force initialization
         }

@@ -5,6 +5,7 @@ import app.utils.graph.Graph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class StationLoaderServiceTest {
     }
 
     @Test
-    void testServiceInitialization() {
+    void testServiceInitialization() throws IOException {
         StationLoaderService service = StationLoaderService.getInstance();
 
         assertNotNull(StationLoaderService.getGraph());
@@ -36,21 +37,21 @@ public class StationLoaderServiceTest {
     }
 
     @Test
-    void testGetGraph() {
+    void testGetGraph() throws IOException {
         Graph<Station, Double> graph = StationLoaderService.getGraph();
         assertNotNull(graph);
         assertTrue(graph.numVertices() > 0);
     }
 
     @Test
-    void testGetStationMap() {
+    void testGetStationMap() throws IOException {
         Map<Integer, Station> stationMap = StationLoaderService.getStationMap();
         assertNotNull(stationMap);
         assertFalse(stationMap.isEmpty());
     }
 
     @Test
-    void testStationExists() {
+    void testStationExists() throws IOException {
         StationLoaderService service = StationLoaderService.getInstance();
         Map<Integer, Station> stationMap = StationLoaderService.getStationMap();
 
@@ -64,14 +65,14 @@ public class StationLoaderServiceTest {
     }
 
     @Test
-    void testSingletonPattern() {
+    void testSingletonPattern() throws IOException {
         StationLoaderService instance1 = StationLoaderService.getInstance();
         StationLoaderService instance2 = StationLoaderService.getInstance();
         assertSame(instance1, instance2);
     }
 
     @Test
-    void testResetInstance() {
+    void testResetInstance() throws IOException {
         StationLoaderService instance1 = StationLoaderService.getInstance();
         StationLoaderService.resetInstance();
         StationLoaderService instance2 = StationLoaderService.getInstance();
