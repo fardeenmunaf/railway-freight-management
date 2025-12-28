@@ -77,7 +77,7 @@ public class MainMenu {
                             RangeQueryView.display(scanner);
                             break;
                         case 12:
-                            TrainDispatchScheduler.display(scanner);
+                            TrainSchedulingView.display(scanner);
                             break;
                         case 13:
                             StationUpgradeView.display(scanner);

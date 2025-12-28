@@ -5,10 +5,12 @@ import app.model.*;
 import app.repositories.CartRepository;
 import app.repositories.Repositories;
 import app.repositories.WarehouseAisleRepository;
+import app.service.sprint3.TrainSchedulingService;
 import app.utils.CsvReader;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -303,45 +305,66 @@ public class AppInitializer implements Runnable {
         repositories.getFacilityTypeRepository().addFacilityType(stationType);
 
         // 2-4. Criar estações
-        Facility lisboa = new Facility();
-        lisboa.setFacilityId(1);
-        lisboa.setName("Lisboa Santa Apolónia");
-        lisboa.setFacilityType(stationType);
-        lisboa.setLat(38.7223);
-        lisboa.setLon(-9.1393);
-        lisboa.setIsIntermodal(false);
-        repositories.getFacilityRepository().addFacility(lisboa);
+        // Try to reuse facilities if already loaded (e.g., from CSV); otherwise create defaults.
+        // Use a flexible finder to match names that may differ in accents or small variants.
+        Facility lisboa = findFacilityByNameFlexible(repositories, "Lisboa Santa Apolónia");
+        if (lisboa == null) {
+            lisboa = new Facility();
+            lisboa.setFacilityId(repositories.getFacilityRepository().getNextFacilityId());
+            lisboa.setName("Lisboa Santa Apolónia");
+            lisboa.setFacilityType(stationType);
+            lisboa.setLat(38.7223);
+            lisboa.setLon(-9.1393);
+            lisboa.setIsIntermodal(false);
+            repositories.getFacilityRepository().addFacility(lisboa);
+        }
 
-        Facility porto = new Facility();
-        porto.setFacilityId(2);
-        porto.setName("Porto Campanhã");
-        porto.setFacilityType(stationType);
-        porto.setLat(41.1496);
-        porto.setLon(-8.5850);
-        porto.setIsIntermodal(false);
-        repositories.getFacilityRepository().addFacility(porto);
+        Facility porto = findFacilityByNameFlexible(repositories, "Porto Campanhã");
+        if (porto == null) {
+            porto = new Facility();
+            porto.setFacilityId(repositories.getFacilityRepository().getNextFacilityId());
+            porto.setName("Porto Campanhã");
+            porto.setFacilityType(stationType);
+            porto.setLat(41.1496);
+            porto.setLon(-8.5850);
+            porto.setIsIntermodal(false);
+            repositories.getFacilityRepository().addFacility(porto);
+        }
 
-        Facility coimbra = new Facility();
-        coimbra.setFacilityId(3);
-        coimbra.setName("Coimbra-B");
-        coimbra.setFacilityType(stationType);
-        coimbra.setLat(40.2085);
-        coimbra.setLon(-8.4295);
-        coimbra.setIsIntermodal(false);
-        repositories.getFacilityRepository().addFacility(coimbra);
+        Facility coimbra = findFacilityByNameFlexible(repositories, "Coimbra-B");
+        if (coimbra == null) {
+            coimbra = new Facility();
+            coimbra.setFacilityId(repositories.getFacilityRepository().getNextFacilityId());
+            coimbra.setName("Coimbra-B");
+            coimbra.setFacilityType(stationType);
+            coimbra.setLat(40.2085);
+            coimbra.setLon(-8.4295);
+            coimbra.setIsIntermodal(false);
+            repositories.getFacilityRepository().addFacility(coimbra);
+        }
 
         // 5-6. Criar segmentos
         LineSegment seg1 = new LineSegment();
         seg1.setSegmentId(1);
         seg1.setLengthKm(200.0);
         seg1.setSpeedLimitKmh(120.0);
+        seg1.setTrackNumber(2); // double track
         repositories.getLineSegmentRepository().addLineSegment(seg1);
 
         LineSegment seg2 = new LineSegment();
         seg2.setSegmentId(2);
         seg2.setLengthKm(120.0);
         seg2.setSpeedLimitKmh(100.0);
+        seg2.setTrackNumber(1); // single track (for crossing tests)
         repositories.getLineSegmentRepository().addLineSegment(seg2);
+
+        // Additional direct segment Lisbon<->Coimbra to provide alternative route
+        LineSegment seg3 = new LineSegment();
+        seg3.setSegmentId(3);
+        seg3.setLengthKm(230.0);
+        seg3.setSpeedLimitKmh(110.0);
+        seg3.setTrackNumber(1); // single track
+        repositories.getLineSegmentRepository().addLineSegment(seg3);
 
         // 7-10. Criar ligações estação-segmento
         LineSegmentFacility lsf1 = new LineSegmentFacility();
@@ -368,12 +391,79 @@ public class AppInitializer implements Runnable {
         lsf4.setFacility(coimbra);
         repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf4);
 
+        // link seg3 (Lisboa <-> Coimbra direct)
+        LineSegmentFacility lsf5 = new LineSegmentFacility();
+        lsf5.setSegmentFacilityId(5);
+        lsf5.setLineSegment(seg3);
+        lsf5.setFacility(lisboa);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf5);
+
+        LineSegmentFacility lsf6 = new LineSegmentFacility();
+        lsf6.setSegmentFacilityId(6);
+        lsf6.setLineSegment(seg3);
+        lsf6.setFacility(coimbra);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf6);
+
+        // Create a sample freight route (Lisboa -> Porto -> Coimbra)
+        FreightRoute fr = new FreightRoute();
+        fr.setRouteId(1);
+        fr.setRouteName("Lisboa-Porto-Coimbra");
+        fr.setRouteType(FreightRoute.RouteType.COMPLEX);
+        fr.setStartFacility(lisboa);
+        fr.setEndFacility(coimbra);
+
+        FreightRouteSegment frs1 = new FreightRouteSegment();
+        frs1.setSegmentId(1);
+        frs1.setFreightRoute(fr);
+        frs1.setSequenceOrder(1);
+        frs1.setFromFacility(lisboa);
+        frs1.setToFacility(porto);
+        frs1.setLineSegment(seg1);
+
+        FreightRouteSegment frs2 = new FreightRouteSegment();
+        frs2.setSegmentId(2);
+        frs2.setFreightRoute(fr);
+        frs2.setSequenceOrder(2);
+        frs2.setFromFacility(porto);
+        frs2.setToFacility(coimbra);
+        frs2.setLineSegment(seg2);
+
+        fr.addRouteSegment(frs1);
+        fr.addRouteSegment(frs2);
+        // Only add route if not already present by name
+        if (repositories.getFreightRouteRepository().getFreightRouteByName(fr.getRouteName()) == null) {
+            repositories.getFreightRouteRepository().addFreightRoute(fr);
+        }
+
+        // Create an alternative direct freight route (Lisboa -> Coimbra)
+        FreightRoute fr2 = new FreightRoute();
+        fr2.setRouteId(2);
+        fr2.setRouteName("Lisboa-Coimbra-Direct");
+        fr2.setRouteType(FreightRoute.RouteType.SIMPLE);
+        fr2.setStartFacility(lisboa);
+        fr2.setEndFacility(coimbra);
+
+        FreightRouteSegment frs3 = new FreightRouteSegment();
+        frs3.setSegmentId(3);
+        frs3.setFreightRoute(fr2);
+        frs3.setSequenceOrder(1);
+        frs3.setFromFacility(lisboa);
+        frs3.setToFacility(coimbra);
+        frs3.setLineSegment(seg3);
+
+        fr2.addRouteSegment(frs3);
+        if (repositories.getFreightRouteRepository().getFreightRouteByName(fr2.getRouteName()) == null) {
+            repositories.getFreightRouteRepository().addFreightRoute(fr2);
+        }
+
         // 11. Criar locomotivas
         Locomotive loco1 = new Locomotive();
         loco1.setLocomotiveId(1);
         loco1.setModel("Class E10");
         loco1.setBrand("DB");
         loco1.setMaxSpeed(160.0);
+        loco1.setPower(3000); // kW
+        loco1.setTotalWeight(90000.0); // kg
         repositories.getLocomotiveRepository().addLocomotive(loco1);
 
         Locomotive loco2 = new Locomotive();
@@ -381,6 +471,8 @@ public class AppInitializer implements Runnable {
         loco2.setModel("Euro Sprinter");
         loco2.setBrand("Siemens");
         loco2.setMaxSpeed(220.0);
+        loco2.setPower(4000); // kW
+        loco2.setTotalWeight(95000.0); // kg
         repositories.getLocomotiveRepository().addLocomotive(loco2);
     }
 
@@ -435,6 +527,46 @@ public class AppInitializer implements Runnable {
 
         System.out.printf("✅ Stations loaded: %d | ❌ Rejected: %d%n",
                 stationIdCounter - 100, rejectedCount);
+    }
+
+    /**
+     * Find a facility by name with flexible matching: exact, normalized (no accents), or contains.
+     */
+    private Facility findFacilityByNameFlexible(Repositories repositories, String name) {
+        if (name == null) return null;
+        var fr = repositories.getFacilityRepository();
+        // 1) exact
+        Facility f = fr.getFacilityByName(name);
+        if (f != null) return f;
+
+        // 2) case-insensitive exact
+        for (Facility fac : fr.getAllFacilities()) {
+            if (fac.getName() != null && fac.getName().equalsIgnoreCase(name)) return fac;
+        }
+
+        // 3) normalized (remove diacritics) equals
+        String nName = normalize(name);
+        for (Facility fac : fr.getAllFacilities()) {
+            if (fac.getName() != null && normalize(fac.getName()).equals(nName)) return fac;
+        }
+
+        // 4) contains normalized
+        for (Facility fac : fr.getAllFacilities()) {
+            if (fac.getName() != null && normalize(fac.getName()).contains(nName)) return fac;
+        }
+
+        // 5) contains case-insensitive
+        for (Facility fac : fr.getAllFacilities()) {
+            if (fac.getName() != null && fac.getName().toLowerCase().contains(name.toLowerCase())) return fac;
+        }
+
+        return null;
+    }
+
+    private String normalize(String s) {
+        if (s == null) return "";
+        String temp = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        return temp.replaceAll("\\p{M}", "").toLowerCase();
     }
 
     private boolean isValidStation(String name, String country, String timeZoneGroup,
@@ -547,91 +679,76 @@ public class AppInitializer implements Runnable {
                                               LocalDateTime departureTime, List<Integer> facilityIds,
                                               String status) {
         try {
-            TrainDispatch dispatch = new TrainDispatch();
-            dispatch.setTrainService(trainService);
-            dispatch.setPlannedDepartureTime(departureTime);
-            dispatch.setRouteType("MANUAL");
-            dispatch.setStatus(status);
-
-            // Criar e adicionar o dispatch
-            dispatch = repositories.getTrainDispatchRepository().addTrainDispatch(dispatch);
-
-            // Criar route points
-            List<RoutePoint> routePoints = new ArrayList<>();
-            double cumulativeDistance = 0.0;
-            double cumulativeTime = 0.0;
-            LocalDateTime currentTime = departureTime;
-
+            // Build manual RoutePoints (without persistence yet)
+            List<RoutePoint> manual = new ArrayList<>();
             for (int i = 0; i < facilityIds.size(); i++) {
                 Facility facility = repositories.getFacilityRepository().getFacilityById(facilityIds.get(i));
                 if (facility == null) continue;
+                RoutePoint rp = new RoutePoint();
+                rp.setFacility(facility);
+                rp.setSequenceOrder(i + 1);
+                manual.add(rp);
+            }
 
-                RoutePoint point = new RoutePoint();
-                point.setTrainDispatch(dispatch);
-                point.setSequenceOrder(i + 1);
-                point.setFacility(facility);
-                point.setDistanceFromStartKm(cumulativeDistance);
-                point.setCumulativeTravelTimeMinutes(cumulativeTime);
+            // Try find a FreightRoute matching the facility sequence so normalizeRoutePoints can set segmentToNext
+            FreightRoute matchedRoute = findMatchingFreightRoute(repositories, facilityIds);
 
-                if (i == 0) {
-                    // Primeiro ponto - partida
-                    point.setEstimatedArrivalTime(departureTime);
-                    point.setEstimatedDepartureTime(departureTime);
-                    point.setCrossingOperation("NONE");
-                    point.setExpectedWaitTimeMinutes(0);
-                } else {
-                    // Pontos subsequentes - simular viagem
-                    double segmentDistance = 50.0 + (i * 30.0); // Distância variável
-                    double segmentSpeed = 80.0; // Velocidade média
-                    double segmentTime = (segmentDistance / segmentSpeed) * 60.0; // Minutos
+            // Prepare existing dispatches for crossing analysis
+            List<TrainDispatch> existing = repositories.getTrainDispatchRepository().getAllTrainDispatches();
 
-                    cumulativeDistance += segmentDistance;
-                    cumulativeTime += segmentTime;
-                    currentTime = currentTime.plusMinutes((long) segmentTime);
+            // Use TrainSchedulingService to compute schedule using real segments if possible
+            TrainSchedulingService scheduler = new TrainSchedulingService();
+            int dispatchId = new java.util.Random().nextInt(10000) + 1;
+            TrainDispatch scheduled = scheduler.scheduleDispatch(dispatchId, trainService, matchedRoute, departureTime, "MANUAL", manual, existing);
 
-                    point.setEstimatedArrivalTime(currentTime);
-                    point.setDistanceFromStartKm(cumulativeDistance);
-                    point.setCumulativeTravelTimeMinutes(cumulativeTime);
-
-                    // Simular operação de cruzamento em alguns pontos
-                    if (i == 1 && facilityIds.size() > 2) {
-                        point.setCrossingOperation("WAIT_FOR_CROSSING");
-                        point.setExpectedWaitTimeMinutes(10);
-                        point.setIsSingleLineSegment(true);
-                        point.setNotes("Single-line segment - crossing operation required");
-                        currentTime = currentTime.plusMinutes(10);
-                        cumulativeTime += 10;
-                    } else {
-                        point.setCrossingOperation("NONE");
-                        point.setExpectedWaitTimeMinutes(0);
-                        point.setIsSingleLineSegment(false);
-                    }
-
-                    // Tempo de paragem na estação (exceto última)
-                    int stopTime = (i < facilityIds.size() - 1) ? 5 : 0;
-                    currentTime = currentTime.plusMinutes(stopTime);
-                    cumulativeTime += stopTime;
-                    point.setEstimatedDepartureTime(currentTime);
+            // Persist dispatch and its route points
+            TrainDispatch saved = repositories.getTrainDispatchRepository().addTrainDispatch(scheduled);
+            List<RoutePoint> persisted = new ArrayList<>();
+            if (saved.getRoute() != null) {
+                for (RoutePoint rp : saved.getRoute()) {
+                    rp.setTrainDispatch(saved);
+                    RoutePoint pr = repositories.getRoutePointRepository().addRoutePoint(rp);
+                    persisted.add(pr);
                 }
-
-                routePoints.add(repositories.getRoutePointRepository().addRoutePoint(point));
             }
+            saved.setRoute(persisted);
+            repositories.getTrainDispatchRepository().updateTrainDispatch(saved.getDispatchId(), saved);
 
-            // Atualizar dispatch com totais
-            if (!routePoints.isEmpty()) {
-                RoutePoint lastPoint = routePoints.get(routePoints.size() - 1);
-                dispatch.setTotalDistanceKm(lastPoint.getDistanceFromStartKm());
-                dispatch.setEstimatedTravelTimeMinutes(lastPoint.getCumulativeTravelTimeMinutes());
-                dispatch.setRoute(routePoints);
-                repositories.getTrainDispatchRepository().updateTrainDispatch(dispatch.getDispatchId(), dispatch);
-            }
-
-            return dispatch;
+            return saved;
 
         } catch (Exception e) {
             System.out.println("⚠️  Error creating dispatch: " + e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Try to find a FreightRoute whose facility sequence contains the given facilityIds as a contiguous subsequence.
+     */
+    private FreightRoute findMatchingFreightRoute(Repositories repositories, List<Integer> facilityIds) {
+        if (facilityIds == null || facilityIds.size() < 2) return null;
+        List<FreightRoute> all = repositories.getFreightRouteRepository().getAllFreightRoutes();
+        for (FreightRoute fr : all) {
+            List<FreightRouteSegment> segs = new ArrayList<>(fr.getRouteSegments());
+            segs.sort(Comparator.comparing(FreightRouteSegment::getSequenceOrder));
+            // build sequence of facility ids from route segments
+            List<Integer> seq = new ArrayList<>();
+            if (!segs.isEmpty()) {
+                seq.add(segs.get(0).getFromFacility().getFacilityId());
+                for (FreightRouteSegment s : segs) {
+                    seq.add(s.getToFacility().getFacilityId());
+                }
+            }
+            // check if facilityIds is contiguous subsequence of seq
+            for (int i = 0; i + facilityIds.size() <= seq.size(); i++) {
+                boolean ok = true;
+                for (int j = 0; j < facilityIds.size(); j++) {
+                    if (!seq.get(i + j).equals(facilityIds.get(j))) { ok = false; break; }
+                }
+                if (ok) return fr;
+            }
+        }
+        return null;
     }
 
     private void createSampleFacilities(Repositories repositories) {
@@ -676,6 +793,31 @@ public class AppInitializer implements Runnable {
         repositories.getTrainServiceRepository().addTrainService(service3);
 
         System.out.println("✅ Sample train services created: 3");
+
+        // Associate locomotives to services so scheduler can compute power
+        ServiceLocomotive sl1 = new ServiceLocomotive();
+        sl1.setServiceLocomotiveId(1);
+        sl1.setService(service1);
+        sl1.setLocomotive(Repositories.getInstance().getLocomotiveRepository().getLocomotiveById(1));
+        sl1.setPositionNo(1);
+        Repositories.getInstance().getServiceLocomotiveRepository().addServiceLocomotive(sl1);
+
+        TrainServiceComposition comp1 = new TrainServiceComposition();
+        comp1.setTrainService(service1);
+        comp1.setServiceLocomotive(sl1);
+        Repositories.getInstance().getTrainServiceCompositionRepository().addTrainServiceComposition(comp1);
+
+        ServiceLocomotive sl2 = new ServiceLocomotive();
+        sl2.setServiceLocomotiveId(2);
+        sl2.setService(service2);
+        sl2.setLocomotive(Repositories.getInstance().getLocomotiveRepository().getLocomotiveById(2));
+        sl2.setPositionNo(1);
+        Repositories.getInstance().getServiceLocomotiveRepository().addServiceLocomotive(sl2);
+
+        TrainServiceComposition comp2 = new TrainServiceComposition();
+        comp2.setTrainService(service2);
+        comp2.setServiceLocomotive(sl2);
+        Repositories.getInstance().getTrainServiceCompositionRepository().addTrainServiceComposition(comp2);
     }
 }
 
