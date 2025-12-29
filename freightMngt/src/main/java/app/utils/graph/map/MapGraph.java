@@ -1,7 +1,7 @@
 package app.utils.graph.map;
 
-import app.utils.graph.Edge;
 import app.utils.graph.CommonGraph;
+import app.utils.graph.Edge;
 import app.utils.graph.Graph;
 
 import java.util.*;
@@ -13,7 +13,7 @@ import java.util.*;
  */
 public class MapGraph<V, E> extends CommonGraph<V, E> {
 
-    final private Map<V, MapVertex<V, E>> mapVertices; // all the Vertices of the graph
+    final private Map<V, MapVertex<V, E>> mapVertices;   // Vertex set
 
     // Constructs an empty graph (either undirected or directed)
     public MapGraph(boolean directed) {
