@@ -2,6 +2,8 @@ package app.view;
 
 import java.io.IOException;
 import java.util.Scanner;
+import app.service.MaxFlowService;
+import app.utils.graph.MaxFlow;
 
 public class MainMenu {
     static Scanner scanner = new Scanner(System.in);
