@@ -1,6 +1,6 @@
 package app.utils.graph.map;
 
-import app.utils.graph.map.MapGraph;
+import app.utils.graph.Edge;
 import app.utils.graph.Graph;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,7 +11,6 @@ import java.util.Collection;
 
 import static org.junit.Assert.*;
 
-import app.utils.graph.Edge;
 
 /**
  *
