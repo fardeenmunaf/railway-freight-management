@@ -1,6 +1,7 @@
 package app.view;
 
 import app.service.sprint3.RailHubCentralityAnalysis;
+import app.service.sprint3.StationLoaderService;
 
 import java.io.IOException;
 import java.util.List;
@@ -13,9 +14,11 @@ import java.util.Scanner;
 public class RailHubCentralityView {
 
     private final RailHubCentralityAnalysis analysis;
+    private final StationLoaderService dataService;
     private final Scanner scanner;
 
     private RailHubCentralityView(Scanner scanner) throws IOException {
+        this.dataService = StationLoaderService.getInstance();
         this.analysis = new RailHubCentralityAnalysis();
         this.scanner = scanner;
     }
@@ -34,9 +37,7 @@ public class RailHubCentralityView {
             System.out.println("=== HUB ANALYSIS MENU ===");
             System.out.println("1. View Top N Hubs");
             System.out.println("2. View Complete Ranking");
-            System.out.println("3. Export Results to CSV");
-            System.out.println("4. View Temporal Complexity Analysis");
-            System.out.println("5. View Specific Station Details");
+            System.out.println("3. View Specific Station Details");
             System.out.println("0. Return to main menu");
             System.out.print("Choose an option: ");
 
@@ -52,12 +53,6 @@ public class RailHubCentralityView {
                         showFullRanking();
                         break;
                     case 3:
-                        exportToCSV();
-                        break;
-                    case 4:
-                        showComplexityAnalysis();
-                        break;
-                    case 5:
                         showStationDetails();
                         break;
                     case 0:
@@ -159,23 +154,7 @@ public class RailHubCentralityView {
         System.out.println("  0.0 - 0.2: Peripheral (Minimal priority)");
     }
 
-    private void exportToCSV() {
-        System.out.println("\n=== EXPORT TO CSV ===");
-        String csv = analysis.exportToCSV();
 
-        System.out.println("Data in CSV format:");
-        System.out.println("─────────────────────────────────────────────────────");
-        System.out.println(csv);
-        System.out.println("─────────────────────────────────────────────────────");
-        System.out.println("\nYou can copy the data above and paste into a .csv file");
-        System.out.println("or use it to import into other analysis tools.");
-    }
-
-    private void showComplexityAnalysis() {
-        System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
-        String complexityInfo = analysis.getTemporalComplexityAnalysis();
-        System.out.println(complexityInfo);
-    }
 
     private void showStationDetails() {
         System.out.print("\nEnter station ID: ");

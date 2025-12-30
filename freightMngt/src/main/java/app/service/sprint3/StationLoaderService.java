@@ -1,5 +1,6 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.utils.graph.Graph;
 import app.utils.graph.map.MapGraph;
@@ -41,7 +42,7 @@ public class StationLoaderService {
     private static StationLoaderService instance;
 
     /** Undirected graph representing the railway network (shared across all services) */
-    private static Graph<Station, Double> graph;
+    private static Graph<Station, EdgeData> graph;
 
     /** Map associating station ID to Station object (shared across all services) */
     private static Map<Integer, Station> stationMap;
@@ -95,6 +96,15 @@ public class StationLoaderService {
         if (initialized) {
             return; // Already loaded
         }
+
+        // Initialize graph and stationMap if not already initialized
+        if (graph == null) {
+            graph = new MapGraph<>(false);
+        }
+        if (stationMap == null) {
+            stationMap = new HashMap<>();
+        }
+
         loadStations(STATIONS_PATH);
         loadLines(LINES_PATH);
         initialized = true;
@@ -133,8 +143,9 @@ public class StationLoaderService {
     /**
      * Loads connections (edges) from the specified CSV file.
      *
-     * Expected format: {stationId1,stationId2,...,cost}
-     * The cost is in the 5th column (index 4). First line ignored.
+     * Expected format: {stationId1,stationId2,distance,capacity,cost}
+     * Columns: departure_stid, arrival_stid, dist, capacity, cost
+     * First line (header) ignored.
      *
      * @param filePath full path to the lines CSV file
      * @throws IOException if an error occurs reading the file
@@ -150,11 +161,15 @@ public class StationLoaderService {
                 try {
                     Integer s1 = Integer.parseInt(fields[0].trim());
                     Integer s2 = Integer.parseInt(fields[1].trim());
-                    Double cost = Double.parseDouble(fields[4].trim());
+                    Double distance = Double.parseDouble(fields[2].trim());   // Column 2: distance
+                    Integer capacity = Integer.parseInt(fields[3].trim());    // Column 3: capacity
+                    Double cost = Double.parseDouble(fields[4].trim());       // Column 4: cost
+
                     Station station1 = stationMap.get(s1);
                     Station station2 = stationMap.get(s2);
                     if (station1 != null && station2 != null) {
-                        graph.addEdge(station1, station2, cost);
+                        EdgeData edgeData = new EdgeData(distance, capacity, cost);
+                        graph.addEdge(station1, station2, edgeData);
                     }
                 } catch (NumberFormatException ignored) {}
             }
@@ -208,10 +223,8 @@ public class StationLoaderService {
      * @return graph with stations and connections
      * @throws IOException if CSV files cannot be read
      */
-    public static Graph<Station, Double> getGraph() throws IOException {
-        if (instance == null) {
-            getInstance(); // Force initialization
-        }
+    public static Graph<Station, EdgeData> getGraph() throws IOException {
+        loadData();
         return graph;
     }
 
@@ -223,9 +236,7 @@ public class StationLoaderService {
      * @throws IOException if CSV files cannot be read
      */
     public static Map<Integer, Station> getStationMap() throws IOException {
-        if (instance == null) {
-            getInstance(); // Force initialization
-        }
+        loadData();
         return stationMap;
     }
 }

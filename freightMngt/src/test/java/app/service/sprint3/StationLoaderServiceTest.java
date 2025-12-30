@@ -1,12 +1,12 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.utils.graph.Graph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,7 +38,7 @@ public class StationLoaderServiceTest {
 
     @Test
     void testGetGraph() throws IOException {
-        Graph<Station, Double> graph = StationLoaderService.getGraph();
+        Graph<Station, EdgeData> graph = StationLoaderService.getGraph();
         assertNotNull(graph);
         assertTrue(graph.numVertices() > 0);
     }
@@ -81,5 +81,44 @@ public class StationLoaderServiceTest {
         assertNotNull(instance2);
         assertNotSame(instance1, instance2);
     }
-}
 
+    @Test
+    void testGetFormattedStationList() throws IOException {
+        StationLoaderService service = StationLoaderService.getInstance();
+        var formattedList = service.getFormattedStationList();
+
+        assertNotNull(formattedList, "Formatted station list should not be null");
+        assertFalse(formattedList.isEmpty(), "Formatted station list should not be empty");
+
+        // Verify format: "ID: 123 | Station Name"
+        String firstEntry = formattedList.get(0);
+        assertTrue(firstEntry.contains("ID:"), "Entry should contain 'ID:'");
+        assertTrue(firstEntry.contains("|"), "Entry should contain '|' separator");
+    }
+
+    @Test
+    void testGetTotalStations() throws IOException {
+        StationLoaderService service = StationLoaderService.getInstance();
+        int totalStations = service.getTotalStations();
+
+        assertTrue(totalStations > 0, "Total stations should be greater than 0");
+
+        // Verify it matches the station map size
+        Map<Integer, Station> stationMap = StationLoaderService.getStationMap();
+        assertEquals(stationMap.size(), totalStations,
+                    "Total stations should match station map size");
+    }
+
+    @Test
+    void testGetTotalConnections() throws IOException {
+        StationLoaderService service = StationLoaderService.getInstance();
+        int totalConnections = service.getTotalConnections();
+
+        assertTrue(totalConnections > 0, "Total connections should be greater than 0");
+
+        // Verify it matches the graph edges
+        Graph<Station, EdgeData> graph = StationLoaderService.getGraph();
+        assertEquals(graph.numEdges(), totalConnections,
+                    "Total connections should match graph edges");
+    }
+}

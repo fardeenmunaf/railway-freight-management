@@ -1,5 +1,6 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.utils.graph.Algorithms;
 import app.utils.graph.Edge;
@@ -10,25 +11,25 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Serviço para cálculo de caminhos mais curtos entre estações (USEI15).
+ * Service for calculating shortest paths between stations (USEI15).
  *
- * Implementa algoritmos de pathfinding com detecção automática:
- * - Dijkstra para grafos sem pesos negativos (mais eficiente)
- * - Bellman-Ford para grafos com pesos negativos (mais robusto)
- * - Detecção de ciclos negativos
+ * Implements pathfinding algorithms with automatic detection:
+ * - Dijkstra for graphs without negative weights (more efficient)
+ * - Bellman-Ford for graphs with negative weights (more robust)
+ * - Negative cycle detection
  *
  * @author Fardeen
  * @version 1.0
  */
 public class ShortestPathService {
 
-    private final Graph<Station, Double> graph;
+    private final Graph<Station, EdgeData> graph;
     private final Map<Integer, Station> stationMap;
 
     /**
-     * Construtor que inicializa o serviço com dados do StationLoaderService.
+     * Constructor that initializes the service with data from StationLoaderService.
      *
-     * @throws IOException se houver erro ao carregar dados
+     * @throws IOException if there is an error loading data
      */
     public ShortestPathService() throws IOException {
         this.graph = StationLoaderService.getGraph();
@@ -36,67 +37,76 @@ public class ShortestPathService {
     }
 
     /**
-     * Calcula o caminho mais curto entre duas estações escolhendo automaticamente
-     * o algoritmo adequado (Dijkstra ou Bellman-Ford).
+     * Calculates the shortest path between two stations automatically choosing
+     * the appropriate algorithm (Dijkstra or Bellman-Ford).
      *
-     * Estratégia:
+     * Strategy:
      * <ul>
-     *   <li>Tenta Dijkstra primeiro (mais eficiente)</li>
-     *   <li>Se falhar ou caminho tiver pesos negativos → Bellman-Ford</li>
-     *   <li>Detecta ciclos negativos e reporta estações/arestas envolvidas</li>
+     *   <li>Tries Dijkstra first (more efficient)</li>
+     *   <li>If it fails or path has negative weights → Bellman-Ford</li>
+     *   <li>Detects negative cycles and reports involved stations/edges</li>
      * </ul>
      *
-     * @param departureId ID da estação de partida
-     * @param arrivalId ID da estação de chegada
-     * @return resultado com caminho, custo, algoritmo usado e detecção de ciclos,
-     *         ou null se estações não existirem
+     * @param departureId ID of the departure station
+     * @param arrivalId ID of the arrival station
+     * @return result with path, cost, algorithm used and cycle detection,
+     *         or null if stations don't exist
      */
     public PathResultWithAlgorithm calculateBestPath(Integer departureId, Integer arrivalId) {
         Station start = stationMap.get(departureId);
         Station end = stationMap.get(arrivalId);
         if (start == null || end == null) return null;
 
-        // 1. Encontra caminho com Dijkstra PRIMEIRO
+        // 1. Find path with Dijkstra FIRST
         LinkedList<Station> path = new LinkedList<>();
-        Double cost = Algorithms.shortestPath(graph, start, end, Double::compare, Double::sum, 0.0, path);
+        EdgeData costData = Algorithms.shortestPath(graph, start, end, Comparator.comparingDouble(EdgeData::getCost), // Compare by cost
+            (e1, e2) -> new EdgeData(0, 0, e1.getCost() + e2.getCost()),  // Sum costs
+            new EdgeData(0, 0, 0.0),  // Zero element
+            path);
 
-        if (cost == null) {
-            // SEM CAMINHO - tenta Bellman-Ford para ciclo negativo
+        if (costData == null) {
+            // NO PATH - try Bellman-Ford for negative cycle
             LinkedList<Station> pathBF = new LinkedList<>();
-            Double costBF = Algorithms.bellmanFord(graph, start, end, Double::compare, Double::sum, 0.0, pathBF);
+            EdgeData costBF = Algorithms.bellmanFord(graph, start, end, Comparator.comparingDouble(EdgeData::getCost),
+                (e1, e2) -> new EdgeData(0, 0, e1.getCost() + e2.getCost()),
+                new EdgeData(0, 0, 0.0),
+                pathBF);
             if (costBF == null) {
                 Set<Station> cycleStations = findNegativeCycleStations(start);
-                Set<Edge<Station, Double>> cycleEdges = findNegativeCycleEdges(cycleStations);
+                Set<Edge<Station, EdgeData>> cycleEdges = findNegativeCycleEdges(cycleStations);
                 PathResult result = new PathResult(new LinkedList<>(), null, true, cycleStations, cycleEdges);
                 return new PathResultWithAlgorithm(result, "Bellman-Ford", true);
             }
-            // Bellman-Ford encontrou caminho
-            PathResult result = new PathResult(pathBF, costBF, false, Collections.emptySet(), Collections.emptySet());
+            // Bellman-Ford found path
+            PathResult result = new PathResult(pathBF, costBF.getCost(), false, Collections.emptySet(), Collections.emptySet());
             return new PathResultWithAlgorithm(result, "Bellman-Ford", false);
         }
 
-        // 2. Dijkstra encontrou caminho - VERIFICA se tem negativos
+        // 2. Dijkstra found path - CHECK if it has negatives
         boolean hasNegativeInPath = hasNegativeEdgesInPath(path);
 
-        PathResult result = new PathResult(path, cost, false, Collections.emptySet(), Collections.emptySet());
+        PathResult result = new PathResult(path, costData.getCost(), false, Collections.emptySet(), Collections.emptySet());
         String algorithm = hasNegativeInPath ? "Bellman-Ford" : "Dijkstra";
 
         return new PathResultWithAlgorithm(result, algorithm, false);
     }
 
     /**
-     * Verifica se o caminho específico contém arestas com custo negativo.
+     * Checks if the specific path contains edges with negative cost.
      *
-     * @param path lista ordenada de estações do caminho
-     * @return true se alguma aresta consecutiva tem custo negativo
+     * @param path ordered list of stations in the path
+     * @return true if any consecutive edge has negative cost
      */
     private boolean hasNegativeEdgesInPath(List<Station> path) {
         for (int i = 0; i < path.size() - 1; i++) {
             Station from = path.get(i);
             Station to = path.get(i + 1);
-            for (Edge<Station, Double> edge : graph.outgoingEdges(from)) {
-                if (edge.getVDest().equals(to) && edge.getWeight() < 0) {
-                    return true;
+            for (Edge<Station, EdgeData> edge : graph.outgoingEdges(from)) {
+                if (edge.getVDest().equals(to)) {
+                    EdgeData edgeData = edge.getWeight();
+                    if (edgeData != null && edgeData.getCost() < 0) {
+                        return true;
+                    }
                 }
             }
         }
@@ -104,24 +114,24 @@ public class ShortestPathService {
     }
 
     /**
-     * Encontra estações alcançáveis a partir de uma estação inicial usando DFS.
+     * Finds reachable stations from an initial station using DFS.
      *
-     * @param current estação inicial
-     * @param reachable conjunto de estações alcançáveis (output)
+     * @param current initial station
+     * @param reachable set of reachable stations (output)
      */
     private void dfsReachable(Station current, Set<Station> reachable) {
         if (reachable.contains(current)) return;
         reachable.add(current);
-        for (Edge<Station, Double> e : graph.outgoingEdges(current)) {
+        for (Edge<Station, EdgeData> e : graph.outgoingEdges(current)) {
             dfsReachable(e.getVDest(), reachable);
         }
     }
 
     /**
-     * Identifica estações envolvidas em ciclos negativos alcançáveis da estação inicial.
+     * Identifies stations involved in negative cycles reachable from the initial station.
      *
-     * @param start estação inicial para determinar componente conectado
-     * @return conjunto de estações envolvidas em arestas negativas
+     * @param start initial station to determine connected component
+     * @return set of stations involved in negative edges
      */
     private Set<Station> findNegativeCycleStations(Station start) {
         Set<Station> reachable = new HashSet<>();
@@ -129,8 +139,9 @@ public class ShortestPathService {
 
         Set<Station> cycleStations = new HashSet<>();
         for (Station v : reachable) {
-            for (Edge<Station, Double> e : graph.outgoingEdges(v)) {
-                if (e.getWeight() < 0 && reachable.contains(e.getVDest())) {
+            for (Edge<Station, EdgeData> e : graph.outgoingEdges(v)) {
+                EdgeData edgeData = e.getWeight();
+                if (edgeData != null && edgeData.getCost() < 0 && reachable.contains(e.getVDest())) {
                     cycleStations.add(v);
                     cycleStations.add(e.getVDest());
                 }
@@ -140,16 +151,17 @@ public class ShortestPathService {
     }
 
     /**
-     * Encontra arestas negativas entre as estações especificadas.
+     * Finds negative edges between the specified stations.
      *
-     * @param cycleStations estações candidatas ao ciclo negativo
-     * @return conjunto de arestas negativas que formam o ciclo
+     * @param cycleStations candidate stations for the negative cycle
+     * @return set of negative edges that form the cycle
      */
-    private Set<Edge<Station, Double>> findNegativeCycleEdges(Set<Station> cycleStations) {
-        Set<Edge<Station, Double>> edges = new HashSet<>();
+    private Set<Edge<Station, EdgeData>> findNegativeCycleEdges(Set<Station> cycleStations) {
+        Set<Edge<Station, EdgeData>> edges = new HashSet<>();
         for (Station v : cycleStations) {
-            for (Edge<Station, Double> e : graph.outgoingEdges(v)) {
-                if (cycleStations.contains(e.getVDest()) && e.getWeight() < 0) {
+            for (Edge<Station, EdgeData> e : graph.outgoingEdges(v)) {
+                EdgeData edgeData = e.getWeight();
+                if (cycleStations.contains(e.getVDest()) && edgeData != null && edgeData.getCost() < 0) {
                     edges.add(e);
                 }
             }
@@ -158,7 +170,7 @@ public class ShortestPathService {
     }
 
     /**
-     * Resultado do cálculo de caminho mais curto com informação do algoritmo utilizado.
+     * Result of shortest path calculation with information about the algorithm used.
      */
     public static class PathResultWithAlgorithm {
         private final PathResult pathResult;
@@ -177,17 +189,17 @@ public class ShortestPathService {
     }
 
     /**
-     * Resultado detalhado do cálculo de caminho mais curto.
+     * Detailed result of shortest path calculation.
      */
     public class PathResult {
         final LinkedList<Station> path;
         final Double totalCost;
         private final boolean hasNegativeCycle;
         private final Set<Station> cycleStations;
-        private final Set<Edge<Station, Double>> cycleEdges;
+        private final Set<Edge<Station, EdgeData>> cycleEdges;
 
         public PathResult(LinkedList<Station> path, Double totalCost, boolean hasNegativeCycle,
-                          Set<Station> cycleStations, Set<Edge<Station, Double>> cycleEdges) {
+                          Set<Station> cycleStations, Set<Edge<Station, EdgeData>> cycleEdges) {
             this.path = path;
             this.totalCost = totalCost;
             this.hasNegativeCycle = hasNegativeCycle;
@@ -196,40 +208,47 @@ public class ShortestPathService {
         }
 
         /**
-         * Formata o resultado para apresentação.
+         * Formats the result for presentation.
          */
         public String formatPath() {
             if (hasNegativeCycle) {
-                StringBuilder sb = new StringBuilder("Ciclo negativo detetado envolvendo:\n");
-                sb.append("Estações: ");
+                StringBuilder sb = new StringBuilder("Negative cycle detected involving:\n");
+                sb.append("Stations: ");
                 sb.append(cycleStations.stream().map(Station::getName).collect(Collectors.joining(", ")));
-                sb.append("\n\nArestas: ");
+                sb.append("\n\nEdges: ");
                 sb.append(cycleEdges.stream()
-                        .map(e -> String.format("%s(%d)->%s(%d):%.2f",
-                                e.getVOrig().getName(), e.getVOrig().getFacilityId(),
-                                e.getVDest().getName(), e.getVDest().getFacilityId(), e.getWeight()))
+                        .map(e -> {
+                            EdgeData edgeData = e.getWeight();
+                            double cost = edgeData != null ? edgeData.getCost() : 0.0;
+                            return String.format("%s(%d)->%s(%d):%.2f",
+                                    e.getVOrig().getName(), e.getVOrig().getFacilityId(),
+                                    e.getVDest().getName(), e.getVDest().getFacilityId(), cost);
+                        })
                         .collect(Collectors.joining(", ")));
                 return sb.toString();
             }
 
             StringBuilder sb = new StringBuilder();
 
-            // Caminho com custos individuais
+            // Path with individual costs
             double total = 0.0;
             for (int i = 0; i < path.size() - 1; i++) {
                 Station from = path.get(i);
                 Station to = path.get(i + 1);
 
-                // Encontra aresta exata
-                Edge<Station, Double> edge = null;
-                for (Edge<Station, Double> e : graph.outgoingEdges(from)) {
+                // Find exact edge
+                Edge<Station, EdgeData> edge = null;
+                for (Edge<Station, EdgeData> e : graph.outgoingEdges(from)) {
                     if (e.getVDest().equals(to)) {
                         edge = e;
                         break;
                     }
                 }
 
-                double cost = edge != null ? edge.getWeight() : 0.0;
+                double cost = 0.0;
+                if (edge != null && edge.getWeight() != null) {
+                    cost = edge.getWeight().getCost();
+                }
                 total += cost;
 
                 sb.append(String.format("%s(ID:%d) -> %s(ID:%d) [%.2f]",
@@ -241,7 +260,7 @@ public class ShortestPathService {
                 }
             }
 
-            sb.append("\nCusto total: ").append(String.format("%.2f", total));
+            sb.append("\nTotal cost: ").append(String.format("%.2f", total));
             return sb.toString();
         }
     }

@@ -1,5 +1,6 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.utils.graph.Algorithms;
 import app.utils.graph.Edge;
@@ -13,19 +14,21 @@ import java.util.*;
  *
  * Computes centrality metrics to identify critical stations:
  * - Degree: number of direct connections
- * - Strength: sum of connection weights
- * - Betweenness: intermediation in shortest paths (Brandes algorithm)
- * - Harmonic Closeness: average accessibility
+ * - Strength: sum of connection weights (using COST metric)
+ * - Betweenness: intermediation in shortest paths (Brandes algorithm, using COST)
+ * - Harmonic Closeness: average accessibility (using COST)
  * - HubScore: normalized composite metric
  *
  * Formula: hubScore = 0.35 * betweenness + 0.35 * harmonicCloseness + 0.30 * strengthNorm
+ *
+ * Note: All metrics use COST as the edge weight (combines distance, capacity, congestion).
  *
  * @author G113 2DK
  * @version 1.0
  */
 public class RailHubCentralityAnalysis {
 
-    private final Graph<Station, Double> graph;
+    private final Graph<Station, EdgeData> graph;
 
     // Computed metrics
     private Map<Station, Integer> degreeMap;
@@ -61,6 +64,23 @@ public class RailHubCentralityAnalysis {
         calculateAllMetrics();
     }
 
+    public RailHubCentralityAnalysis (Graph<Station, EdgeData> graph) {
+        this.graph = graph;
+
+        // Initialize maps
+        this.degreeMap = new HashMap<>();
+        this.strengthMap = new HashMap<>();
+        this.betweennessMap = new HashMap<>();
+        this.harmonicClosenessMap = new HashMap<>();
+        this.hubScoreMap = new HashMap<>();
+        this.normalizedBetweenness = new HashMap<>();
+        this.normalizedHarmonicCloseness = new HashMap<>();
+        this.normalizedStrength = new HashMap<>();
+
+        // Calculate all metrics immediately
+        calculateAllMetrics();
+    }
+
     /**
      * Computes all centrality metrics and HubScore.
      *
@@ -78,7 +98,7 @@ public class RailHubCentralityAnalysis {
      * Computes degree and strength for all stations.
      *
      * Degree: number of edges connected to the station
-     * Strength: sum of weights of all connected edges
+     * Strength: sum of COST values of all connected edges
      *
      * Complexity: O(V + E)
      */
@@ -88,12 +108,12 @@ public class RailHubCentralityAnalysis {
             int degree = 0;
             double strength = 0.0;
             // Iterate over outgoing edges
-            for (Edge<Station, Double> edge : graph.outgoingEdges(station)) {
+            for (Edge<Station, EdgeData> edge : graph.outgoingEdges(station)) {
                 degree++;
-                // Sum the weight if it's not null, otherwise treat as 0
-                Double weight = edge.getWeight();
-                if (weight != null) {
-                    strength += weight;
+                // Sum the COST from EdgeData
+                EdgeData edgeData = edge.getWeight();
+                if (edgeData != null) {
+                    strength += edgeData.getCost();  // Using COST metric
                 }
             }
             degreeMap.put(station, degree);
@@ -107,7 +127,7 @@ public class RailHubCentralityAnalysis {
      * Betweenness: measures how often a station appears in shortest paths
      * between other pairs of stations.
      *
-     * Uses the WEIGHTED version because our graph has costs/distances on edges.
+     * Uses the WEIGHTED version because our graph has costs on edges.
      * This ensures shortest paths consider actual costs, not just hop count.
      *
      * Brandes Algorithm with Dijkstra:
@@ -118,7 +138,12 @@ public class RailHubCentralityAnalysis {
      */
     private void computeBetweenness() {
         // Use Brandes algorithm for weighted graphs
-        Map<Station, Double> result = Algorithms.brandesBetweennessWeighted(graph, Double::compare, Double::sum, 0.0);
+        Map<Station, Double> result = Algorithms.brandesBetweennessWeighted(
+            graph,
+            Comparator.comparingDouble(EdgeData::getCost),  // Compare by cost
+            (e1, e2) -> new EdgeData(0, 0, e1.getCost() + e2.getCost()),  // Sum costs
+            new EdgeData(0, 0, 0.0)  // Zero element
+        );
 
         // Store results in betweennessMap
         betweennessMap.putAll(result);
@@ -141,13 +166,13 @@ public class RailHubCentralityAnalysis {
 
             // Compute shortest paths from source to all other vertices
             ArrayList<LinkedList<Station>> paths = new ArrayList<>(); //List of paths
-            ArrayList<Double> distances = new ArrayList<>();         //List of distances
+            ArrayList<EdgeData> distances = new ArrayList<>();       //List of distances as EdgeData
 
             // Run Dijkstra from this source to get all distances
             boolean success = Algorithms.shortestPaths(graph, source,
-                Double::compare,  // Compare distances
-                Double::sum,      // Sum distances
-                0.0,              // Zero element
+                Comparator.comparingDouble(EdgeData::getCost),  // Compare by cost
+                (e1, e2) -> new EdgeData(0, 0, e1.getCost() + e2.getCost()),  // Sum costs
+                new EdgeData(0, 0, 0.0),  // Zero element
                 paths,            // Output: paths (we don't need these)
                 distances         // Output: distances to all vertices
             );
@@ -155,16 +180,21 @@ public class RailHubCentralityAnalysis {
             if (success) {
                 // For each destination vertex
                 for (int i = 0; i < distances.size(); i++) {
-                    Double distance = distances.get(i);
+                    EdgeData distanceData = distances.get(i);
                     Station destination = graph.vertex(i); // the destination is the last vertex on the path
 
                     // Skip if it's the same station or no path exists
-                    if (destination.equals(source) || distance == null || distance == 0.0) {
+                    if (destination.equals(source) || distanceData == null) {
                         continue;
                     }
 
-                    // Add 1/distance to harmonic sum
-                    harmonicSum += 1.0 / distance;
+                    double cost = distanceData.getCost();
+                    if (cost == 0.0) {
+                        continue;
+                    }
+
+                    // Add 1/cost to harmonic sum
+                    harmonicSum += 1.0 / cost;
                 }
             }
 
@@ -287,8 +317,8 @@ public class RailHubCentralityAnalysis {
                 station.getName(),
                 degreeMap.getOrDefault(station, 0),
                 strengthMap.getOrDefault(station, 0.0),
-                betweennessMap.getOrDefault(station, 0.0),
-                harmonicClosenessMap.getOrDefault(station, 0.0),
+                normalizedBetweenness.getOrDefault(station, 0.0),  // Use normalized value
+                normalizedHarmonicCloseness.getOrDefault(station, 0.0),  // Use normalized value
                 hubScoreMap.getOrDefault(station, 0.0)
             );
             results.add(result);
@@ -307,71 +337,15 @@ public class RailHubCentralityAnalysis {
      * @return list with the N most important hubs
      */
     public List<HubAnalysisResult> getTopNHubs(int n) {
+        // Handle edge case: negative or zero N
+        if (n <= 0) {
+            return new ArrayList<>();
+        }
+
         List<HubAnalysisResult> allResults = getRankedResults();
         return allResults.subList(0, Math.min(n, allResults.size()));
     }
 
-    /**
-     * Exports results in CSV format.
-     *
-     * @return CSV string with header and all stations
-     */
-    public String exportToCSV() {
-        StringBuilder csv = new StringBuilder();
-        csv.append("StationID,StationName,Degree,Strength,Betweenness,HarmonicCloseness,HubScore\n");
-
-        for (HubAnalysisResult result : getRankedResults()) {
-            csv.append(String.format("%d,%s,%d,%.4f,%.4f,%.4f,%.4f\n",
-                result.getStationId(),
-                result.getStationName(),
-                result.getDegree(),
-                result.getStrength(),
-                result.getBetweenness(),
-                result.getHarmonicCloseness(),
-                result.getHubScore()
-            ));
-        }
-
-        return csv.toString();
-    }
-
-    /**
-     * Returns temporal complexity analysis.
-     *
-     * @return string with detailed complexity analysis
-     */
-    public String getTemporalComplexityAnalysis() {
-        int V = graph.numVertices();
-        int E = graph.numEdges();
-
-        return String.format("""
-            === TEMPORAL COMPLEXITY ANALYSIS (USEI13) ===
-            
-            Graph size:
-            - Vertices (V): %d stations
-            - Edges (E): %d connections
-            
-            Complexity per operation:
-            1. Degree & Strength:          O(V + E) = O(%d + %d)
-            2. Betweenness (Brandes):      O(VE) = O(%d × %d)
-            3. Harmonic Closeness (APSP):  O(V² × E) = O(%d² × %d)
-            4. Normalization:              O(V) = O(%d)
-            5. HubScore:                   O(V) = O(%d)
-            
-            Total complexity: O(V² × E) = O(%d² × %d) = O(%d)
-            
-            Note: For sparse graphs (E ≈ V), complexity ≈ O(V³)
-                  For dense graphs (E ≈ V²), complexity ≈ O(V⁴)
-            """,
-            V, E,
-            V, E,
-            V, E,
-            V, E,
-            V,
-            V,
-            V, E, V * V * E
-        );
-    }
 
     /**
      * Class to store hub analysis results.
