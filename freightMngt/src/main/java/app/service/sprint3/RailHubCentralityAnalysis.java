@@ -26,7 +26,6 @@ import java.util.*;
 public class RailHubCentralityAnalysis {
 
     private final Graph<Station, Double> graph;
-    private final Map<Integer, Station> stationMap;
 
     // Computed metrics
     private Map<Station, Integer> degreeMap;
@@ -47,7 +46,6 @@ public class RailHubCentralityAnalysis {
      */
     public RailHubCentralityAnalysis() throws IOException {
         this.graph = StationLoaderService.getGraph();
-        this.stationMap = StationLoaderService.getStationMap();
 
         // Initialize maps
         this.degreeMap = new HashMap<>();
@@ -58,6 +56,9 @@ public class RailHubCentralityAnalysis {
         this.normalizedBetweenness = new HashMap<>();
         this.normalizedHarmonicCloseness = new HashMap<>();
         this.normalizedStrength = new HashMap<>();
+
+        // Calculate all metrics immediately
+        calculateAllMetrics();
     }
 
     /**
