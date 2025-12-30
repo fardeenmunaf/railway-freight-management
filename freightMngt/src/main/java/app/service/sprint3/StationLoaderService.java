@@ -14,36 +14,36 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Serviço para carregamento de estações e linhas ferroviárias a partir de ficheiros CSV.
+ * Service for loading stations and railway lines from CSV files.
  *
- * Funcionalidades principais:
+ * Main functionalities:
  * <ul>
- *   <li>Carregamento de estações de stations.csv</li>
- *   <li>Carregamento de ligações de lines.csv</li>
- *   <li>Fornecimento de dados para outros serviços (USEI13 e USEI15)</li>
+ *   <li>Loading stations from stations.csv</li>
+ *   <li>Loading connections from lines.csv</li>
+ *   <li>Providing data for other services (USEI13 and USEI15)</li>
  * </ul>
  *
- * Implementa padrão Singleton - o grafo é carregado uma vez e compartilhado
- * entre todos os serviços. Não permite instâncias independentes.
+ * Implements Singleton pattern - the graph is loaded once and shared
+ * across all services. Does not allow independent instances.
  *
  * @author G113 2DK
  * @version 1.0
  */
 public class StationLoaderService {
 
-    /** Caminho para o ficheiro CSV das estações */
+    /** Path to the stations CSV file */
     private static final String STATIONS_PATH = "src/main/java/app/sampleDataset/stations.csv";
 
-    /** Caminho para o ficheiro CSV das linhas */
+    /** Path to the lines CSV file */
     private static final String LINES_PATH = "src/main/java/app/sampleDataset/lines.csv";
 
-    /** Singleton instance - lazy initialized */
+    /** Singleton instance */
     private static StationLoaderService instance;
 
-    /** Grafo não-direcionado representa a rede ferroviária (shared across all services) */
+    /** Undirected graph representing the railway network (shared across all services) */
     private static Graph<Station, Double> graph;
 
-    /** Mapa que associa ID da estação ao objeto Station (shared across all services) */
+    /** Map associating station ID to Station object (shared across all services) */
     private static Map<Integer, Station> stationMap;
 
     /** Flag indicating if data has been loaded */
@@ -101,13 +101,13 @@ public class StationLoaderService {
     }
 
     /**
-     * Carrega estações do ficheiro CSV especificado.
+     * Loads stations from the specified CSV file.
      *
-     * Formato esperado: {idEstacao,nome,latitude,longitude}
-     * A primeira linha (cabeçalho) é ignorada.
+     * Expected format: {stationId,name,latitude,longitude}
+     * The first line (header) is ignored.
      *
-     * @param filePath caminho completo para o ficheiro CSV de estações
-     * @throws IOException caso ocorra erro na leitura do ficheiro
+     * @param filePath full path to the stations CSV file
+     * @throws IOException if an error occurs reading the file
      */
     private static void loadStations(String filePath) throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -131,13 +131,13 @@ public class StationLoaderService {
     }
 
     /**
-     * Carrega ligações (arestas) do ficheiro CSV especificado.
+     * Loads connections (edges) from the specified CSV file.
      *
-     * Formato esperado: { idEstacao1,idEstacao2,...,custo}
-     * O custo está na 5ª coluna (índice 4). Primeira linha ignorada.
+     * Expected format: {stationId1,stationId2,...,cost}
+     * The cost is in the 5th column (index 4). First line ignored.
      *
-     * @param filePath caminho completo para o ficheiro CSV de linhas
-     * @throws IOException caso ocorra erro na leitura do ficheiro
+     * @param filePath full path to the lines CSV file
+     * @throws IOException if an error occurs reading the file
      */
     private static void loadLines(String filePath) throws IOException {
         Path path = Paths.get(filePath);
@@ -162,19 +162,19 @@ public class StationLoaderService {
     }
 
     /**
-     * Verifica se uma estação com o ID especificado existe no sistema.
+     * Checks if a station with the specified ID exists in the system.
      *
-     * @param stationId ID da estação a verificar
-     * @return { true} se a estação existe, { false} caso contrário
+     * @param stationId ID of the station to check
+     * @return true if the station exists, false otherwise
      */
     public boolean stationExists(Integer stationId) {
         return stationMap.containsKey(stationId);
     }
 
     /**
-     * Retorna lista formatada de todas as estações ordenadas por ID.
+     * Returns formatted list of all stations sorted by ID.
      *
-     * @return lista no formato "ID: 123 | Nome da Estação"
+     * @return list in format "ID: 123 | Station Name"
      */
     public List<String> getFormattedStationList() {
         return stationMap.values().stream()
@@ -184,28 +184,28 @@ public class StationLoaderService {
     }
 
     /**
-     * Retorna o número total de estações carregadas.
+     * Returns the total number of loaded stations.
      *
-     * @return quantidade de estações no sistema
+     * @return number of stations in the system
      */
     public int getTotalStations() {
         return stationMap.size();
     }
 
     /**
-     * Retorna o número total de conexões (arestas) no grafo.
+     * Returns the total number of connections (edges) in the graph.
      *
-     * @return quantidade de ligações entre estações
+     * @return number of connections between stations
      */
     public int getTotalConnections() {
         return graph.numEdges();
     }
 
     /**
-     * Retorna o grafo da rede ferroviária.
+     * Returns the railway network graph.
      * Forces initialization if not yet loaded.
      *
-     * @return grafo com estações e conexões
+     * @return graph with stations and connections
      * @throws IOException if CSV files cannot be read
      */
     public static Graph<Station, Double> getGraph() throws IOException {
@@ -216,10 +216,10 @@ public class StationLoaderService {
     }
 
     /**
-     * Retorna o mapa de estações indexado por ID.
+     * Returns the station map indexed by ID.
      * Forces initialization if not yet loaded.
      *
-     * @return mapa ID → Station
+     * @return map ID → Station
      * @throws IOException if CSV files cannot be read
      */
     public static Map<Integer, Station> getStationMap() throws IOException {
