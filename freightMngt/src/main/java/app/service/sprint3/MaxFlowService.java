@@ -22,6 +22,12 @@ import java.util.function.BinaryOperator;
  */
 public class MaxFlowService {
 
+    /**
+     * Attempt to instantiate a project graph implementation using common class names and constructors.
+     * Tries several candidate classes and constructors (no-arg, boolean, boolean+int) and a getInstance() method.
+     *
+     * @return instantiated Graph implementation or null if none of the candidates could be instantiated
+     */
     @SuppressWarnings("unchecked")
     private static Graph<?, ?> tryInstantiateProjectGraph() {
         String[] candidates = {
@@ -81,6 +87,20 @@ public class MaxFlowService {
         return null;
     }
 
+    /**
+     * Compute the maximum flow on the provided graph between the vertices resolved from the provided keys.
+     *
+     * The method resolves source/sink by preferring Station.getFacilityId() when vertices are of type Station.
+     * If no Station with the provided facilityId is found, it falls back to the graph's integer vertex key.
+     *
+     * @param g the project graph to use (must not be null)
+     * @param sourceKey facilityId or graph-internal key for the source vertex
+     * @param sinkKey facilityId or graph-internal key for the sink vertex
+     * @param <V> vertex type used by the graph
+     * @param <E> edge weight / capacity type used by the graph
+     * @return a MaxFlow.Result containing source/sink references, resolved keys, the max flow value (or null) and a message/complexity
+     * @throws IllegalArgumentException if g is null
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static <V, E> MaxFlow.Result<V, E> compute(Graph<V, E> g, int sourceKey, int sinkKey) {
         if (g == null) throw new IllegalArgumentException("Graph cannot be null");
@@ -242,6 +262,16 @@ public class MaxFlowService {
         return (MaxFlow.Result<V, E>) MaxFlow.compute((Graph) g, source, sink, comp, add, zero);
     }
 
+    /**
+     * Compute the maximum flow between two stations identified by keys using the project's graph, when available.
+     *
+     * This method will try to obtain the project graph via StationLoaderService.getGraph() or by instantiating
+     * a known Graph implementation. It validates presence of edges and numeric capacities before computing.
+     *
+     * @param sourceKey the facilityId or graph-internal key for the source station
+     * @param sinkKey the facilityId or graph-internal key for the sink station
+     * @return a MaxFlow.Result containing the computation outcome, message and complexity
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static MaxFlow.Result<?, ?> computeUsingProjectGraphIfAvailable(int sourceKey, int sinkKey) {
         Graph<?, ?> g = ensureProjectGraphPopulated();
@@ -273,9 +303,23 @@ public class MaxFlowService {
             return new MaxFlow.Result<>(null, null, sourceKey, sinkKey, null, msg, "O(V·E^2)"); }
     }
 
+    /**
+     * Convenience wrapper to compute using an explicitly provided graph by integer keys.
+     *
+     * @param g graph to use
+     * @param sourceKey graph-internal key for source
+     * @param sinkKey graph-internal key for sink
+     * @return MaxFlow.Result with computation outcome
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static MaxFlow.Result<?, ?> computeUsingGraph(Graph<?, ?> g, int sourceKey, int sinkKey) { return (MaxFlow.Result) compute((Graph) g, sourceKey, sinkKey); }
 
+    /**
+     * Return the list of Station objects present in the project's graph (if available).
+     * Useful to enumerate facilityIds the user should pass to compute methods.
+     *
+     * @return list of Station instances or null if project graph is unavailable
+     */
     public static List<Station> getProjectGraphStations() {
         Graph<?,?> g = ensureProjectGraphPopulated();
         if (g == null) return null;
@@ -284,6 +328,13 @@ public class MaxFlowService {
         return res;
     }
 
+    /**
+     * Ensure the project graph is populated with Station vertices when possible.
+     * Tries to obtain the graph from StationLoaderService.getGraph() first and falls back to instantiation.
+     * When a graph implementation is available, the method will add Station objects found in Repositories.
+     *
+     * @return Graph instance with station vertices or null when no graph implementation could be obtained
+     */
     @SuppressWarnings({"unchecked","rawtypes"})
     private static Graph<?,?> ensureProjectGraphPopulated() {
         try { Graph<Station, ?> sg = app.service.sprint3.StationLoaderService.getGraph(); if (sg != null) return sg; } catch (Throwable ignored) {}

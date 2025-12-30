@@ -15,6 +15,18 @@ public class MaxFlow {
 
     /**
      * Edmonds-Karp algorithm using explicit subtraction operator.
+     *
+     * @param g the graph containing vertices and weighted edges representing capacities
+     * @param source the source vertex object (must be a valid vertex in g)
+     * @param sink the sink vertex object (must be a valid vertex in g)
+     * @param cmp comparator for capacity values (used to compare to zero and between capacities)
+     * @param add binary operator that returns the sum of two capacity values
+     * @param sub binary operator that returns the subtraction a - b for capacity values
+     * @param zero representation of zero for the capacity type E
+     * @param <V> vertex type
+     * @param <E> capacity numeric type
+     * @return the maximum flow value of type E from source to sink, or null if source/sink are invalid
+     * @throws IllegalArgumentException if negative capacities are found
      */
     public static <V, E> E edmondsKarp(Graph<V, E> g, V source, V sink,
                                        Comparator<E> cmp, BinaryOperator<E> add, BinaryOperator<E> sub, E zero) {
@@ -140,7 +152,19 @@ public class MaxFlow {
         return maxFlow;
     }
 
-    // overload without explicit subtract: derive default subtraction for common numeric types
+    /**
+     * Edmonds-Karp convenience overload that derives a subtraction operator for common numeric types.
+     *
+     * @param g the graph
+     * @param source the source vertex
+     * @param sink the sink vertex
+     * @param cmp comparator for capacity values
+     * @param add addition operator for capacity values
+     * @param zero zero value for the capacity type
+     * @param <V> vertex type
+     * @param <E> capacity type
+     * @return maximum flow value or null on invalid vertices
+     */
     public static <V, E> E edmondsKarp(Graph<V, E> g, V source, V sink,
                                        Comparator<E> cmp, BinaryOperator<E> add, E zero) {
         BinaryOperator<E> sub = defaultSubtract(zero);
@@ -161,7 +185,12 @@ public class MaxFlow {
         throw new UnsupportedOperationException("Subtraction not supported for capacity type: " + zero.getClass());
     }
 
-    /** Result wrapper */
+    /**
+     * Result wrapper containing source/sink vertices, keys and the computed max flow.
+     *
+     * @param <V> vertex type
+     * @param <E> capacity type
+     */
     public static class Result<V, E> {
         public final V source;
         public final V sink;
@@ -186,7 +215,20 @@ public class MaxFlow {
         }
     }
 
-    // compute convenience methods matching earlier API
+    /**
+     * Compute the maximum flow between two vertex objects.
+     *
+     * @param g the graph
+     * @param source source vertex object
+     * @param sink sink vertex object
+     * @param cmp comparator for capacity type
+     * @param add addition operator for capacity type
+     * @param sub subtraction operator for capacity type
+     * @param zero zero value for capacity type
+     * @param <V> vertex type
+     * @param <E> capacity type
+     * @return Result wrapper with computed max flow and metadata
+     */
     public static <V, E> Result<V, E> compute(Graph<V, E> g, V source, V sink,
                                               Comparator<E> cmp, BinaryOperator<E> add, BinaryOperator<E> sub, E zero) {
         Integer sKey = g.validVertex(source) ? Integer.valueOf(g.key(source)) : null;
@@ -200,12 +242,39 @@ public class MaxFlow {
         return new Result<>(source, sink, sKey, tKey, flow, msg, "O(V·E^2)");
     }
 
+    /**
+     * Compute maximum flow and derive subtraction for common numeric types.
+     *
+     * @param g the graph
+     * @param source source vertex object
+     * @param sink sink vertex object
+     * @param cmp comparator for capacity type
+     * @param add addition operator for capacity type
+     * @param zero zero value for capacity type
+     * @param <V> vertex type
+     * @param <E> capacity type
+     * @return Result wrapper with computed max flow and metadata
+     */
     public static <V, E> Result<V, E> compute(Graph<V, E> g, V source, V sink,
                                               Comparator<E> cmp, BinaryOperator<E> add, E zero) {
         BinaryOperator<E> sub = defaultSubtract(zero);
         return compute(g, source, sink, cmp, add, sub, zero);
     }
 
+    /**
+     * Compute maximum flow by resolving vertex keys (graph-internal integer keys) to vertex objects.
+     *
+     * @param g the graph
+     * @param sourceKey graph-internal key for source vertex
+     * @param sinkKey graph-internal key for sink vertex
+     * @param cmp comparator for capacity type
+     * @param add addition operator for capacity type
+     * @param sub subtraction operator for capacity type
+     * @param zero zero value for capacity type
+     * @param <V> vertex type
+     * @param <E> capacity type
+     * @return Result wrapper with computed max flow and metadata
+     */
     public static <V, E> Result<V, E> compute(Graph<V, E> g, int sourceKey, int sinkKey,
                                               Comparator<E> cmp, BinaryOperator<E> add, BinaryOperator<E> sub, E zero) {
         V s = g.vertex(sourceKey);
@@ -215,6 +284,19 @@ public class MaxFlow {
         return new Result<>(r.source, r.sink, sourceKey, sinkKey, r.maxFlow, r.message, r.complexity);
     }
 
+    /**
+     * Compute maximum flow by resolving vertex keys and deriving subtraction for common numeric types.
+     *
+     * @param g the graph
+     * @param sourceKey graph-internal key for source vertex
+     * @param sinkKey graph-internal key for sink vertex
+     * @param cmp comparator for capacity type
+     * @param add addition operator for capacity type
+     * @param zero zero value for capacity type
+     * @param <V> vertex type
+     * @param <E> capacity type
+     * @return Result wrapper with computed max flow and metadata
+     */
     public static <V, E> Result<V, E> compute(Graph<V, E> g, int sourceKey, int sinkKey,
                                               Comparator<E> cmp, BinaryOperator<E> add, E zero) {
         BinaryOperator<E> sub = defaultSubtract(zero);

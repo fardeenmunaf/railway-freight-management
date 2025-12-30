@@ -17,8 +17,21 @@ import java.util.Scanner;
  */
 public class MaxFlowView {
 
+    /**
+     * Output modes for result formatting. DETAILED prints a multi-line verbose view; COMPACT prints a single-line summary.
+     */
     public enum Mode { DETAILED, COMPACT }
 
+    /**
+     * Format a MaxFlow.Result into a human-readable string.
+     * The method prefers Station.facilityId for displayed keys when available.
+     *
+     * @param res the result from MaxFlow computation (may be null)
+     * @param mode formatting mode (DETAILED or COMPACT)
+     * @param <V> vertex type
+     * @param <E> capacity type
+     * @return formatted string ready for printing
+     */
     public static <V, E> String formatResult(MaxFlow.Result<V, E> res, Mode mode) {
         if (mode == null) mode = Mode.DETAILED;
         if (res == null) return mode == Mode.DETAILED ? "MaxFlow Result:\n  Result is null\n" : "MaxFlow: null";
@@ -52,10 +65,25 @@ public class MaxFlowView {
         return sb.toString();
     }
 
+    /**
+     * Print a formatted MaxFlow.Result to standard output.
+     *
+     * @param res computation result
+     * @param mode formatting mode
+     * @param <V> vertex type
+     * @param <E> capacity type
+     */
     public static <V, E> void printResult(MaxFlow.Result<V, E> res, Mode mode) {
         System.out.println(formatResult(res, mode));
     }
 
+    /**
+     * Interactive console display that lists loaded stations, prompts the user for source and sink station IDs
+     * and computes/prints the maximum flow using the project's graph.
+     *
+     * @param scanner Scanner instance to read user input
+     * @throws IOException if an I/O error occurs while interacting with the console
+     */
     public static void display(Scanner scanner) throws IOException {
         System.out.println("=== Maximum Throughput (MaxFlow) ===");
 

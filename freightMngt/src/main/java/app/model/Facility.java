@@ -209,6 +209,13 @@ public class Facility {
                 '}';
     }
 
+    /**
+     * Equality is based on non-null facilityId. Two Facility objects are considered equal when both
+     * have a non-null facilityId and those IDs are equal. If either facilityId is null, equals returns false.
+     *
+     * @param o object to compare with
+     * @return true when both objects are Facility and have the same non-null facilityId
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -219,6 +226,11 @@ public class Facility {
         return this.facilityId.equals(facility.facilityId);
     }
 
+    /**
+     * Hash code consistent with equals: when facilityId is non-null, its hashCode is used; otherwise 0 is returned.
+     *
+     * @return hash code for the facility
+     */
     @Override
     public int hashCode() {
         return facilityId == null ? 0 : facilityId.hashCode();
