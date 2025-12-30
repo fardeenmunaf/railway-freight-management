@@ -4,7 +4,6 @@ import app.model.Station; // Importar a classe de domínio Station
 
 import java.util.*;
 import java.util.stream.Collectors;
-
 /**
  * Builds a balanced 2D-tree from station data using latitude and longitude.
  * Reuses AVLTree for efficient bulk-build strategy.
