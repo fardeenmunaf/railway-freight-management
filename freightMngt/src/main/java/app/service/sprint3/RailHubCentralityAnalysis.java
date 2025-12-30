@@ -1,6 +1,8 @@
 package app.service.sprint3;
 
 import app.model.Station;
+import app.utils.graph.Algorithms;
+import app.utils.graph.Edge;
 import app.utils.graph.Graph;
 
 import java.io.IOException;
@@ -80,11 +82,22 @@ public class RailHubCentralityAnalysis {
      * Complexity: O(V + E)
      */
     private void computeDegreeAndStrength() {
-        // TODO: Implement degree and strength computation
-        // For each vertex in the graph:
-        //   - degree = number of edges (inDegree + outDegree for undirected graph)
-        //   - strength = sum of edge weights
-        // Use graph.outgoingEdges(vertex) and graph.incomingEdges(vertex)
+        // Iterate over all stations
+        for (Station station : graph.vertices()) {
+            int degree = 0;
+            double strength = 0.0;
+            // Iterate over outgoing edges
+            for (Edge<Station, Double> edge : graph.outgoingEdges(station)) {
+                degree++;
+                // Sum the weight if it's not null, otherwise treat as 0
+                Double weight = edge.getWeight();
+                if (weight != null) {
+                    strength += weight;
+                }
+            }
+            degreeMap.put(station, degree);
+            strengthMap.put(station, strength);
+        }
     }
 
     /**
@@ -103,16 +116,11 @@ public class RailHubCentralityAnalysis {
      * Complexity: O(VE + V^2 log V) for weighted graphs
      */
     private void computeBetweenness() {
-        // TODO: Implement Brandes algorithm (WEIGHTED version)
-        // Our graph has Double weights (costs/distances), so we MUST use the weighted version:
-        //
-        // Map<Station, Double> result = Algorithms.brandesBetweennessWeighted(
-        //     graph,
-        //     Double::compare,   // Compare doubles
-        //     Double::sum,        // Sum doubles
-        //     0.0                 // Zero element
-        // );
-        // betweennessMap.putAll(result);
+        // Use Brandes algorithm for weighted graphs
+        Map<Station, Double> result = Algorithms.brandesBetweennessWeighted(graph, Double::compare, Double::sum, 0.0);
+
+        // Store results in betweennessMap
+        betweennessMap.putAll(result);
     }
 
     /**
@@ -126,13 +134,42 @@ public class RailHubCentralityAnalysis {
      * Complexity: O(V^2 * E) using Floyd-Warshall or APSP with Dijkstra
      */
     private void computeHarmonicCloseness() {
-        // TODO: Implement harmonic closeness computation
-        // Option 1: Floyd-Warshall O(V^3) - simpler
-        // Option 2: Dijkstra/BFS from each vertex O(V * (E + V log V)) - more efficient for sparse graphs
-        //
-        // For each vertex v:
-        //   harmonicCloseness[v] = Σ(1 / distance(v, u)) for all u ≠ v
-        //   If there is no path from v to u, contribution is 0
+        // For each station as source
+        for (Station source : graph.vertices()) {
+            double harmonicSum = 0.0;
+
+            // Compute shortest paths from source to all other vertices
+            ArrayList<LinkedList<Station>> paths = new ArrayList<>(); //List of paths
+            ArrayList<Double> distances = new ArrayList<>();         //List of distances
+
+            // Run Dijkstra from this source to get all distances
+            boolean success = Algorithms.shortestPaths(graph, source,
+                Double::compare,  // Compare distances
+                Double::sum,      // Sum distances
+                0.0,              // Zero element
+                paths,            // Output: paths (we don't need these)
+                distances         // Output: distances to all vertices
+            );
+
+            if (success) {
+                // For each destination vertex
+                for (int i = 0; i < distances.size(); i++) {
+                    Double distance = distances.get(i);
+                    Station destination = graph.vertex(i); // the destination is the last vertex on the path
+
+                    // Skip if it's the same station or no path exists
+                    if (destination.equals(source) || distance == null || distance == 0.0) {
+                        continue;
+                    }
+
+                    // Add 1/distance to harmonic sum
+                    harmonicSum += 1.0 / distance;
+                }
+            }
+
+            // Store harmonic closeness for this station
+            harmonicClosenessMap.put(source, harmonicSum);
+        }
     }
 
     /**
@@ -144,11 +181,62 @@ public class RailHubCentralityAnalysis {
      * Complexity: O(V)
      */
     private void normalizeMetrics() {
-        // TODO: Implement normalization
-        // For each metric (betweenness, harmonicCloseness, strength):
-        //   1. Find min and max
-        //   2. For each vertex: normalized = (value - min) / (max - min)
-        //   3. Special case: if max == min, all receive 1.0 (or 0.0)
+        // Normalize betweenness
+        normalizedBetweenness = normalizeMap(betweennessMap);
+
+        // Normalize harmonic closeness
+        normalizedHarmonicCloseness = normalizeMap(harmonicClosenessMap);
+
+        // Normalize strength
+        normalizedStrength = normalizeMap(strengthMap);
+    }
+
+    /**
+     * Helper method to normalize a map of values to [0,1] interval.
+     *
+     * @param map the map to normalize
+     * @return normalized map with values in [0,1]
+     */
+    private Map<Station, Double> normalizeMap(Map<Station, Double> map) {
+        Map<Station, Double> normalized = new HashMap<>();
+
+        // If map is empty, return empty
+        if (map.isEmpty()) {
+            return normalized;
+        }
+
+        // Find min and max values
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+
+        for (Double value : map.values()) {
+            if (value < min) {
+                min = value;
+            }
+            if (value > max) {
+                max = value;
+            }
+        }
+
+        // Calculate range
+        double range = max - min;
+
+        // Normalize each value
+        for (Map.Entry<Station, Double> entry : map.entrySet()) {
+            Station station = entry.getKey();
+            Double value = entry.getValue();
+
+            // If all values are the same (range = 0), assign 1.0 to all
+            if (range == 0.0) {
+                normalized.put(station, 1.0);
+            } else {
+                // Standard normalization: (value - min) / (max - min)
+                double normalizedValue = (value - min) / range;
+                normalized.put(station, normalizedValue);
+            }
+        }
+
+        return normalized;
     }
 
     /**
@@ -164,11 +252,24 @@ public class RailHubCentralityAnalysis {
      * Complexity: O(V)
      */
     private void computeHubScore() {
-        // TODO: Implement HubScore computation
-        // For each vertex:
-        //   hubScore[v] = 0.35 * normalizedBetweenness[v]
-        //               + 0.35 * normalizedHarmonicCloseness[v]
-        //               + 0.30 * normalizedStrength[v]
+        // Weights for each metric
+        final double BETWEENNESS_WEIGHT = 0.35;
+        final double HARMONIC_CLOSENESS_WEIGHT = 0.35;
+        final double STRENGTH_WEIGHT = 0.30;
+
+        // Calculate HubScore for each station
+        for (Station station : graph.vertices()) {
+            // Get normalized values for this station (default to 0.0 if not found)
+            double normBetweenness = normalizedBetweenness.getOrDefault(station, 0.0);
+            double normHarmonicCloseness = normalizedHarmonicCloseness.getOrDefault(station, 0.0);
+            double normStrength = normalizedStrength.getOrDefault(station, 0.0);
+
+            // Calculate weighted sum
+            double hubScore = (BETWEENNESS_WEIGHT * normBetweenness) + (HARMONIC_CLOSENESS_WEIGHT * normHarmonicCloseness) + (STRENGTH_WEIGHT * normStrength);
+
+            // Store the result
+            hubScoreMap.put(station, hubScore);
+        }
     }
 
     /**
