@@ -11,7 +11,8 @@ import java.util.function.BinaryOperator;
  * addition, comparison and subtraction are provided externally via BinaryOperator and Comparator.
  *
  * The algorithm uses the graph's Edge weights as capacities. It constructs and updates a
- * residual graph using a matrix indexed by vertex keys. The original Graph is not mutated.
+ * residual graph using adjacency maps to avoid the O(V^2) memory blowup of a dense matrix.
+ * The original Graph is not mutated.
  *
  * Complexity: O(V * E^2) for Edmonds-Karp.
  */
@@ -51,16 +52,19 @@ public class MaxFlow {
                 throw new IllegalArgumentException("Negative capacities are not allowed");
         }
 
+        // Use sparse residual representation: one Map<Integer,E> per vertex to store outgoing residual capacities
         @SuppressWarnings("unchecked")
-        E[][] residual = (E[][]) new Object[n][n];
+        Map<Integer, E>[] residual = new Map[n];
+        for (int i = 0; i < n; i++) residual[i] = new HashMap<>();
 
         // initialize residual with capacities from original graph
         for (Edge<V, E> e : g.edges()) {
             int u = g.key(e.getVOrig());
             int v = g.key(e.getVDest());
             E cap = e.getWeight();
-            if (cap != null)
-                residual[u][v] = cap;
+            if (cap != null && cmp.compare(cap, zero) > 0) {
+                residual[u].put(v, cap);
+            }
         }
 
         E maxFlow = zero;
@@ -80,8 +84,11 @@ public class MaxFlow {
 
             while (!q.isEmpty() && parent[t] == -1) {
                 int u = q.poll();
-                for (int v = 0; v < n; v++) {
-                    if (parent[v] == -1 && residual[u][v] != null && cmp.compare(residual[u][v], zero) > 0) {
+                // iterate neighbours from residual adjacency map
+                for (Map.Entry<Integer, E> entry : residual[u].entrySet()) {
+                    int v = entry.getKey();
+                    E cap = entry.getValue();
+                    if (parent[v] == -1 && cap != null && cmp.compare(cap, zero) > 0) {
                         parent[v] = u;
                         q.add(v);
                         if (v == t) break;
@@ -97,7 +104,8 @@ public class MaxFlow {
             int v = t;
             while (v != s) {
                 int u = parent[v];
-                E cap = residual[u][v];
+                E cap = residual[u].get(v);
+                if (cap == null) cap = zero; // safety
                 if (bottleneck == null) bottleneck = cap;
                 else bottleneck = min(bottleneck, cap, cmp);
                 v = u;
@@ -111,10 +119,21 @@ public class MaxFlow {
             while (v != s) {
                 int u = parent[v];
                 // residual[u][v] -= bottleneck
-                residual[u][v] = sub.apply(residual[u][v], bottleneck);
+                E curr = residual[u].get(v);
+                if (curr == null) curr = zero; // safety
+                E newCap = sub.apply(curr, bottleneck);
+                if (cmp.compare(newCap, zero) <= 0) {
+                    // remove zero or negative residual
+                    residual[u].remove(v);
+                } else {
+                    residual[u].put(v, newCap);
+                }
+
                 // residual[v][u] += bottleneck
-                if (residual[v][u] == null) residual[v][u] = bottleneck;
-                else residual[v][u] = add.apply(residual[v][u], bottleneck);
+                E rev = residual[v].get(u);
+                if (rev == null) residual[v].put(u, bottleneck);
+                else residual[v].put(u, add.apply(rev, bottleneck));
+
                 v = u;
             }
         }

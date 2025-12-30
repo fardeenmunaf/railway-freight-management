@@ -1,8 +1,13 @@
-package app.service;
+package app.service.sprint3;
 
 import app.utils.graph.Graph;
 import app.utils.graph.MaxFlow;
 import app.utils.graph.Edge;
+import app.model.Station;
+import app.model.FacilityType;
+import app.repositories.Repositories;
+import app.utils.CsvReader;
+import app.utils.graph.map.MapGraph;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -17,6 +22,9 @@ import java.util.function.BinaryOperator;
  * Keeps algorithm logic outside views.
  */
 public class MaxFlowService {
+
+    private static final String BELGIAN_STATIONS_CSV = "src/main/java/app/sampleDataset/stations.csv";
+    private static final String BELGIAN_LINES_CSV    = "src/main/java/app/sampleDataset/lines.csv";
 
     @SuppressWarnings("unchecked")
     private static Graph<?, ?> tryInstantiateProjectGraph() {
@@ -125,8 +133,32 @@ public class MaxFlowService {
     public static <V, E> MaxFlow.Result<V, E> compute(Graph<V, E> g, int sourceKey, int sinkKey) {
         if (g == null) throw new IllegalArgumentException("Graph cannot be null");
 
+        // Try to resolve source/sink as graph keys first
         V source = g.vertex(sourceKey);
         V sink = g.vertex(sinkKey);
+
+        // If not found, and vertices are Station objects, try to resolve by Station.facilityId
+        if (source == null || sink == null) {
+            V probe = g.numVertices() > 0 ? g.vertex(0) : null;
+            if (probe instanceof Station) {
+                if (source == null) {
+                    // find station with facilityId == sourceKey
+                    V found = g.vertex(v -> ((Station) v).getFacilityId() != null && ((Station) v).getFacilityId().intValue() == sourceKey);
+                    if (found != null) source = found;
+                }
+                if (sink == null) {
+                    V found = g.vertex(v -> ((Station) v).getFacilityId() != null && ((Station) v).getFacilityId().intValue() == sinkKey);
+                    if (found != null) sink = found;
+                }
+            }
+        }
+
+        if (source == null || sink == null) {
+            // preserve previous behavior: create Result indicating invalid vertices
+            Integer sKey = g.validVertex(source) ? Integer.valueOf(g.key(source)) : null;
+            Integer tKey = g.validVertex(sink) ? Integer.valueOf(g.key(sink)) : null;
+            return new MaxFlow.Result<>(source, sink, sKey, tKey, null, "Invalid source or sink vertex.", "O(V·E^2)");
+        }
 
         Class<?> weightClass = null;
         Object zero = null;
@@ -143,7 +175,7 @@ public class MaxFlowService {
 
         if (weightClass == null) {
             // No capacities found on edges: cannot compute meaningful max flow
-            return new MaxFlow.Result<>(source, sink, sourceKey, sinkKey, null,
+            return new MaxFlow.Result<>(source, sink, g.key(source), g.key(sink), null,
                     "Graph edges do not have capacities (weights are null). Provide numeric capacities.", "O(V·E^2)");
         }
 
@@ -166,11 +198,11 @@ public class MaxFlowService {
         } else if (BigInteger.class.isAssignableFrom(weightClass)) {
             zero = BigInteger.ZERO;
             comp = (Comparator) Comparator.naturalOrder();
-            add = (a, b) -> ((BigInteger)a).add((BigInteger)b);
+            add = (a, b) -> ((BigInteger)a).add((BigInteger) b);
         } else if (BigDecimal.class.isAssignableFrom(weightClass)) {
             zero = BigDecimal.ZERO;
             comp = (Comparator) Comparator.naturalOrder();
-            add = (a, b) -> ((BigDecimal)a).add((BigDecimal)b);
+            add = (a, b) -> ((BigDecimal)a).add((BigDecimal) b);
         } else {
             // fallback to Integer
             zero = Integer.valueOf(0);
@@ -178,19 +210,134 @@ public class MaxFlowService {
             add = (a, b) -> Integer.valueOf(((Integer)a) + ((Integer)b));
         }
 
-        return (MaxFlow.Result<V, E>) MaxFlow.compute((Graph) g, sourceKey, sinkKey, comp, add, zero);
+        // Use vertex-based compute now that 'source' and 'sink' have been resolved
+        return (MaxFlow.Result<V, E>) MaxFlow.compute((Graph) g, source, sink, comp, add, zero);
     }
 
     // Existing convenience methods
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static MaxFlow.Result<?,?> computeUsingProjectGraphIfAvailable(int sourceKey, int sinkKey) {
         Graph<?,?> g = tryInstantiateProjectGraph();
-        if (g == null) g = createSampleIntegerGraph();
+        // If no concrete project graph was found, or it seems empty, try to build from Repositories first
+        if (g == null || g.numVertices() == 0 || g.numEdges() == 0) {
+            // try to build graph from already-initialized Stations in Repositories
+            MapGraph<Station, Integer> repoGraph = buildStationGraphFromRepositories();
+            if (repoGraph != null && repoGraph.numVertices() > 0 && repoGraph.numEdges() > 0) {
+                g = repoGraph;
+            } else {
+                // fallback to CSV-based builder (legacy behavior)
+                g = buildStationCapacityGraphFromSample();
+            }
+        }
         return (MaxFlow.Result) compute((Graph) g, sourceKey, sinkKey);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static MaxFlow.Result<?,?> computeUsingGraph(Graph<?,?> g, int sourceKey, int sinkKey) {
         return (MaxFlow.Result) compute((Graph) g, sourceKey, sinkKey);
+    }
+
+    // Builds a MapGraph<Station,Integer> from sampleDataset CSVs using the "capacity" column as integer capacities.
+    public static MapGraph<Station, Integer> buildStationCapacityGraphFromSample() {
+        MapGraph<Station, Integer> g = new MapGraph<>(true);
+
+        Repositories repos = Repositories.getInstance();
+        FacilityType stationType = repos.getFacilityTypeRepository().getFacilityTypeByName("Station");
+        if (stationType == null) {
+            stationType = new FacilityType(2, "Station");
+            repos.getFacilityTypeRepository().addFacilityType(stationType);
+        }
+
+        List<Map<String, String>> stationRows = CsvReader.readCsv(BELGIAN_STATIONS_CSV, ",");
+        Map<Integer, Station> byId = new HashMap<>();
+        for (Map<String, String> row : stationRows) {
+            try {
+                int id = Integer.parseInt(row.get("Station id").trim());
+                Station s = new Station(
+                        id, row.get("Station"), stationType,
+                        safeParseDouble(row.get("Lat")), safeParseDouble(row.get("Lon")),
+                        false, null, null, null, null, null, null
+                );
+                repos.getFacilityRepository().addFacility(s);
+                byId.put(id, s);
+                g.addVertex(s);
+            } catch (Exception ignored) {}
+        }
+
+        List<Map<String, String>> lineRows = CsvReader.readCsv(BELGIAN_LINES_CSV, ",");
+        for (Map<String, String> row : lineRows) {
+            try {
+                int orig = Integer.parseInt(row.get("departure_stid").trim());
+                int dest = Integer.parseInt(row.get("arrival_stid").trim());
+                Integer cap = null;
+                try {
+                    String capStr = row.get("capacity");
+                    if (capStr != null) cap = Integer.valueOf((int) Double.parseDouble(capStr));
+                } catch (Exception ignored) { cap = null; }
+
+                Station sOrig = byId.get(orig);
+                Station sDest = byId.get(dest);
+                if (sOrig != null && sDest != null && cap != null) {
+                    g.addEdge(sOrig, sDest, cap);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return g;
+    }
+
+    // Build a MapGraph from Stations already loaded in Repositories, and wire edges using lines CSV if available
+    public static MapGraph<Station, Integer> buildStationGraphFromRepositories() {
+        Repositories repos = Repositories.getInstance();
+        MapGraph<Station, Integer> g = new MapGraph<>(true);
+
+        // collect stations from repositories
+        Map<Integer, Station> byId = new HashMap<>();
+        try {
+            List<app.model.Facility> facilities = repos.getFacilityRepository().getAllFacilities();
+            for (app.model.Facility f : facilities) {
+                if (f instanceof Station) {
+                    Station s = (Station) f;
+                    byId.put(s.getFacilityId(), s);
+                    g.addVertex(s);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        if (byId.isEmpty()) return g;
+
+        // attempt to wire edges using lines CSV (if present)
+        List<Map<String, String>> lineRows = CsvReader.readCsv(BELGIAN_LINES_CSV, ",");
+        for (Map<String, String> row : lineRows) {
+            try {
+                String origS = row.get("departure_stid");
+                String destS = row.get("arrival_stid");
+                if (origS == null || destS == null) continue;
+                int orig = Integer.parseInt(origS.trim());
+                int dest = Integer.parseInt(destS.trim());
+                Integer cap = null;
+                try {
+                    String capStr = row.get("capacity");
+                    if (capStr != null) cap = Integer.valueOf((int) Double.parseDouble(capStr));
+                } catch (Exception ignored) { cap = null; }
+
+                Station sOrig = byId.get(orig);
+                Station sDest = byId.get(dest);
+                if (sOrig != null && sDest != null && cap != null) {
+                    g.addEdge(sOrig, sDest, cap);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        return g;
+    }
+
+    private static Double safeParseDouble(String value) {
+        try {
+            return value == null ? null : Double.parseDouble(value.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
