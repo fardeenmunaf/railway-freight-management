@@ -1,7 +1,7 @@
 package app.view;
 
+import app.service.sprint3.ShortestPathService;
 import app.service.sprint3.StationLoaderService;
-import app.service.sprint3.StationLoaderService.PathResultWithAlgorithm;
 
 import java.io.IOException;
 import java.util.List;
@@ -9,20 +9,21 @@ import java.util.Scanner;
 
 public class ShortestPathUI {
 
-    private final StationLoaderService service;
+    private final ShortestPathService pathService;
+    private final StationLoaderService dataService;
     private final Scanner scanner;
 
-    private ShortestPathUI(Scanner scanner) {
-        this.service = new StationLoaderService();
+    private ShortestPathUI(Scanner scanner) throws IOException {
+        this.dataService = StationLoaderService.getInstance();
+        this.pathService = new ShortestPathService();
         this.scanner = scanner;
     }
 
     public static void display(Scanner scanner) throws IOException {
         ShortestPathUI ui = new ShortestPathUI(scanner);
-        ui.service.initialize();
         System.out.println("Dados carregados com sucesso!");
-        System.out.println("Total de estações: " + ui.service.getTotalStations());
-        System.out.println("Total de linhas: " + ui.service.getTotalConnections());
+        System.out.println("Total de estações: " + ui.dataService.getTotalStations());
+        System.out.println("Total de linhas: " + ui.dataService.getTotalConnections());
         System.out.println();
         ui.showMenu();
     }
@@ -70,7 +71,7 @@ public class ShortestPathUI {
         }
 
         System.out.println("\nA calcular o melhor caminho...");
-        PathResultWithAlgorithm result = service.calculateBestPath(departureId, arrivalId);
+        ShortestPathService.PathResultWithAlgorithm result = pathService.calculateBestPath(departureId, arrivalId);
 
         if (result == null) {
             System.out.println("Não foi possível calcular o caminho.");
@@ -82,7 +83,7 @@ public class ShortestPathUI {
         System.out.println("Algoritmo usado: " + result.getAlgorithmUsed());
         System.out.println();
 
-        StationLoaderService.PathResult pathResult = result.getPathResult();
+        ShortestPathService.PathResult pathResult = result.getPathResult();
 
         if (result.hasNegativeCycle()) {
             System.out.println("AVISO: Ciclo negativo detectado!");
@@ -99,7 +100,7 @@ public class ShortestPathUI {
         try {
             Integer id = scanner.nextInt();
             scanner.nextLine();
-            if (!service.stationExists(id)) {
+            if (!dataService.stationExists(id)) {
                 System.out.println("Estação com ID " + id + " não existe!");
                 return null;
             }
@@ -114,13 +115,13 @@ public class ShortestPathUI {
 
     private void listStations() {
         System.out.println("\n=== ESTAÇÕES DISPONÍVEIS ===");
-        if (service.getTotalStations() == 0) {
+        if (dataService.getTotalStations() == 0) {
             System.out.println("Nenhuma estação carregada.");
             return;
         }
 
-        List<String> formattedStations = service.getFormattedStationList();
+        List<String> formattedStations = dataService.getFormattedStationList();
         formattedStations.forEach(System.out::println);
-        System.out.println("\nTotal: " + service.getTotalStations() + " estações");
+        System.out.println("\nTotal: " + dataService.getTotalStations() + " estações");
     }
 }
