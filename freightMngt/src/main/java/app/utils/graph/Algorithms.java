@@ -516,4 +516,225 @@ public class Algorithms {
             }
         }
     }
+
+    /**
+     * Computes Betweenness Centrality using Brandes' algorithm (unweighted version).
+     *
+     * Betweenness centrality measures how often a vertex appears on shortest paths
+     * between other pairs of vertices. A high betweenness indicates that a vertex
+     * is a crucial intermediary in the network.
+     *
+     * Brandes' Algorithm (2001):
+     * - Phase 1: Single-source shortest paths from each vertex using BFS
+     * - Phase 2: Accumulation of dependencies in reverse order
+     *
+     * Complexity: O(VE) for unweighted graphs
+     *
+     * Reference: Brandes, U. (2001). "A faster algorithm for betweenness centrality"
+     *
+     * @param g Graph instance
+     * @return Map with betweenness centrality values for each vertex
+     */
+    public static <V, E> Map<V, Double> brandesBetweenness(Graph<V, E> g) {
+        Map<V, Double> betweenness = new HashMap<>();
+
+        // Initialize betweenness to 0 for all vertices
+        for (V v : g.vertices()) {
+            betweenness.put(v, 0.0);
+        }
+
+        // For each vertex as source
+        for (V source : g.vertices()) {
+            // Data structures for single-source shortest paths
+            Deque<V> stack = new ArrayDeque<>();
+            Map<V, List<V>> predecessors = new HashMap<>();
+            Map<V, Integer> sigma = new HashMap<>();  // number of shortest paths
+            Map<V, Integer> distance = new HashMap<>();
+
+            // Initialize
+            for (V w : g.vertices()) {
+                predecessors.put(w, new ArrayList<>());
+                sigma.put(w, 0);
+                distance.put(w, -1);
+            }
+
+            sigma.put(source, 1);
+            distance.put(source, 0);
+
+            // BFS phase - find shortest paths
+            Queue<V> queue = new LinkedList<>();
+            queue.offer(source);
+
+            while (!queue.isEmpty()) {
+                V v = queue.poll();
+                stack.push(v);
+
+                // For each neighbor of v
+                for (V w : g.adjVertices(v)) {
+                    // w found for the first time?
+                    if (distance.get(w) < 0) {
+                        queue.offer(w);
+                        distance.put(w, distance.get(v) + 1);
+                    }
+
+                    // Is this a shortest path to w?
+                    if (distance.get(w).equals(distance.get(v) + 1)) {
+                        sigma.put(w, sigma.get(w) + sigma.get(v));
+                        predecessors.get(w).add(v);
+                    }
+                }
+            }
+
+            // Accumulation phase - back-propagate dependencies
+            Map<V, Double> dependency = new HashMap<>();
+            for (V v : g.vertices()) {
+                dependency.put(v, 0.0);
+            }
+
+            // Stack contains vertices in order of non-increasing distance from source
+            while (!stack.isEmpty()) {
+                V w = stack.pop();
+
+                for (V v : predecessors.get(w)) {
+                    double contribution = (sigma.get(v).doubleValue() / sigma.get(w).doubleValue())
+                                        * (1.0 + dependency.get(w));
+                    dependency.put(v, dependency.get(v) + contribution);
+                }
+
+                if (!w.equals(source)) {
+                    betweenness.put(w, betweenness.get(w) + dependency.get(w));
+                }
+            }
+        }
+
+        // For undirected graphs, divide by 2 (each shortest path is counted twice)
+        if (!g.isDirected()) {
+            for (V v : g.vertices()) {
+                betweenness.put(v, betweenness.get(v) / 2.0);
+            }
+        }
+
+        return betweenness;
+    }
+
+    /**
+     * Computes Betweenness Centrality using Brandes' algorithm (weighted version with Dijkstra).
+     *
+     * Similar to the unweighted version but uses Dijkstra instead of BFS for shortest paths.
+     * This version properly handles weighted graphs where edge weights matter.
+     *
+     * Complexity: O(VE + V^2 log V)
+     *
+     * @param g    Graph instance
+     * @param ce   Comparator between elements of type E
+     * @param sum  Sum two elements of type E
+     * @param zero Neutral element of the sum
+     * @return Map with betweenness centrality values for each vertex
+     */
+    public static <V, E> Map<V, Double> brandesBetweennessWeighted(Graph<V, E> g, Comparator<E> ce, BinaryOperator<E> sum, E zero) {
+        Map<V, Double> betweenness = new HashMap<>();
+
+        // Initialize betweenness to 0 for all vertices
+        for (V v : g.vertices()) {
+            betweenness.put(v, 0.0);
+        }
+
+        // For each vertex as source
+        for (V source : g.vertices()) {
+            // Data structures for single-source shortest paths
+            Deque<V> stack = new ArrayDeque<>();
+            Map<V, List<V>> predecessors = new HashMap<>();
+            Map<V, Integer> sigma = new HashMap<>();  // number of shortest paths
+            Map<V, E> distance = new HashMap<>();
+
+            // Initialize
+            for (V w : g.vertices()) {
+                predecessors.put(w, new ArrayList<>());
+                sigma.put(w, 0);
+                distance.put(w, null);
+            }
+
+            sigma.put(source, 1);
+            distance.put(source, zero);
+
+            // Priority queue for Dijkstra (using manual selection for simplicity)
+            Set<V> visited = new HashSet<>();
+            V current = source;
+
+            // Dijkstra phase - find shortest paths
+            while (current != null) {
+                stack.push(current);
+                visited.add(current);
+
+                E distCurrent = distance.get(current);
+
+                // For each neighbor
+                for (Edge<V, E> edge : g.outgoingEdges(current)) {
+                    V w = edge.getVDest();
+                    E newDist = sum.apply(distCurrent, edge.getWeight());
+
+                    // w found for the first time?
+                    if (distance.get(w) == null) {
+                        distance.put(w, newDist);
+                        sigma.put(w, sigma.get(current));
+                        predecessors.get(w).add(current);
+                    }
+                    // Shorter path to w found?
+                    else if (ce.compare(newDist, distance.get(w)) < 0) {
+                        distance.put(w, newDist);
+                        sigma.put(w, sigma.get(current));
+                        predecessors.get(w).clear();
+                        predecessors.get(w).add(current);
+                    }
+                    // Another shortest path to w found?
+                    else if (ce.compare(newDist, distance.get(w)) == 0) {
+                        sigma.put(w, sigma.get(w) + sigma.get(current));
+                        predecessors.get(w).add(current);
+                    }
+                }
+
+                // Select next vertex with minimum distance
+                current = null;
+                E minDist = null;
+                for (V v : g.vertices()) {
+                    if (!visited.contains(v) && distance.get(v) != null) {
+                        if (minDist == null || ce.compare(distance.get(v), minDist) < 0) {
+                            minDist = distance.get(v);
+                            current = v;
+                        }
+                    }
+                }
+            }
+
+            // Accumulation phase - back-propagate dependencies
+            Map<V, Double> dependency = new HashMap<>();
+            for (V v : g.vertices()) {
+                dependency.put(v, 0.0);
+            }
+
+            // Stack contains vertices in order of non-increasing distance from source
+            while (!stack.isEmpty()) {
+                V w = stack.pop();
+
+                for (V v : predecessors.get(w)) {
+                    double contribution = (sigma.get(v).doubleValue() / sigma.get(w).doubleValue())
+                                        * (1.0 + dependency.get(w));
+                    dependency.put(v, dependency.get(v) + contribution);
+                }
+
+                if (!w.equals(source)) {
+                    betweenness.put(w, betweenness.get(w) + dependency.get(w));
+                }
+            }
+        }
+
+        // For undirected graphs, divide by 2 (each shortest path is counted twice)
+        if (!g.isDirected()) {
+            for (V v : g.vertices()) {
+                betweenness.put(v, betweenness.get(v) / 2.0);
+            }
+        }
+
+        return betweenness;
+    }
 }

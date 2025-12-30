@@ -29,7 +29,7 @@ public class MainMenu {
             System.out.println("| 13. Station Upgrade             |");
             System.out.println("| 14. Freights Route View         |");
             System.out.println("| 15. Aware Shortest Paths        |");
-            System.out.println("| 16. Maximum Throughput (MaxFlow)|");
+            System.out.println("| 16. Rail Hub Centrality         |");
             System.out.println("| 0. Exit                         |");
             System.out.println("-----------------------------------");
             System.out.print("Enter your choice (0-16): ");
@@ -38,7 +38,7 @@ public class MainMenu {
             try {
                 choice = Integer.parseInt(input);
                 if (choice < 0 || choice > 16) {
-                    System.out.println("Invalid choice. Please enter a number between 0 and 16.");
+                    System.out.println("Invalid choice. Please enter a number between 0 and 15.");
                 } else if (choice == 0) {
                     System.out.println("Exiting the system. Goodbye!");
                     System.exit(0);
@@ -90,7 +90,7 @@ public class MainMenu {
                             ShortestPathUI.display(scanner);
                             break;
                         case 16:
-                            MaxFlowView.display(scanner);
+                            RailHubCentralityView.display(scanner);
                             break;
                         default:
                             System.out.println("Option not implemented yet.");
