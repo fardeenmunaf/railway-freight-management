@@ -7,88 +7,95 @@ import java.util.function.BinaryOperator;
 
 /**
  * Edmonds-Karp implementation for maximum flow on graphs with numeric capacities stored as E.
- * This implementation assumes capacities are non-negative and supports any numeric type where
- * addition, comparison and subtraction are provided externally via BinaryOperator and Comparator.
- *
- * The algorithm uses the graph's Edge weights as capacities. It constructs and updates a
- * residual graph using adjacency maps to avoid the O(V^2) memory blowup of a dense matrix.
- * The original Graph is not mutated.
+ * Supports a generic capacity type E via provided Comparator, add and subtract operators.
  *
  * Complexity: O(V * E^2) for Edmonds-Karp.
  */
 public class MaxFlow {
 
     /**
-     * Computes maximum flow value between source and sink using Edmonds-Karp.
-     * This variant requires a subtraction operator so the implementation does not rely on unsafe casts.
-     *
-     * @param g input graph where edge weights are capacities (type E)
-     * @param source source vertex (must be a vertex present in g)
-     * @param sink sink vertex (must be a vertex present in g)
-     * @param cmp comparator for capacities
-     * @param add function to add two capacities
-     * @param sub function to subtract two capacities (a - b)
-     * @param zero zero element for capacities
-     * @param <V> vertex type
-     * @param <E> capacity (edge weight) type
-     * @return max flow value (E) or null if validation fails (e.g., source/sink invalid)
-     * @throws IllegalArgumentException if negative capacities are found
+     * Edmonds-Karp algorithm using explicit subtraction operator.
      */
     public static <V, E> E edmondsKarp(Graph<V, E> g, V source, V sink,
                                        Comparator<E> cmp, BinaryOperator<E> add, BinaryOperator<E> sub, E zero) {
-        if (!g.validVertex(source) || !g.validVertex(sink))
-            return null;
-        if (source.equals(sink))
-            return zero; // by definition
+        if (!g.validVertex(source) || !g.validVertex(sink)) return null;
+        if (source.equals(sink)) return zero;
 
+        // number of vertices
         int n = g.numVertices();
 
-        // Validate capacities are non-negative: we check using comparator assuming zero is the neutral element
+        // validate capacities non-negative
         for (Edge<V, E> e : g.edges()) {
             E cap = e.getWeight();
-            if (cap == null)
-                continue;
-            if (cmp.compare(cap, zero) < 0)
-                throw new IllegalArgumentException("Negative capacities are not allowed");
+            if (cap == null) continue;
+            if (cmp.compare(cap, zero) < 0) throw new IllegalArgumentException("Negative capacities are not allowed");
         }
 
-        // Use sparse residual representation: one Map<Integer,E> per vertex to store outgoing residual capacities
-        @SuppressWarnings("unchecked")
-        Map<Integer, E>[] residual = new Map[n];
-        for (int i = 0; i < n; i++) residual[i] = new HashMap<>();
+        // build mapping vertex -> index based on g.vertices() (stable list)
+        List<V> verts = g.vertices();
+        Map<V, Integer> index = new IdentityHashMap<>();
+        for (int i = 0; i < verts.size(); i++) {
+            V v = verts.get(i);
+            if (v != null) index.put(v, i);
+        }
 
-        // initialize residual with capacities from original graph
+        // fallback mapping using g.key if some vertex objects differ
+        // build residual adjacency maps
+        Map<Integer, Map<Integer, E>> residual = new HashMap<>();
+        for (int i = 0; i < verts.size(); i++) residual.put(i, new HashMap<>());
+
+        // helper to resolve index of a vertex object
+        java.util.function.Function<V, Integer> resolveIndex = (V v) -> {
+            Integer idx = index.get(v);
+            if (idx != null) return idx;
+            try {
+                int k = g.key(v);
+                if (k >= 0 && k < n) return k;
+            } catch (Exception ignored) {}
+            return null;
+        };
+
+        // initialize residual capacities from graph edges
         for (Edge<V, E> e : g.edges()) {
-            int u = g.key(e.getVOrig());
-            int v = g.key(e.getVDest());
+            Integer u = resolveIndex.apply(e.getVOrig());
+            Integer v = resolveIndex.apply(e.getVDest());
+            if (u == null || v == null) continue;
             E cap = e.getWeight();
-            if (cap != null && cmp.compare(cap, zero) > 0) {
-                residual[u].put(v, cap);
+            if (cap == null) continue;
+            if (cmp.compare(cap, zero) > 0) {
+                Map<Integer, E> row = residual.get(u);
+                // if multiple edges between same pair, sum capacities
+                E prev = row.get(v);
+                row.put(v, prev == null ? cap : add.apply(prev, cap));
             }
         }
 
-        E maxFlow = zero;
+        // resolve source/sink indices
+        Integer sIdx = resolveIndex.apply(source);
+        Integer tIdx = resolveIndex.apply(sink);
+        if (sIdx == null || tIdx == null) return null;
+        int s = sIdx, t = tIdx;
 
-        int s = g.key(source);
-        int t = g.key(sink);
+        E maxFlow = zero;
 
         // BFS parent array
         int[] parent = new int[n];
 
         while (true) {
-            // BFS to find augmenting path in residual graph
             Arrays.fill(parent, -1);
-            Queue<Integer> q = new LinkedList<>();
-            parent[s] = -2; // mark source as visited
+            Queue<Integer> q = new ArrayDeque<>();
+            parent[s] = -2;
             q.add(s);
 
             while (!q.isEmpty() && parent[t] == -1) {
                 int u = q.poll();
-                // iterate neighbours from residual adjacency map
-                for (Map.Entry<Integer, E> entry : residual[u].entrySet()) {
-                    int v = entry.getKey();
-                    E cap = entry.getValue();
-                    if (parent[v] == -1 && cap != null && cmp.compare(cap, zero) > 0) {
+                Map<Integer, E> row = residual.get(u);
+                if (row == null) continue;
+                for (Map.Entry<Integer, E> ent : row.entrySet()) {
+                    int v = ent.getKey();
+                    E cap = ent.getValue();
+                    if (cap == null) continue;
+                    if (parent[v] == -1 && cmp.compare(cap, zero) > 0) {
                         parent[v] = u;
                         q.add(v);
                         if (v == t) break;
@@ -96,43 +103,35 @@ public class MaxFlow {
                 }
             }
 
-            if (parent[t] == -1)
-                break; // no more augmenting paths
+            if (parent[t] == -1) break; // no augmenting path
 
-            // find bottleneck capacity along path
+            // find bottleneck
             E bottleneck = null;
             int v = t;
             while (v != s) {
                 int u = parent[v];
-                E cap = residual[u].get(v);
-                if (cap == null) cap = zero; // safety
-                if (bottleneck == null) bottleneck = cap;
-                else bottleneck = min(bottleneck, cap, cmp);
+                E cap = residual.get(u).get(v);
+                if (cap == null) cap = zero;
+                if (bottleneck == null) bottleneck = cap; else bottleneck = min(bottleneck, cap, cmp);
                 v = u;
             }
 
-            // add bottleneck to maxFlow
+            // add to maxFlow
             maxFlow = add.apply(maxFlow, bottleneck);
 
-            // update residual capacities along path
+            // update residual along path
             v = t;
             while (v != s) {
                 int u = parent[v];
-                // residual[u][v] -= bottleneck
-                E curr = residual[u].get(v);
-                if (curr == null) curr = zero; // safety
+                Map<Integer, E> row = residual.get(u);
+                E curr = row.get(v);
+                if (curr == null) curr = zero;
                 E newCap = sub.apply(curr, bottleneck);
-                if (cmp.compare(newCap, zero) <= 0) {
-                    // remove zero or negative residual
-                    residual[u].remove(v);
-                } else {
-                    residual[u].put(v, newCap);
-                }
+                if (cmp.compare(newCap, zero) <= 0) row.remove(v); else row.put(v, newCap);
 
-                // residual[v][u] += bottleneck
-                E rev = residual[v].get(u);
-                if (rev == null) residual[v].put(u, bottleneck);
-                else residual[v].put(u, add.apply(rev, bottleneck));
+                Map<Integer, E> revRow = residual.get(v);
+                E rev = revRow.get(u);
+                if (rev == null) revRow.put(u, bottleneck); else revRow.put(u, add.apply(rev, bottleneck));
 
                 v = u;
             }
@@ -141,56 +140,41 @@ public class MaxFlow {
         return maxFlow;
     }
 
-    // backward-compatible overload that derives a subtraction operator for common numeric types
+    // overload without explicit subtract: derive default subtraction for common numeric types
     public static <V, E> E edmondsKarp(Graph<V, E> g, V source, V sink,
                                        Comparator<E> cmp, BinaryOperator<E> add, E zero) {
         BinaryOperator<E> sub = defaultSubtract(zero);
         return edmondsKarp(g, source, sink, cmp, add, sub, zero);
     }
 
-    // utility to choose minimum of two E using comparator
-    private static <E> E min(E a, E b, Comparator<E> cmp) {
-        return (cmp.compare(a, b) <= 0) ? a : b;
-    }
+    // helper to pick minimum
+    private static <E> E min(E a, E b, Comparator<E> cmp) { return (cmp.compare(a, b) <= 0) ? a : b; }
 
     @SuppressWarnings("unchecked")
     private static <E> BinaryOperator<E> defaultSubtract(E zero) {
-        if (zero instanceof Integer) {
-            return (a, b) -> (E) Integer.valueOf(((Integer) a) - ((Integer) b));
-        } else if (zero instanceof Double) {
-            return (a, b) -> (E) Double.valueOf(((Double) a) - ((Double) b));
-        } else if (zero instanceof Long) {
-            return (a, b) -> (E) Long.valueOf(((Long) a) - ((Long) b));
-        } else if (zero instanceof Float) {
-            return (a, b) -> (E) Float.valueOf(((Float) a) - ((Float) b));
-        } else if (zero instanceof BigInteger) {
-            return (a, b) -> (E) ((BigInteger) a).subtract((BigInteger) b);
-        } else if (zero instanceof BigDecimal) {
-            return (a, b) -> (E) ((BigDecimal) a).subtract((BigDecimal) b);
-        }
+        if (zero instanceof Integer) return (a, b) -> (E) Integer.valueOf(((Integer) a) - ((Integer) b));
+        if (zero instanceof Double) return (a, b) -> (E) Double.valueOf(((Double) a) - ((Double) b));
+        if (zero instanceof Long) return (a, b) -> (E) Long.valueOf(((Long) a) - ((Long) b));
+        if (zero instanceof Float) return (a, b) -> (E) Float.valueOf(((Float) a) - ((Float) b));
+        if (zero instanceof BigInteger) return (a, b) -> (E) ((BigInteger) a).subtract((BigInteger) b);
+        if (zero instanceof BigDecimal) return (a, b) -> (E) ((BigDecimal) a).subtract((BigDecimal) b);
         throw new UnsupportedOperationException("Subtraction not supported for capacity type: " + zero.getClass());
     }
 
-    /**
-     * Result wrapper containing flow summary and metadata.
-     * @param <V> vertex type
-     * @param <E> capacity type
-     */
+    /** Result wrapper */
     public static class Result<V, E> {
         public final V source;
         public final V sink;
-        public final Integer sourceKey; // optional numeric key for source (stid)
-        public final Integer sinkKey;   // optional numeric key for sink (stid)
+        public final Integer sourceKey;
+        public final Integer sinkKey;
         public final E maxFlow;
         public final String message;
         public final String complexity;
 
-        // original constructor (no keys)
         public Result(V source, V sink, E maxFlow, String message, String complexity) {
             this(source, sink, null, null, maxFlow, message, complexity);
         }
 
-        // constructor with explicit keys
         public Result(V source, V sink, Integer sourceKey, Integer sinkKey, E maxFlow, String message, String complexity) {
             this.source = source;
             this.sink = sink;
@@ -202,62 +186,32 @@ public class MaxFlow {
         }
     }
 
-    /**
-     * Convenience method that computes max flow and returns a Result that includes a message
-     * and documented complexity. Messages follow the acceptance criteria:
-     * - source == sink -> maxFlow = zero, message indicates equality
-     * - no path -> maxFlow = zero, message indicates no path
-     * - negative capacities -> throws IllegalArgumentException
-     *
-     * This variant requires a subtraction operator.
-     */
+    // compute convenience methods matching earlier API
     public static <V, E> Result<V, E> compute(Graph<V, E> g, V source, V sink,
                                               Comparator<E> cmp, BinaryOperator<E> add, BinaryOperator<E> sub, E zero) {
-        // compute keys when possible to include stids in the Result
         Integer sKey = g.validVertex(source) ? Integer.valueOf(g.key(source)) : null;
         Integer tKey = g.validVertex(sink) ? Integer.valueOf(g.key(sink)) : null;
+        if (!g.validVertex(source) || !g.validVertex(sink)) return new Result<>(source, sink, sKey, tKey, null, "Invalid source or sink vertex.", "O(V·E^2)");
+        if (source.equals(sink)) return new Result<>(source, sink, sKey, tKey, zero, "Source equals sink - max flow is 0.", "O(1)");
 
-        if (!g.validVertex(source) || !g.validVertex(sink))
-            return new Result<>(source, sink, sKey, tKey, null, "Invalid source or sink vertex.", "O(V·E^2)");
-
-        if (source.equals(sink)) {
-            return new Result<>(source, sink, sKey, tKey, zero, "Source equals sink - max flow is 0.", "O(1)");
-        }
-
-        // run algorithm
         E flow = edmondsKarp(g, source, sink, cmp, add, sub, zero);
-        if (flow == null) {
-            // This indicates validation failed inside edmondsKarp (e.g., invalid vertices)
-            return new Result<>(source, sink, sKey, tKey, null, "Computation failed (invalid vertices)", "O(V·E^2)");
-        }
-
-        String msg;
-        if (cmp.compare(flow, zero) == 0) {
-            msg = "No augmenting path found - max flow is 0.";
-        } else {
-            msg = "Max flow computed successfully.";
-        }
-
+        if (flow == null) return new Result<>(source, sink, sKey, tKey, null, "Computation failed (invalid vertices)", "O(V·E^2)");
+        String msg = cmp.compare(flow, zero) == 0 ? "No augmenting path found - max flow is 0." : "Max flow computed successfully.";
         return new Result<>(source, sink, sKey, tKey, flow, msg, "O(V·E^2)");
     }
 
-    // backward-compatible overload that derives a subtraction operator for common numeric types
     public static <V, E> Result<V, E> compute(Graph<V, E> g, V source, V sink,
                                               Comparator<E> cmp, BinaryOperator<E> add, E zero) {
         BinaryOperator<E> sub = defaultSubtract(zero);
         return compute(g, source, sink, cmp, add, sub, zero);
     }
 
-    // Overloads that accept numeric keys (station ids) directly
     public static <V, E> Result<V, E> compute(Graph<V, E> g, int sourceKey, int sinkKey,
                                               Comparator<E> cmp, BinaryOperator<E> add, BinaryOperator<E> sub, E zero) {
         V s = g.vertex(sourceKey);
         V t = g.vertex(sinkKey);
-        if (s == null || t == null)
-            return new Result<>(null, null, sourceKey, sinkKey, null, "Invalid source or sink key.", "O(V·E^2)");
-
+        if (s == null || t == null) return new Result<>(null, null, sourceKey, sinkKey, null, "Invalid source or sink key.", "O(V·E^2)");
         Result<V, E> r = compute(g, s, t, cmp, add, sub, zero);
-        // return same result but include keys
         return new Result<>(r.source, r.sink, sourceKey, sinkKey, r.maxFlow, r.message, r.complexity);
     }
 
@@ -266,5 +220,4 @@ public class MaxFlow {
         BinaryOperator<E> sub = defaultSubtract(zero);
         return compute(g, sourceKey, sinkKey, cmp, add, sub, zero);
     }
-
 }

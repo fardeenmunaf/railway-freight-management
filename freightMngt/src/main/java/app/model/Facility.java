@@ -208,4 +208,19 @@ public class Facility {
                 ", facilityFeatures=" + facilityFeatures +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Facility facility = (Facility) o;
+        // consider facilities equal when facilityId is non-null and equal
+        if (this.facilityId == null || facility.facilityId == null) return false;
+        return this.facilityId.equals(facility.facilityId);
+    }
+
+    @Override
+    public int hashCode() {
+        return facilityId == null ? 0 : facilityId.hashCode();
+    }
 }

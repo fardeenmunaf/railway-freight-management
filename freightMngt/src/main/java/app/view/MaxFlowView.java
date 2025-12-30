@@ -1,52 +1,49 @@
 package app.view;
 
 import app.utils.graph.MaxFlow;
-import java.io.IOException;
-import java.util.Scanner;
-
-import app.repositories.Repositories;
 import app.model.Station;
 import app.service.sprint3.MaxFlowService;
+import app.repositories.Repositories;
+
+import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Scanner;
 
 /**
- * View única para formatar e imprimir resultados de MaxFlow.
- * Suporta dois modos: DETAILED (vários campos, legível) e COMPACT (uma linha resumo).
- * Inclui um método de consola mínimo `display(Scanner)` para substituir a vista removida.
+ * Console view for Maximum Throughput (MaxFlow).
+ * Prints stations loaded in the project's graph (so IDs match the ones the user must input),
+ * prompts for source and sink station IDs and displays the result.
  */
 public class MaxFlowView {
 
-    public enum Mode {
-        DETAILED,
-        COMPACT
-    }
+    public enum Mode { DETAILED, COMPACT }
 
-    /**
-     * Formata o resultado no modo especificado.
-     */
     public static <V, E> String formatResult(MaxFlow.Result<V, E> res, Mode mode) {
         if (mode == null) mode = Mode.DETAILED;
+        if (res == null) return mode == Mode.DETAILED ? "MaxFlow Result:\n  Result is null\n" : "MaxFlow: null";
 
-        if (res == null) {
-            return mode == Mode.DETAILED
-                    ? "MaxFlow Result:\n  Result is null\n"
-                    : "MaxFlow: null";
-        }
+        // Determine display keys preferring Station.facilityId when available
+        String srcKeyStr = "null", sinkKeyStr = "null";
+        try {
+            if (res.source instanceof Station && ((Station) res.source).getFacilityId() != null) srcKeyStr = String.valueOf(((Station) res.source).getFacilityId());
+            else if (res.sourceKey != null) srcKeyStr = res.sourceKey.toString();
+        } catch (Exception ignored) {}
+        try {
+            if (res.sink instanceof Station && ((Station) res.sink).getFacilityId() != null) sinkKeyStr = String.valueOf(((Station) res.sink).getFacilityId());
+            else if (res.sinkKey != null) sinkKeyStr = res.sinkKey.toString();
+        } catch (Exception ignored) {}
 
         if (mode == Mode.COMPACT) {
-            String sourceKey = res.sourceKey == null ? "null" : res.sourceKey.toString();
-            String sinkKey = res.sinkKey == null ? "null" : res.sinkKey.toString();
             String maxFlow = res.maxFlow == null ? "null" : res.maxFlow.toString();
             String msg = (res.message == null || res.message.isEmpty()) ? "" : " (" + res.message + ")";
-            return String.format("MaxFlow: %s -> %s | flow=%s%s", sourceKey, sinkKey, maxFlow, msg);
+            return String.format("MaxFlow: %s -> %s | flow=%s%s", srcKeyStr, sinkKeyStr, maxFlow, msg);
         }
 
-        // DETAILED
         StringBuilder sb = new StringBuilder();
         sb.append("MaxFlow Result:\n");
-        sb.append("  Source key: ").append(res.sourceKey).append("\n");
-        sb.append("  Sink key:   ").append(res.sinkKey).append("\n");
+        sb.append("  Source key: ").append(srcKeyStr).append("\n");
+        sb.append("  Sink key:   ").append(sinkKeyStr).append("\n");
         sb.append("  Source:     ").append(res.source == null ? "null" : res.source.toString()).append("\n");
         sb.append("  Sink:       ").append(res.sink == null ? "null" : res.sink.toString()).append("\n");
         sb.append("  Max flow:   ").append(res.maxFlow == null ? "null" : res.maxFlow.toString()).append("\n");
@@ -55,60 +52,39 @@ public class MaxFlowView {
         return sb.toString();
     }
 
-    /**
-     * Imprime o resultado no modo especificado.
-     */
     public static <V, E> void printResult(MaxFlow.Result<V, E> res, Mode mode) {
         System.out.println(formatResult(res, mode));
     }
 
-    /**
-     * Conveniência: imprime em modo detalhado.
-     */
-    public static <V, E> void printDetailed(MaxFlow.Result<V, E> res) {
-        printResult(res, Mode.DETAILED);
-    }
-
-    /**
-     * Conveniência: imprime em modo compacto.
-     */
-    public static <V, E> void printCompact(MaxFlow.Result<V, E> res) {
-        printResult(res, Mode.COMPACT);
-    }
-
-    /**
-     * Método mínimo de console para substituir a vista removida.
-     * Agora: lista estações carregadas no Repositories, pede source/sink por ID e calcula max flow.
-     */
     public static void display(Scanner scanner) throws IOException {
-        Repositories repos = Repositories.getInstance();
-        List<Station> stations = repos.getFacilityRepository().getAllFacilities().stream()
-                .filter(f -> f instanceof Station)
-                .map(f -> (Station) f)
-                .collect(Collectors.toList());
+        System.out.println("=== Maximum Throughput (MaxFlow) ===");
 
-        if (stations.isEmpty()) {
-            System.err.println("⚠ No stations loaded in Repositories. Make sure AppInitializer.run() executed.");
+        List<Station> stations = MaxFlowService.getProjectGraphStations();
+        if (stations == null) {
+            System.err.println("Project graph not available. MaxFlow requires the project's graph (StationLoaderService.getGraph()). Ensure the application initialized the graph.");
             System.out.println("Pressione Enter para voltar ao menu...");
             scanner.nextLine();
             return;
         }
 
-        System.out.println("=== Maximum Throughput (MaxFlow) ===");
+        if (stations.isEmpty()) {
+            System.err.println("Project graph has no stations loaded. Ensure StationLoaderService populated the graph.");
+            System.out.println("Pressione Enter para voltar ao menu...");
+            scanner.nextLine();
+            return;
+        }
+
+        // sort by facilityId and print (these are the IDs the user must input)
+        stations.sort(Comparator.comparing(Station::getFacilityId));
         System.out.println("Loaded stations (ID : Name) - showing up to 50 entries:");
         stations.stream().limit(50).forEach(s -> System.out.printf("%d : %s%n", s.getFacilityId(), s.getName()));
 
-        Integer sourceId = null;
-        Integer sinkId = null;
-
+        Integer sourceId = null, sinkId = null;
         try {
             System.out.print("Enter source station ID: ");
-            String sIn = scanner.nextLine().trim();
-            sourceId = Integer.parseInt(sIn);
-
+            sourceId = Integer.parseInt(scanner.nextLine().trim());
             System.out.print("Enter sink station ID: ");
-            String tIn = scanner.nextLine().trim();
-            sinkId = Integer.parseInt(tIn);
+            sinkId = Integer.parseInt(scanner.nextLine().trim());
         } catch (NumberFormatException e) {
             System.err.println("Invalid number. Returning to menu.");
             System.out.println("Pressione Enter para voltar ao menu...");
@@ -116,13 +92,16 @@ public class MaxFlowView {
             return;
         }
 
-        System.out.println("Computing max flow between " + sourceId + " and " + sinkId + " (may use sample CSV if repositories have no capacity graph)...");
+        System.out.println("Computing max flow between " + sourceId + " and " + sinkId + " using the project's graph...");
         MaxFlow.Result<?,?> res = MaxFlowService.computeUsingProjectGraphIfAvailable(sourceId, sinkId);
 
         if (res == null) {
             System.err.println("Computation returned null result.");
         } else {
             System.out.println(formatResult(res, Mode.DETAILED));
+            // if no topology path message suggests reachable stations, MaxFlowService may provide helper methods
+            if (res.message != null && res.message.toLowerCase().contains("no augmenting path")) {
+            }
         }
 
         System.out.println("Pressione Enter para voltar ao menu...");
