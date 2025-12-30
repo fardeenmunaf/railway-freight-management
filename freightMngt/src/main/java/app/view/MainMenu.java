@@ -32,7 +32,7 @@ public class MainMenu {
             System.out.println("| 16. Rail Hub Centrality         |");
             System.out.println("| 0. Exit                         |");
             System.out.println("-----------------------------------");
-            System.out.print("Enter your choice (0-15): ");
+            System.out.print("Enter your choice (0-16): ");
 
             String input = scanner.nextLine();
             try {
