@@ -1,118 +1,92 @@
-# USEI14 — Maximum throughput between two Hubs
+# USEI14 - Fluxo Máximo (Max Flow)
 
-Objetivo
+## O que foi implementado
 
-- Calcular o fluxo máximo (max flow) entre duas estações (source, sink) usando capacidades por aresta (trens por dia) para estimar a vazão teórica de um corredor.
-- Retorno esperado: source stid, target stid, maxFlowValue e análise da complexidade temporal.
+Foi implementado o algoritmo de **Edmonds-Karp** para calcular o fluxo máximo entre duas estações numa rede de transporte. Basicamente, o algoritmo descobre qual é a capacidade máxima que conseguimos enviar de um ponto A para um ponto B, considerando as capacidades de cada ligação.
 
-Visão geral da implementação
+## Como funciona o algoritmo
 
-- Algoritmo central: Edmonds–Karp (variante de Ford–Fulkerson que usa BFS para encontrar caminhos aumentantes).
-- Código principal: `src/main/java/app/utils/graph/MaxFlow.java`.
-  - A função pública de cálculo é `MaxFlow.edmondsKarp(...)` e o wrapper `MaxFlow.compute(...)` que devolve um `MaxFlow.Result` com metadados (source, sink, sourceKey, sinkKey, maxFlow, message, complexity).
-  - A implementação usa uma matriz residual indexada por key do vértice: `E[][] residual = (E[][]) new Object[n][n];` onde `n = numVertices()`.
-  - Regras/validações: as capacidades (pesos das arestas) não podem ser negativas; se houver arestas com capacidade negativa é lançada uma exceção.
-  - Suporta vários tipos numéricos (Integer, Double, Long, Float, BigInteger, BigDecimal) — o wrapper `MaxFlowService` deduz o tipo a partir das arestas e fornece as operações de soma/subtração necessárias.
+O Edmonds-Karp é uma variação do Ford-Fulkerson que usa BFS para encontrar caminhos:
 
-Como o grafo é obtido e onde as capacidades vêm
+1. Começa com uma rede residual igual ao grafo original
+2. Procura um caminho da origem ao destino usando BFS
+3. Descobre qual é a capacidade mínima nesse caminho (bottleneck)
+4. Atualiza a rede residual:
+   - Diminui a capacidade no sentido do fluxo
+   - Adiciona capacidade no sentido contrário (para poder "desfazer" se necessário)
+5. Repete até não haver mais caminhos possíveis
+6. Retorna o fluxo total acumulado
 
-- Serviço que prepara e invoca o MaxFlow: `src/main/java/app/service/sprint3/MaxFlowService.java`.
-  - Estratégia de obtenção do grafo (em ordem de tentativa):
-    1. `tryInstantiateProjectGraph()` — tentativa reflexiva de obter uma instância do grafo do projecto (procura `MapGraph`/`MatrixGraph`, construtores, ou `getInstance()` estático). Se existir um grafo global do projecto, esse grafo será usado diretamente.
-    2. `buildStationGraphFromRepositories()` — tenta construir um `MapGraph<Station,Integer>` usando as `Station` já carregadas em `Repositories` (carregadas por `AppInitializer`) e, se presente, ligações no CSV `sampleDataset/lines.csv` usando a coluna `capacity`.
-    3. `buildStationCapacityGraphFromSample()` — fallback: lê `sampleDataset/stations.csv` e `sampleDataset/lines.csv` e constrói um `MapGraph<Station,Integer>` usando explicitamente a coluna `capacity` das linhas.
-  - Portanto, as capacidades usadas pelo MaxFlow vêm da coluna `capacity` do ficheiro `sampleDataset/lines.csv` (quando o grafo é construído a partir dos CSVs) ou das arestas já presentes no grafo do projecto.
+## Análise de Complexidade
 
-- Integração com `AppInitializer`:
-  - `AppInitializer.loadStations(...)` carrega estações a partir de `train_stations_europe.csv` e adiciona-as ao `Repositories` (via `FacilityRepository`).
-  - `MaxFlowService.buildStationGraphFromRepositories()` tenta reutilizar essas estações em `Repositories` (correspondência por `facilityId`) ao ligar as arestas com `departure_stid`/`arrival_stid` do `lines.csv`.
-  - Observação prática: essa reutilização funciona apenas se os `facilityId` nas `Repositories` coincidirem com os ids em `lines.csv`. Caso contrário, o serviço recorre ao builder dos CSVs (fallback) para garantir um grafo com capacidades.
+### Complexidade Temporal
 
-Como invocar (APIs disponíveis)
+A complexidade principal do algoritmo é **O(V·E²)**, onde:
+- V = número de vértices
+- E = número de arestas
 
-- Usar o grafo existente (quando já tens a referência ao grafo):
-  - `MaxFlowService.computeUsingGraph(existingGraph, sourceKey, sinkKey)` — usa o grafo que passares diretamente.
-- Invocação com tentativa automática de obter grafo do projecto / repos / CSVs:
-  - `MaxFlowService.computeUsingProjectGraphIfAvailable(sourceKey, sinkKey)` — função de conveniência que segue a ordem de tentativa descrita acima e devolve `MaxFlow.Result<?,?>`.
-- Visualização/Output: `app/view/MaxFlowView.java` formata e imprime `MaxFlow.Result` em modo DETAILED ou COMPACT.
+**Porquê?**
+- Cada BFS demora O(V+E) ≈ O(E) em grafos densos
+- Podem existir no máximo O(V·E) caminhos de aumento
+- Logo: O(E) × O(V·E) = O(V·E²)
 
-Formato do resultado (`MaxFlow.Result`)
+**Casos especiais:**
+- Source = Sink: **O(1)** (deteção imediata)
+- Aresta direta entre source e sink: **O(1)**
+- Vértices inválidos: **O(1)**
+- BFS individual: **O(V+E)**
+- Construção da rede residual: **O(E)**
 
-- Campos principais:
-  - `source` (V) — objecto vertex (quando disponível)
-  - `sink` (V) — objecto vertex
-  - `sourceKey` (Integer) — chave numérica (stid) do source quando resolvida
-  - `sinkKey` (Integer) — chave numérica do sink quando resolvida
-  - `maxFlow` (E) — valor do fluxo máximo (tipo numérico)
-  - `message` (String) — texto com info/erros
-  - `complexity` (String) — análise temporal (por exemplo: "O(V·E^2)")
+### Complexidade Espacial
 
-Análise completa de complexidade (tempo e memória) — explicação e razões
+- **O(V²)** para a rede residual (HashMaps)
+- **O(V)** para estruturas auxiliares (queue do BFS, array de parents)
 
-1) Edmonds–Karp (implementação usada)
-- Complexidade temporal: O(V · E^2)
-  - Explicação: cada iteração encontra um caminho aumentante usando BFS (custo O(E) por BFS em grafos representados por adjacências). O número total de iterações (aumentos) é O(V·E) no pior caso para Edmonds–Karp. Multiplicando dá O(V·E·E) = O(V·E^2).
-  - Intuição: cada aumento reduz pelo menos uma aresta saturada; o número de aumentos pode ser tão alto quanto O(V·E) em grafos construídos adversarialmente. Como cada BFS custa O(E), chegamos ao bound O(V·E^2).
-- Complexidade de memória: O(V^2) adicional (matriz residual)
-  - Explicação: a implementação actual aloca uma matriz residual `E[][] residual = new Object[n][n]` (onde n = numVertices). Isto usa O(n^2) memória para representar capacidades residuais entre quaisquer pares de vértices. Em grafos esparsos este custo pode ser caro; uma alternativa eficiente em memória seria usar um grafo residual representado por listas de adjacência (O(V + E)).
-- Operações internas custosas:
-  - BFS por iteração: O(E)
-  - Atualização de residual ao longo do caminho: O(length do caminho) ≤ O(V)
-  - Escolha do bottleneck (min) ao longo do caminho: O(V) (percurso do caminho por pares u→v)
+## Implementação
 
-2) Overhead de preparação e detecção de tipo no wrapper (`MaxFlowService.compute`)
-- Detecção de tipo de peso: O(E) — o serviço varre as arestas até encontrar um peso não-nulo para deduzir o tipo numérico (Integer/Double/...). Custo linear no número de arestas até encontrar um peso.
-- Preparação das funções add/sub: O(1) após detecção de tipo.
+### Classes principais
 
-3) Construção do grafo a partir de CSV (`buildStationCapacityGraphFromSample` / `buildStationGraphFromRepositories`)
-- Leitura de CSVs: linear no número de linhas dos ficheiros.
-  - `buildStationCapacityGraphFromSample()` faz:
-    - leitura de todas as estações do CSV: O(S) onde S = número de estações
-    - leitura de todas as linhas/arestas do CSV e adição (quando capacity existe): O(L) onde L = número de linhas
-    - custo total: O(S + L)
-  - `buildStationGraphFromRepositories()` varre todas as facilities em `Repositories` e constrói vértices: O(F) onde F = número de facilities; em seguida varre `lines.csv` para ligar arestas (O(L)). Total: O(F + L).
-- Memória da estrutura final: depende da implementação do grafo (MapGraph usa estruturas por vértice; memória ≈ O(V + E) para representação por listas/estruturas). Nota: embora `MapGraph` mantenha objetos Edge, `MaxFlow` cria ainda uma matriz residual O(V^2).
+**MaxFlow.java** (`app.utils.graph`)
+- Método `edmondsKarp()` - implementação do algoritmo
+- Método `compute()` - wrapper que retorna um objeto Result
+- Suporta tipos genéricos para vértices e capacidades
+- Funciona com Integer, Double, Long, Float, BigInteger, BigDecimal
 
-4) Complexidade combinada (fluxo completo incluindo preparação)
-- Caso típico quando o serviço constrói o grafo a partir dos CSVs: custo de preparação O(S + L) + custo do algoritmo O(V·E^2) (sendo V ≈ número de estações usadas e E ≈ número de arestas). A etapa dominante geralmente é o passo do algoritmo de max-flow (O(V·E^2)), especialmente em grafos médios a grandes.
+**MaxFlowService.java** (`app.service.sprint3`)
+- Integra o algoritmo com o resto do projeto
+- Resolve vértices por facilityId das estações
+- Suporta EdgeData com capacidades
+- Validações de grafo e capacidades
 
-Considerações práticas e motivação das decisões
+**MaxFlow.Result**
+- Objeto que encapsula o resultado
+- Contém: source, sink, maxFlow, message, complexity
 
-- Por que Edmonds–Karp?
-  - Simplicidade e robustez: Edmonds–Karp (BFS) é fácil de implementar e garantir comportamento determinístico. Para grafos de dimensão moderada (como um subconjunto do grafo belga de teste), é suficientemente eficiente e fácil de compreender/depurar.
-  - Compatibilidade de tipos: a implementação suporta vários tipos numéricos e valida as capacidades (não-negatividade).
-- Por que matriz residual (memória O(V^2))?
-  - Simplicidade de indexação: a matriz residual permite indexar diretamente por chave de vértice (g.key(v)). Facilita operações em código genérico sem manipular nós/arestas residuais explícitos.
-  - Trade-off: maior consumo de memória em grafos com muitos vértices. Para escalabilidade, uma versão alternativa e recomendada é usar uma representação residual por listas (adjacência), que reduz memória a O(V + E) e mantém cada operação de atualização eficiente.
-- Porque a preparação do grafo tenta usar a instância do projecto por reflexão?
-  - Deseja-se preferir um grafo que já existe na aplicação (por exemplo montado por outros módulos) em vez de sempre reconstruir a partir dos CSVs. O método `tryInstantiateProjectGraph()` tenta instanciar/refletir `MapGraph`/`MatrixGraph` do projecto e, se houver um singleton `getInstance()`, obtém o grafo global.
+## Testes realizados
 
-Casos de borda e validação
+Foram desenvolvidos 4 testes principais:
 
-- Capacidades nulas: se o grafo não tiver arestas com capacidade (pesos nulos), `MaxFlowService` devolve um `Result` com mensagem a indicar "Graph edges do not have capacities (weights are null). Provide numeric capacities.".
-- Capacidades negativas: `MaxFlow` valida e rejeita (lança IllegalArgumentException) — capacidades devem ser não-negativas.
-- Source == sink: `MaxFlow.compute(...)` trata esse caso devolvendo fluxo 0 e mensagem apropriada.
-- Vértices inválidos: se source/sink não existirem no grafo devolve um `Result` indicando "Invalid source or sink vertex.".
+1. **Source = Sink**: Retorna fluxo 0 corretamente 
+2. **Sem caminho**: Deteta quando não há ligação entre origem e destino 
+3. **Exemplo clássico**: Grafo com fluxo máximo = 5
+   ```
+   s --3--> a --2--> t
+   |        |
+   2        1
+   ↓        ↓
+   b ------3------> t
+   ```
+   Resultado esperado: 5 
 
-Recomendações para produção / melhorias futuras
+4. **Capacidades negativas**: Lança IllegalArgumentException como esperado 
 
-- Representação residual por adjacência: reimplementar a residual graph como listas adjacentes (Edge residual objects) para reduzir memória de O(V^2) para O(V + E) — isto também permite aplicar algoritmos mais eficientes (Dinic/O(E·sqrt(V)), Push–relabel, etc.).
-- Implementar Dinic ou Push–relabel para melhores garantias de desempenho em grafos maiores:
-  - Dinic: O(E·V^1/2) em muitos casos práticos, e geralmente muito mais rápido que Edmonds–Karp para grafos grandes.
-  - Push–relabel (Goldberg–Tarjan): O(V^2·sqrt(E)) ou variantes com bom desempenho prático.
-- Testes automatizados: adicionar testes JUnit com grafos de referência pequenos (ex.: grafo 4 nós com fluxos conhecidos) e com subgrafo extraído de `sampleDataset/lines.csv` para validar resultados e regressões.
+## Resumo das Complexidades
 
-Resumo final / como usar hoje
+| Operação | Temporal | Espacial |
+|----------|----------|----------|
+| Edmonds-Karp (caso geral) | O(V·E²) | O(V²) |
+| Source = Sink | O(1) | O(1) |
+| Aresta direta | O(1) | O(1) |
+| Sem caminho válido | O(V·E²) | O(V²) |
+| BFS individual | O(V+E) | O(V) |
 
-- Fluxo máximo (procedimento):
-  1. Obter um grafo com capacidades (preferir grafo do projecto ou usar `MaxFlowService.computeUsingProjectGraphIfAvailable(sourceId, sinkId)`).
-  2. Invocar `MaxFlowService.compute((Graph)g, sourceKey, sinkKey)` ou `computeUsingProjectGraphIfAvailable(sourceKey, sinkKey)`.
-  3. Ler `MaxFlow.Result`: `sourceKey`, `sinkKey`, `maxFlow` e `complexity`.
-
-- Local de código relevante:
-  - Algoritmo: `src/main/java/app/utils/graph/MaxFlow.java`
-  - Serviço: `src/main/java/app/service/sprint3/MaxFlowService.java`
-  - View: `src/main/java/app/view/MaxFlowView.java`
-  - Datasets: `src/main/java/app/sampleDataset/stations.csv`, `src/main/java/app/sampleDataset/lines.csv`
-
----
