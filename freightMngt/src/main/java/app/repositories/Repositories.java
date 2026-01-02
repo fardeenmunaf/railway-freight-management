@@ -52,6 +52,8 @@ public class Repositories {
     private final LineSegmentRepository lineSegmentRepository;
     private final TrainDispatchRepository trainDispatchRepository;
     private final RoutePointRepository routePointRepository;
+    private final FreightRepository freightRepository;
+    private final FreightRouteRepository freightRouteRepository;
 
     /**
      * The Singleton's constructor should always be private to prevent direct construction calls with the new operator.
@@ -105,6 +107,8 @@ public class Repositories {
         lineSegmentRepository = new LineSegmentRepository();
         trainDispatchRepository = new TrainDispatchRepository();
         routePointRepository = new RoutePointRepository();
+        freightRepository = new FreightRepository();
+        freightRouteRepository = new FreightRouteRepository();
     }
 
     /**
@@ -305,5 +309,13 @@ public class Repositories {
 
     public RoutePointRepository getRoutePointRepository() {
         return routePointRepository;
+    }
+
+    public FreightRepository getFreightRepository() {
+        return freightRepository;
+    }
+
+    public FreightRouteRepository getFreightRouteRepository() {
+        return freightRouteRepository;
     }
 }
