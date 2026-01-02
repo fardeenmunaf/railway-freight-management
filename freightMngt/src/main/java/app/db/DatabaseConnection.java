@@ -88,8 +88,8 @@ public class DatabaseConnection {
      * Initializes the database schema by executing the schema.sql file.
      */
     private void initializeDatabase() {
-        String schemaPath = "src/main/java/app/db/schema.sql";
-        String dataPath = "src/main/java/app/db/data.sql";
+        String schemaPath = "../sql-scripts/USBD03/schema.sql";
+        String dataPath = "../sql-scripts/USBD04/data.sql";
         
         try {
             // Execute schema.sql if file exists
