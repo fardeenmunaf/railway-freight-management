@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementação DAO para gestão de ItemCategory na base de dados Oracle.
- * Implementa operações CRUD para a entidade ItemCategory.
+ * DAO implementation for ItemCategory management in the Oracle database.
+ * Implements CRUD operations for the ItemCategory entity.
  *
  * @author G113 2DK
  * @version 1.0
@@ -18,6 +18,9 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
 
     private final Connection connection;
 
+    /**
+     * Constructor that initializes the database connection.
+     */
     public ItemCategoryDAOImpl() {
         this.connection = DatabaseConnection.getInstance().getConnection();
     }
@@ -110,6 +113,29 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
         return null;
     }
 
+    @Override
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM ITEM_CATEGORY WHERE CATEGORY_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the next available ID for a new ItemCategory.
+     *
+     * @return the next available ID
+     * @throws SQLException if an error occurs during the operation
+     */
     private int getNextId() throws SQLException {
         String sql = "SELECT NVL(MAX(CATEGORY_ID), 0) + 1 AS NEXT_ID FROM ITEM_CATEGORY";
 
@@ -124,6 +150,13 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
         return 1;
     }
 
+    /**
+     * Maps a ResultSet row to an ItemCategory object.
+     *
+     * @param rs the ResultSet containing the data
+     * @return the ItemCategory object
+     * @throws SQLException if an error occurs during the operation
+     */
     private ItemCategory mapResultSetToItemCategory(ResultSet rs) throws SQLException {
         return new ItemCategory(
                 rs.getInt("CATEGORY_ID"),

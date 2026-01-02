@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementação DAO para gestão de Gauge na base de dados Oracle.
- * Implementa operações CRUD para a entidade Gauge.
+ * DAO implementation for Gauge management in the Oracle database.
+ * Implements CRUD operations for the Gauge entity.
  *
  * @author G113 2DK
  * @version 1.0
@@ -18,6 +18,9 @@ public class GaugeDAOImpl implements GaugeDAO {
 
     private final Connection connection;
 
+    /**
+     * Constructor that initializes the database connection.
+     */
     public GaugeDAOImpl() {
         this.connection = DatabaseConnection.getInstance().getConnection();
     }
@@ -112,6 +115,29 @@ public class GaugeDAOImpl implements GaugeDAO {
         return null;
     }
 
+    @Override
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM GAUGE WHERE GAUGE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the next available ID for a new Gauge.
+     *
+     * @return the next available ID
+     * @throws SQLException if an error occurs during the operation
+     */
     private int getNextId() throws SQLException {
         String sql = "SELECT NVL(MAX(GAUGE_ID), 0) + 1 AS NEXT_ID FROM GAUGE";
 
@@ -126,6 +152,13 @@ public class GaugeDAOImpl implements GaugeDAO {
         return 1;
     }
 
+    /**
+     * Maps a ResultSet row to a Gauge object.
+     *
+     * @param rs the ResultSet containing the data
+     * @return the Gauge object
+     * @throws SQLException if an error occurs during the operation
+     */
     private Gauge mapResultSetToGauge(ResultSet rs) throws SQLException {
         return new Gauge(
                 rs.getInt("GAUGE_ID"),

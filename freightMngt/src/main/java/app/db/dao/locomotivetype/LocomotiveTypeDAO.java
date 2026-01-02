@@ -5,8 +5,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Interface DAO para operações CRUD de LocomotiveType.
- * Define os métodos para manipulação de dados de LocomotiveType na base de dados.
+ * DAO interface for CRUD operations on LocomotiveType.
+ * Defines methods for manipulating LocomotiveType data in the database.
  *
  * @author G113 2DK
  * @version 1.0
@@ -14,53 +14,64 @@ import java.util.List;
 public interface LocomotiveTypeDAO {
 
     /**
-     * Cria um novo registo de LocomotiveType na base de dados.
+     * Creates a new LocomotiveType record in the database.
      *
-     * @param locomotiveType o objeto LocomotiveType a ser criado
-     * @throws SQLException se ocorrer erro na operação
+     * @param locomotiveType the LocomotiveType object to be created
+     * @throws SQLException if an error occurs during the operation
      */
     void create(LocomotiveType locomotiveType) throws SQLException;
 
     /**
-     * Recupera um LocomotiveType com base no seu identificador único.
+     * Retrieves a LocomotiveType based on its unique identifier.
      *
-     * @param id o identificador do LocomotiveType
-     * @return o LocomotiveType encontrado ou null se não existir
-     * @throws SQLException se ocorrer erro na operação
+     * @param id the identifier of the LocomotiveType
+     * @return the LocomotiveType found or null if it does not exist
+     * @throws SQLException if an error occurs during the operation
      */
     LocomotiveType get(int id) throws SQLException;
 
     /**
-     * Recupera todos os LocomotiveTypes armazenados na base de dados.
+     * Retrieves all LocomotiveTypes stored in the database.
      *
-     * @return lista com todos os LocomotiveTypes
-     * @throws SQLException se ocorrer erro na operação
+     * @return list with all LocomotiveTypes
+     * @throws SQLException if an error occurs during the operation
      */
     List<LocomotiveType> getAll() throws SQLException;
 
     /**
-     * Atualiza os dados de um LocomotiveType existente na base de dados.
+     * Updates the data of an existing LocomotiveType in the database.
      *
-     * @param locomotiveType o objeto LocomotiveType com os dados atualizados
-     * @throws SQLException se ocorrer erro na operação
+     * @param locomotiveType the LocomotiveType object with updated data
+     * @throws SQLException if an error occurs during the operation
      */
     void update(LocomotiveType locomotiveType) throws SQLException;
 
     /**
-     * Remove um LocomotiveType da base de dados com base no seu identificador único.
+     * Removes a LocomotiveType from the database based on its unique identifier.
      *
-     * @param id o identificador do LocomotiveType a remover
-     * @throws SQLException se ocorrer erro na operação
+     * @param id the identifier of the LocomotiveType to remove
+     * @throws SQLException if an error occurs during the operation
      */
     void delete(int id) throws SQLException;
 
     /**
-     * Recupera um LocomotiveType pelo nome.
+     * Retrieves a LocomotiveType by name.
      *
-     * @param name o nome do LocomotiveType
-     * @return o LocomotiveType encontrado ou null se não existir
-     * @throws SQLException se ocorrer erro na operação
+     * @param name the name of the LocomotiveType
+     * @return the LocomotiveType found or null if it does not exist
+     * @throws SQLException if an error occurs during the operation
      */
     LocomotiveType getByName(String name) throws SQLException;
+
+    /**
+     * Checks if a LocomotiveType exists with the specified ID.
+     *
+     * @param id the identifier of the LocomotiveType
+     * @return true if it exists, false otherwise
+     * @throws SQLException if an error occurs during the operation
+     */
+    boolean exists(int id) throws SQLException;
 }
+
+
 

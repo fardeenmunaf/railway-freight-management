@@ -28,7 +28,12 @@ public class OrderDAOImpl implements OrderDAO {
             pstmt.setInt(1, order.getOrderId());
             pstmt.setString(2, order.getStatus());
             pstmt.setInt(3, order.getPriority());
-            pstmt.setDate(4, order.getDueDate() != null ? new java.sql.Date(order.getDueDate().getTime()) : null);
+
+            if (order.getDueDate() != null) {
+                pstmt.setTimestamp(4, Timestamp.valueOf(order.getDueDate()));
+            } else {
+                pstmt.setNull(4, Types.TIMESTAMP);
+            }
 
             pstmt.executeUpdate();
         }
@@ -71,7 +76,13 @@ public class OrderDAOImpl implements OrderDAO {
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, order.getStatus());
             pstmt.setInt(2, order.getPriority());
-            pstmt.setDate(3, order.getDueDate() != null ? new java.sql.Date(order.getDueDate().getTime()) : null);
+
+            if (order.getDueDate() != null) {
+                pstmt.setTimestamp(3, Timestamp.valueOf(order.getDueDate()));
+            } else {
+                pstmt.setNull(3, Types.TIMESTAMP);
+            }
+
             pstmt.setInt(4, order.getOrderId());
 
             pstmt.executeUpdate();
@@ -122,6 +133,29 @@ public class OrderDAOImpl implements OrderDAO {
         return orders;
     }
 
+    @Override
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM \"ORDER\" WHERE ORDER_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the next available ID for a new Order.
+     *
+     * @return the next available ID
+     * @throws SQLException if an error occurs during the operation
+     */
     private int getNextId() throws SQLException {
         String sql = "SELECT NVL(MAX(ORDER_ID), 0) + 1 AS NEXT_ID FROM \"ORDER\"";
 
@@ -134,7 +168,16 @@ public class OrderDAOImpl implements OrderDAO {
         return 1;
     }
 
+    /**
+     * Maps a ResultSet row to an Order object.
+     *
+     * @param rs the ResultSet containing the data
+     * @return the Order object
+     * @throws SQLException if an error occurs during the operation
+     */
     private Order mapResultSetToOrder(ResultSet rs) throws SQLException {
+        // Simplified - returns basic Order object
+        // TODO: Complete mapping with all fields
         return new Order();
     }
 }

@@ -9,8 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementação DAO para gestão de Item na base de dados Oracle.
- * Implementa operações CRUD para a entidade Item.
+ * DAO implementation for Item management in the Oracle database.
+ * Implements CRUD operations for the Item entity.
  *
  * @author G113 2DK
  * @version 1.0
@@ -19,6 +19,9 @@ public class ItemDAOImpl implements ItemDAO {
 
     private final Connection connection;
 
+    /**
+     * Constructor that initializes the database connection.
+     */
     public ItemDAOImpl() {
         this.connection = DatabaseConnection.getInstance().getConnection();
     }
@@ -167,6 +170,29 @@ public class ItemDAOImpl implements ItemDAO {
         return items;
     }
 
+    @Override
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM ITEM WHERE ITEM_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the next available ID for a new Item.
+     *
+     * @return the next available ID
+     * @throws SQLException if an error occurs during the operation
+     */
     private int getNextId() throws SQLException {
         String sql = "SELECT NVL(MAX(ITEM_ID), 0) + 1 AS NEXT_ID FROM ITEM";
 
@@ -181,6 +207,13 @@ public class ItemDAOImpl implements ItemDAO {
         return 1;
     }
 
+    /**
+     * Maps a ResultSet row to an Item object.
+     *
+     * @param rs the ResultSet containing the data
+     * @return the Item object
+     * @throws SQLException if an error occurs during the operation
+     */
     private Item mapResultSetToItem(ResultSet rs) throws SQLException {
         ItemCategory category = null;
         if (rs.getObject("CATEGORY_ID") != null) {

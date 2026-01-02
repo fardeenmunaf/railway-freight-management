@@ -9,10 +9,20 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO implementation for Locomotive management in the Oracle database.
+ * Implements CRUD operations for the Locomotive entity.
+ *
+ * @author G113 2DK
+ * @version 1.0
+ */
 public class LocomotiveDAOImpl implements LocomotiveDAO {
 
     private final Connection connection;
 
+    /**
+     * Constructor that initializes the database connection.
+     */
     public LocomotiveDAOImpl() {
         this.connection = DatabaseConnection.getInstance().getConnection();
     }
@@ -146,6 +156,29 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
         return locomotives;
     }
 
+    @Override
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM LOCOMOTIVE WHERE LOCOMOTIVE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the next available ID for a new Locomotive.
+     *
+     * @return the next available ID
+     * @throws SQLException if an error occurs during the operation
+     */
     private int getNextId() throws SQLException {
         String sql = "SELECT NVL(MAX(LOCOMOTIVE_ID), 0) + 1 AS NEXT_ID FROM LOCOMOTIVE";
 
@@ -158,8 +191,16 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
         return 1;
     }
 
+    /**
+     * Maps a ResultSet row to a Locomotive object.
+     *
+     * @param rs the ResultSet containing the data
+     * @return the Locomotive object
+     * @throws SQLException if an error occurs during the operation
+     */
     private Locomotive mapResultSetToLocomotive(ResultSet rs) throws SQLException {
-        // Simplificado - retorna apenas com campos básicos
+        // Simplified - returns basic Locomotive object
+        // TODO: Complete mapping with all fields
         return new Locomotive();
     }
 }

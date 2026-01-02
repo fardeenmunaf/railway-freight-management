@@ -5,8 +5,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Interface DAO para operações CRUD de Item.
- * Define os métodos para manipulação de dados de Item na base de dados.
+ * DAO interface for CRUD operations on Item.
+ * Defines methods for manipulating Item data in the database.
  *
  * @author G113 2DK
  * @version 1.0
@@ -14,63 +14,71 @@ import java.util.List;
 public interface ItemDAO {
 
     /**
-     * Cria um novo registo de Item na base de dados.
+     * Creates a new Item record in the database.
      *
-     * @param item o objeto Item a ser criado
-     * @throws SQLException se ocorrer erro na operação
+     * @param item the Item object to be created
+     * @throws SQLException if an error occurs during the operation
      */
     void create(Item item) throws SQLException;
 
     /**
-     * Recupera um Item com base no seu identificador único.
+     * Retrieves an Item based on its unique identifier.
      *
-     * @param id o identificador do Item
-     * @return o Item encontrado ou null se não existir
-     * @throws SQLException se ocorrer erro na operação
+     * @param id the identifier of the Item
+     * @return the Item found or null if it does not exist
+     * @throws SQLException if an error occurs during the operation
      */
     Item get(int id) throws SQLException;
 
     /**
-     * Recupera todos os Items armazenados na base de dados.
+     * Retrieves all Items stored in the database.
      *
-     * @return lista com todos os Items
-     * @throws SQLException se ocorrer erro na operação
+     * @return list with all Items
+     * @throws SQLException if an error occurs during the operation
      */
     List<Item> getAll() throws SQLException;
 
     /**
-     * Atualiza os dados de um Item existente na base de dados.
+     * Updates the data of an existing Item in the database.
      *
-     * @param item o objeto Item com os dados atualizados
-     * @throws SQLException se ocorrer erro na operação
+     * @param item the Item object with updated data
+     * @throws SQLException if an error occurs during the operation
      */
     void update(Item item) throws SQLException;
 
     /**
-     * Remove um Item da base de dados com base no seu identificador único.
+     * Removes an Item from the database based on its unique identifier.
      *
-     * @param id o identificador do Item a remover
-     * @throws SQLException se ocorrer erro na operação
+     * @param id the identifier of the Item to remove
+     * @throws SQLException if an error occurs during the operation
      */
     void delete(int id) throws SQLException;
 
     /**
-     * Recupera um Item pelo SKU.
+     * Retrieves an Item based on its SKU.
      *
-     * @param sku o SKU do Item
-     * @return o Item encontrado ou null se não existir
-     * @throws SQLException se ocorrer erro na operação
+     * @param sku the SKU of the Item
+     * @return the Item found or null if it does not exist
+     * @throws SQLException if an error occurs during the operation
      */
     Item getBySku(String sku) throws SQLException;
 
     /**
-     * Recupera Items por categoria.
+     * Retrieves all Items in a specific category.
      *
-     * @param categoryId o identificador da categoria
-     * @return lista com os Items da categoria
-     * @throws SQLException se ocorrer erro na operação
+     * @param categoryId the identifier of the category
+     * @return list with all Items in the specified category
+     * @throws SQLException if an error occurs during the operation
      */
     List<Item> getByCategory(int categoryId) throws SQLException;
-}
 
+    /**
+     * Checks if an Item exists with the specified ID.
+     *
+     * @param id the identifier of the Item
+     * @return true if it exists, false otherwise
+     * @throws SQLException if an error occurs during the operation
+     */
+    boolean exists(int id) throws SQLException;
+}
 

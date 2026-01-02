@@ -1,16 +1,16 @@
 package app.db.dao.train;
 
 import app.db.DatabaseConnection;
-import app.model.Company;
 import app.model.Train;
+import app.model.Company;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementacao DAO para gestao de Train na base de dados Oracle.
- * Implementa operacoes CRUD para a entidade Train.
+ * DAO implementation for Train management in the Oracle database.
+ * Implements CRUD operations for the Train entity.
  *
  * @author G113 2DK
  * @version 1.0
@@ -19,13 +19,17 @@ public class TrainDAOImpl implements TrainDAO {
 
     private final Connection connection;
 
+    /**
+     * Constructor that initializes the database connection.
+     */
     public TrainDAOImpl() {
         this.connection = DatabaseConnection.getInstance().getConnection();
     }
 
     @Override
     public void create(Train train) throws SQLException {
-        String sql = "INSERT INTO TRAIN (TRAIN_ID, CODE, DEPARTURE, DESTINATION, COMPANY_ID) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO TRAIN (TRAIN_ID, CODE, DEPARTURE, DESTINATION, OPERATOR_ID) " +
+                     "VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (train.getTrainId() == null) {
@@ -33,11 +37,17 @@ public class TrainDAOImpl implements TrainDAO {
             }
 
             pstmt.setInt(1, train.getTrainId());
-            pstmt.setInt(2, train.getCode());
+
+            if (train.getCode() != null) {
+                pstmt.setInt(2, train.getCode());
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+
             pstmt.setString(3, train.getDeparture());
             pstmt.setString(4, train.getDestination());
 
-            if (train.getOperator() != null) {
+            if (train.getOperator() != null && train.getOperator().getCompanyId() != null) {
                 pstmt.setInt(5, train.getOperator().getCompanyId());
             } else {
                 pstmt.setNull(5, Types.INTEGER);
@@ -49,10 +59,10 @@ public class TrainDAOImpl implements TrainDAO {
 
     @Override
     public Train get(int id) throws SQLException {
-        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
+        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
+                     "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
                      "FROM TRAIN t " +
-                     "LEFT JOIN COMPANY c ON t.COMPANY_ID = c.COMPANY_ID " +
+                     "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "WHERE t.TRAIN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -71,10 +81,10 @@ public class TrainDAOImpl implements TrainDAO {
     @Override
     public List<Train> getAll() throws SQLException {
         List<Train> trains = new ArrayList<>();
-        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
+        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
+                     "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
                      "FROM TRAIN t " +
-                     "LEFT JOIN COMPANY c ON t.COMPANY_ID = c.COMPANY_ID " +
+                     "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "ORDER BY t.TRAIN_ID";
 
         try (Statement stmt = connection.createStatement();
@@ -90,14 +100,20 @@ public class TrainDAOImpl implements TrainDAO {
 
     @Override
     public void update(Train train) throws SQLException {
-        String sql = "UPDATE TRAIN SET CODE = ?, DEPARTURE = ?, DESTINATION = ?, COMPANY_ID = ? WHERE TRAIN_ID = ?";
+        String sql = "UPDATE TRAIN SET CODE = ?, DEPARTURE = ?, DESTINATION = ?, OPERATOR_ID = ? " +
+                     "WHERE TRAIN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, train.getCode());
+            if (train.getCode() != null) {
+                pstmt.setInt(1, train.getCode());
+            } else {
+                pstmt.setNull(1, Types.INTEGER);
+            }
+
             pstmt.setString(2, train.getDeparture());
             pstmt.setString(3, train.getDestination());
 
-            if (train.getOperator() != null) {
+            if (train.getOperator() != null && train.getOperator().getCompanyId() != null) {
                 pstmt.setInt(4, train.getOperator().getCompanyId());
             } else {
                 pstmt.setNull(4, Types.INTEGER);
@@ -120,17 +136,38 @@ public class TrainDAOImpl implements TrainDAO {
     }
 
     @Override
-    public List<Train> getByOperator(int companyId) throws SQLException {
-        List<Train> trains = new ArrayList<>();
-        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
+    public Train getByCode(int code) throws SQLException {
+        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
+                     "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
                      "FROM TRAIN t " +
-                     "LEFT JOIN COMPANY c ON t.COMPANY_ID = c.COMPANY_ID " +
-                     "WHERE t.COMPANY_ID = ? " +
+                     "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
+                     "WHERE t.CODE = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, code);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToTrain(rs);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public List<Train> getByOperator(int operatorId) throws SQLException {
+        List<Train> trains = new ArrayList<>();
+        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
+                     "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
+                     "FROM TRAIN t " +
+                     "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
+                     "WHERE t.OPERATOR_ID = ? " +
                      "ORDER BY t.TRAIN_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, companyId);
+            pstmt.setInt(1, operatorId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -142,6 +179,75 @@ public class TrainDAOImpl implements TrainDAO {
         return trains;
     }
 
+    @Override
+    public List<Train> getByDeparture(String departure) throws SQLException {
+        List<Train> trains = new ArrayList<>();
+        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
+                     "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
+                     "FROM TRAIN t " +
+                     "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
+                     "WHERE t.DEPARTURE = ? " +
+                     "ORDER BY t.TRAIN_ID";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, departure);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    trains.add(mapResultSetToTrain(rs));
+                }
+            }
+        }
+
+        return trains;
+    }
+
+    @Override
+    public List<Train> getByDestination(String destination) throws SQLException {
+        List<Train> trains = new ArrayList<>();
+        String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
+                     "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
+                     "FROM TRAIN t " +
+                     "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
+                     "WHERE t.DESTINATION = ? " +
+                     "ORDER BY t.TRAIN_ID";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, destination);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    trains.add(mapResultSetToTrain(rs));
+                }
+            }
+        }
+
+        return trains;
+    }
+
+    @Override
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM TRAIN WHERE TRAIN_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the next available ID for a new Train.
+     *
+     * @return the next available ID
+     * @throws SQLException if an error occurs during the operation
+     */
     private int getNextId() throws SQLException {
         String sql = "SELECT NVL(MAX(TRAIN_ID), 0) + 1 AS NEXT_ID FROM TRAIN";
 
@@ -156,24 +262,36 @@ public class TrainDAOImpl implements TrainDAO {
         return 1;
     }
 
+    /**
+     * Maps a ResultSet row to a Train object.
+     *
+     * @param rs the ResultSet containing the data
+     * @return the Train object
+     * @throws SQLException if an error occurs during the operation
+     */
     private Train mapResultSetToTrain(ResultSet rs) throws SQLException {
-        Company operator = null;
-        if (rs.getObject("COMPANY_ID") != null) {
-            operator = new Company(
-                    rs.getInt("COMPANY_ID"),
-                    rs.getString("NAME"),
-                    rs.getString("SHORT_NAME"),
-                    rs.getString("VAT")
-            );
+        Train train = new Train();
+
+        train.setTrainId(rs.getInt("TRAIN_ID"));
+
+        if (rs.getObject("CODE") != null) {
+            train.setCode(rs.getInt("CODE"));
         }
 
-        return new Train(
-                rs.getInt("TRAIN_ID"),
-                Integer.parseInt(rs.getString("CODE")),
-                String.valueOf(rs.getInt("DEPARTURE")),
-                String.valueOf(rs.getInt("DESTINATION")),
-                operator
-        );
+        train.setDeparture(rs.getString("DEPARTURE"));
+        train.setDestination(rs.getString("DESTINATION"));
+
+        // Set Operator (Company) if available
+        if (rs.getObject("OPERATOR_ID") != null) {
+            Company operator = new Company();
+            operator.setCompanyId(rs.getInt("OPERATOR_ID"));
+            operator.setName(rs.getString("OPERATOR_NAME"));
+            operator.setShortName(rs.getString("SHORT_NAME"));
+            operator.setVat(rs.getString("VAT"));
+            train.setOperatorId(operator);
+        }
+
+        return train;
     }
 }
 

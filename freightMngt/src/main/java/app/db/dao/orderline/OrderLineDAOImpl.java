@@ -2,15 +2,27 @@ package app.db.dao.orderline;
 
 import app.db.DatabaseConnection;
 import app.model.OrderLine;
+import app.model.Order;
+import app.model.Item;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DAO implementation for OrderLine management in the Oracle database.
+ * Implements CRUD operations for the OrderLine entity.
+ *
+ * @author G113 2DK
+ * @version 1.0
+ */
 public class OrderLineDAOImpl implements OrderLineDAO {
 
     private final Connection connection;
 
+    /**
+     * Constructor that initializes the database connection.
+     */
     public OrderLineDAOImpl() {
         this.connection = DatabaseConnection.getInstance().getConnection();
     }
@@ -25,9 +37,24 @@ public class OrderLineDAOImpl implements OrderLineDAO {
             }
 
             pstmt.setInt(1, orderLine.getOrderLineId());
-            pstmt.setInt(2, orderLine.getOrder() != null ? orderLine.getOrder().getOrderId() : null);
-            pstmt.setString(3, orderLine.getSku());
-            pstmt.setInt(4, orderLine.getQty());
+
+            if (orderLine.getOrder() != null && orderLine.getOrder().getOrderId() != null) {
+                pstmt.setInt(2, orderLine.getOrder().getOrderId());
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+
+            if (orderLine.getSku() != null && orderLine.getSku().getSku() != null) {
+                pstmt.setString(3, orderLine.getSku().getSku());
+            } else {
+                pstmt.setNull(3, Types.VARCHAR);
+            }
+
+            if (orderLine.getQty() != null) {
+                pstmt.setDouble(4, orderLine.getQty());
+            } else {
+                pstmt.setNull(4, Types.DOUBLE);
+            }
 
             pstmt.executeUpdate();
         }
@@ -68,9 +95,24 @@ public class OrderLineDAOImpl implements OrderLineDAO {
         String sql = "UPDATE ORDER_LINE SET ORDER_ID = ?, SKU = ?, QTY = ? WHERE ORDER_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, orderLine.getOrder() != null ? orderLine.getOrder().getOrderId() : null);
-            pstmt.setString(2, orderLine.getSku());
-            pstmt.setInt(3, orderLine.getQty());
+            if (orderLine.getOrder() != null && orderLine.getOrder().getOrderId() != null) {
+                pstmt.setInt(1, orderLine.getOrder().getOrderId());
+            } else {
+                pstmt.setNull(1, Types.INTEGER);
+            }
+
+            if (orderLine.getSku() != null && orderLine.getSku().getSku() != null) {
+                pstmt.setString(2, orderLine.getSku().getSku());
+            } else {
+                pstmt.setNull(2, Types.VARCHAR);
+            }
+
+            if (orderLine.getQty() != null) {
+                pstmt.setDouble(3, orderLine.getQty());
+            } else {
+                pstmt.setNull(3, Types.DOUBLE);
+            }
+
             pstmt.setInt(4, orderLine.getOrderLineId());
 
             pstmt.executeUpdate();
@@ -121,6 +163,29 @@ public class OrderLineDAOImpl implements OrderLineDAO {
         return orderLines;
     }
 
+    @Override
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM ORDER_LINE WHERE ORDER_LINE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the next available ID for a new OrderLine.
+     *
+     * @return the next available ID
+     * @throws SQLException if an error occurs during the operation
+     */
     private int getNextId() throws SQLException {
         String sql = "SELECT NVL(MAX(ORDER_LINE_ID), 0) + 1 AS NEXT_ID FROM ORDER_LINE";
 
@@ -133,8 +198,37 @@ public class OrderLineDAOImpl implements OrderLineDAO {
         return 1;
     }
 
+    /**
+     * Maps a ResultSet row to an OrderLine object.
+     *
+     * @param rs the ResultSet containing the data
+     * @return the OrderLine object
+     * @throws SQLException if an error occurs during the operation
+     */
     private OrderLine mapResultSetToOrderLine(ResultSet rs) throws SQLException {
-        return new OrderLine();
+        OrderLine orderLine = new OrderLine();
+
+        orderLine.setOrderLineId(rs.getInt("ORDER_LINE_ID"));
+
+        // Set Order if available
+        if (rs.getObject("ORDER_ID") != null) {
+            Order order = new Order();
+            order.setOrderId(rs.getInt("ORDER_ID"));
+            orderLine.setOrder(order);
+        }
+
+        // Set Item/SKU if available
+        if (rs.getObject("SKU") != null) {
+            Item item = new Item();
+            item.setSku(rs.getString("SKU"));
+            orderLine.setSku(item);
+        }
+
+        if (rs.getObject("QTY") != null) {
+            orderLine.setQty(rs.getDouble("QTY"));
+        }
+
+        return orderLine;
     }
 }
 
