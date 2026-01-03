@@ -264,12 +264,12 @@ public class TrainAssemblyView {
         System.out.println("       ASSEMBLE TRAIN COMPOSITION");
         System.out.println("═══════════════════════════════════════════");
 
-        System.out.print("\nEnter Train Service ID: ");
+        System.out.print("\nEnter Train Service ID:           e.g. 2001:");
         try {
             Integer serviceId = scanner.nextInt();
             scanner.nextLine(); // consume newline
 
-            System.out.print("Enter Locomotive IDs (comma-separated, e.g., 1,2,3): ");
+            System.out.print("Enter Locomotive IDs:           e.g.5621: ");
             String input = scanner.nextLine();
 
             List<Integer> locomotiveIds = parseLocomotiveIds(input);

@@ -28,7 +28,7 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
 
     @Override
     public void create(Wagon wagon) throws SQLException {
-        String sql = "INSERT INTO " + getTableName("WAGON") + " (WAGON_ID, WAGON_MODEL_ID, OPERATOR_ID, SERVICE_YEAR) " +
+        String sql = "INSERT INTO " + getTableName("WAGON") + " (WAGON_ID, WAGON_MODEL, OPERATOR_ID, SERVICE_YEAR) " +
                      "VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -62,10 +62,10 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
 
     @Override
     public Wagon get(int id) throws SQLException {
-        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
+        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
                      "FROM " + getTableName("WAGON") + " w " +
-                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL = wm.WAGON_MODEL_ID " +
                      "WHERE w.WAGON_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -84,10 +84,10 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
     @Override
     public List<Wagon> getAll() throws SQLException {
         List<Wagon> wagons = new ArrayList<>();
-        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
+        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
                      "FROM " + getTableName("WAGON") + " w " +
-                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL = wm.WAGON_MODEL_ID " +
                      "ORDER BY w.WAGON_ID";
 
         try (Statement stmt = connection.createStatement();
@@ -103,7 +103,7 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
 
     @Override
     public void update(Wagon wagon) throws SQLException {
-        String sql = "UPDATE " + getTableName("WAGON") + " SET WAGON_MODEL_ID = ?, OPERATOR_ID = ?, SERVICE_YEAR = ? " +
+        String sql = "UPDATE " + getTableName("WAGON") + " SET WAGON_MODEL = ?, OPERATOR_ID = ?, SERVICE_YEAR = ? " +
                      "WHERE WAGON_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -144,11 +144,11 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
     @Override
     public List<Wagon> getByModel(int wagonModelId) throws SQLException {
         List<Wagon> wagons = new ArrayList<>();
-        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
+        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
                      "FROM " + getTableName("WAGON") + " w " +
-                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
-                     "WHERE w.WAGON_MODEL_ID = ? " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL = wm.WAGON_MODEL_ID " +
+                     "WHERE w.WAGON_MODEL = ? " +
                      "ORDER BY w.WAGON_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -167,10 +167,10 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
     @Override
     public List<Wagon> getByOperator(int operatorId) throws SQLException {
         List<Wagon> wagons = new ArrayList<>();
-        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
+        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
                      "FROM " + getTableName("WAGON") + " w " +
-                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL = wm.WAGON_MODEL_ID " +
                      "WHERE w.OPERATOR_ID = ? " +
                      "ORDER BY w.WAGON_ID";
 
@@ -190,10 +190,10 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
     @Override
     public List<Wagon> getByServiceYear(int serviceYear) throws SQLException {
         List<Wagon> wagons = new ArrayList<>();
-        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
+        String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
                      "FROM " + getTableName("WAGON") + " w " +
-                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL = wm.WAGON_MODEL_ID " +
                      "WHERE w.SERVICE_YEAR = ? " +
                      "ORDER BY w.WAGON_ID";
 
@@ -230,7 +230,7 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
     @Override
     public List<Wagon> getAvailableForRoute(Integer departureFacilityId) throws SQLException {
         List<Wagon> wagons = new ArrayList<>();
-        String sql = "{? = call fn_get_available_wagons(?)}";
+        String sql = "{? = call APPUSER.fn_get_available_wagons(?)}";
 
         try (CallableStatement cstmt = connection.prepareCall(sql)) {
             // Register OUT parameter for the cursor
@@ -285,9 +285,9 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
         wagon.setWagonId(rs.getInt("WAGON_ID"));
 
         // Set WagonModel if available
-        if (rs.getObject("WAGON_MODEL_ID") != null) {
+        if (rs.getObject("WAGON_MODEL") != null) {
             WagonModel model = new WagonModel();
-            model.setWagonModelId(rs.getInt("WAGON_MODEL_ID"));
+            model.setWagonModelId(rs.getInt("WAGON_MODEL"));
             model.setName(rs.getString("MODEL_NAME"));
             wagon.setWagonModel(model);
         }
@@ -359,3 +359,4 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
         return wagon;
     }
 }
+

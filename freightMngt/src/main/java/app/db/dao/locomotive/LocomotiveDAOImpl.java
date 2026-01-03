@@ -173,7 +173,7 @@ public class LocomotiveDAOImpl extends BaseDAOImpl implements LocomotiveDAO {
     @Override
     public List<Locomotive> getAvailableForRoute(Integer departureFacilityId) throws SQLException {
         List<Locomotive> locomotives = new ArrayList<>();
-        String sql = "{? = call fn_get_available_locomotives(?)}";
+        String sql = "{? = call APPUSER.fn_get_available_locomotives(?)}";
 
         try (CallableStatement cstmt = connection.prepareCall(sql)) {
             // Register OUT parameter for the cursor

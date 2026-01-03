@@ -29,8 +29,8 @@ public class DatabaseConnection {
     // IMPORTANT: Use the user that OWNS the tables (LOCOMOTIVE, WAGON, etc.)
     // Common usernames: "system", "freight_user", "g113", "admin", etc.
     // You can check the owner by running in SQL*Plus: SELECT OWNER FROM ALL_TABLES WHERE TABLE_NAME = 'LOCOMOTIVE';
-    private static final String DB_USER = "system"; // Change to your schema owner username
-    private static final String DB_PASSWORD = "admin"; // Change to your password
+    private static final String DB_USER = "APPUSER"; // Using SYSTEM user to access APPUSER schema
+    private static final String DB_PASSWORD = "admin"; // SYSTEM password
 
     // If you're connecting as a different user, specify the schema owner here
     // Example: If tables are owned by "freight_user" but you connect as "system", set this to "freight_user"
