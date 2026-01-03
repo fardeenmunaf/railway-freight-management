@@ -1,8 +1,7 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
-import app.utils.graph.Algorithms;
-import app.utils.graph.Edge;
 import app.utils.graph.Graph;
 import app.utils.graph.map.MapGraph;
 
@@ -16,63 +15,112 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Serviço para carregamento de estações e linhas ferroviárias a partir de ficheiros CSV
- * e cálculo de caminhos mais curtos entre estações usando algoritmos adequados.
+ * Service for loading stations and railway lines from CSV files.
  *
- * Funcionalidades principais:
- * 
- *   <li>Carregamento de estações de { stations.csv}</li>
- *   <li>Carregamento de ligações de { lines.csv}</li>
- *   <li>Cálculo automático de caminho mais curto (Dijkstra ou Bellman-Ford)</li>
- *   <li>Detecção de ciclos negativos no grafo</li>
+ * Main functionalities:
+ * <ul>
+ *   <li>Loading stations from stations.csv</li>
+ *   <li>Loading connections from lines.csv</li>
+ *   <li>Providing data for other services (USEI13 and USEI15)</li>
  * </ul>
  *
- * @author Fardeen
+ * Implements Singleton pattern - the graph is loaded once and shared
+ * across all services. Does not allow independent instances.
+ *
+ * @author G113 2DK
  * @version 1.0
  */
 public class StationLoaderService {
 
-    /** Caminho para o ficheiro CSV das estações */
+    /** Path to the stations CSV file */
     private static final String STATIONS_PATH = "src/main/java/app/sampleDataset/stations.csv";
 
-    /** Caminho para o ficheiro CSV das linhas */
+    /** Path to the lines CSV file */
     private static final String LINES_PATH = "src/main/java/app/sampleDataset/lines.csv";
 
-    /** Grafo não-direcionado representa a rede ferroviária  */
-    private static Graph<Station, Double> graph;
+    /** Singleton instance */
+    private static StationLoaderService instance;
 
-    /** Mapa que associa ID da estação ao objeto Station */
-    private Map<Integer, Station> stationMap;
+    /** Undirected graph representing the railway network (shared across all services) */
+    private static Graph<Station, EdgeData> graph;
+
+    /** Map associating station ID to Station object (shared across all services) */
+    private static Map<Integer, Station> stationMap;
+
+    /** Flag indicating if data has been loaded */
+    private static boolean initialized = false;
 
     /**
-     * Construtor que inicializa o grafo não-direcionado e o mapa de estações. (ida e volta)
+     * Private constructor - enforces singleton pattern.
+     * Use getInstance() to access the service.
      */
-    public StationLoaderService() {
-        this.graph = new MapGraph<>(false);
-        this.stationMap = new HashMap<>();
+    private StationLoaderService() {
+        // Singleton - no public instantiation
     }
 
     /**
-     * Inicializa o serviço carregando estações e linhas dos ficheiros padrão.
+     * Returns the singleton instance, creating it if necessary.
+     * The graph is loaded lazily on first access.
      *
-     * @throws IOException caso ocorra erro na leitura dos ficheiros CSV
+     * @return shared instance of StationLoaderService
+     * @throws IOException if CSV files cannot be read
      */
-    public void initialize() throws IOException {
+    public static synchronized StationLoaderService getInstance() throws IOException {
+        if (instance == null) {
+            instance = new StationLoaderService();
+            // Initialize static graph and stationMap
+            graph = new MapGraph<>(false);
+            stationMap = new HashMap<>();
+            loadData();
+        }
+        return instance;
+    }
+
+    /**
+     * Forces a reload of the singleton instance.
+     * Useful when CSV data has changed or for testing.
+     */
+    public static synchronized void resetInstance() {
+        instance = null;
+        graph = null;
+        stationMap = null;
+        initialized = false;
+    }
+
+    /**
+     * Loads stations and lines from CSV files (internal use only).
+     *
+     * @throws IOException if CSV files cannot be read
+     */
+    private static void loadData() throws IOException {
+        if (initialized) {
+            return; // Already loaded
+        }
+
+        // Initialize graph and stationMap if not already initialized
+        if (graph == null) {
+            graph = new MapGraph<>(false);
+        }
+        if (stationMap == null) {
+            stationMap = new HashMap<>();
+        }
+
         loadStations(STATIONS_PATH);
         loadLines(LINES_PATH);
+        initialized = true;
     }
 
     /**
-     * Carrega estações do ficheiro CSV especificado.
+     * Loads stations from the specified CSV file.
      *
-     * Formato esperado: {idEstacao,nome,latitude,longitude}
-     * A primeira linha (cabeçalho) é ignorada.
+     * Expected format: {stationId,name,latitude,longitude}
+     * The first line (header) is ignored.
      *
      * @param filePath caminho completo para o ficheiro CSV de estações
      * @return lista de estações carregadas
      * @throws IOException caso ocorra erro na leitura do ficheiro
      */
-    public List<Station> loadStations(String filePath) throws IOException {
+    private static List<Station> loadStations(String filePath) throws IOException {
         List<Station> stations = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -97,15 +145,16 @@ public class StationLoaderService {
     }
 
     /**
-     * Carrega ligações (arestas) do ficheiro CSV especificado.
+     * Loads connections (edges) from the specified CSV file.
      *
-     * Formato esperado: { idEstacao1,idEstacao2,...,custo}
-     * O custo está na 5ª coluna (índice 4). Primeira linha ignorada.
+     * Expected format: {stationId1,stationId2,distance,capacity,cost}
+     * Columns: departure_stid, arrival_stid, dist, capacity, cost
+     * First line (header) ignored.
      *
-     * @param filePath caminho completo para o ficheiro CSV de linhas
-     * @throws IOException caso ocorra erro na leitura do ficheiro
+     * @param filePath full path to the lines CSV file
+     * @throws IOException if an error occurs reading the file
      */
-    void loadLines(String filePath) throws IOException {
+    private static void loadLines(String filePath) throws IOException {
         Path path = Paths.get(filePath);
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             reader.readLine();
@@ -116,11 +165,15 @@ public class StationLoaderService {
                 try {
                     Integer s1 = Integer.parseInt(fields[0].trim());
                     Integer s2 = Integer.parseInt(fields[1].trim());
-                    Double cost = Double.parseDouble(fields[4].trim());
+                    Double distance = Double.parseDouble(fields[2].trim());   // Column 2: distance
+                    Integer capacity = Integer.parseInt(fields[3].trim());    // Column 3: capacity
+                    Double cost = Double.parseDouble(fields[4].trim());       // Column 4: cost
+
                     Station station1 = stationMap.get(s1);
                     Station station2 = stationMap.get(s2);
                     if (station1 != null && station2 != null) {
-                        graph.addEdge(station1, station2, cost);
+                        EdgeData edgeData = new EdgeData(distance, capacity, cost);
+                        graph.addEdge(station1, station2, edgeData);
                     }
                 } catch (NumberFormatException ignored) {}
             }
@@ -128,19 +181,19 @@ public class StationLoaderService {
     }
 
     /**
-     * Verifica se uma estação com o ID especificado existe no sistema.
+     * Checks if a station with the specified ID exists in the system.
      *
-     * @param stationId ID da estação a verificar
-     * @return { true} se a estação existe, { false} caso contrário
+     * @param stationId ID of the station to check
+     * @return true if the station exists, false otherwise
      */
     public boolean stationExists(Integer stationId) {
         return stationMap.containsKey(stationId);
     }
 
     /**
-     * Retorna lista formatada de todas as estações ordenadas por ID.
+     * Returns formatted list of all stations sorted by ID.
      *
-     * @return lista no formato "ID: 123 | Nome da Estação"
+     * @return list in format "ID: 123 | Station Name"
      */
     public List<String> getFormattedStationList() {
         return stationMap.values().stream()
@@ -154,7 +207,7 @@ public class StationLoaderService {
      *
      * @return grafo não-direcionado com estações e suas conexões
      */
-    public Graph<Station, Double> getNetwork() {
+    public Graph<Station, EdgeData> getNetwork() {
         return graph;
     }
 
@@ -167,7 +220,7 @@ public class StationLoaderService {
      * @return grafo não-direcionado representando a rede ferroviária
      * @throws IOException caso ocorra erro na leitura dos ficheiros
      */
-    public Graph<Station, Double> loadNetwork(String stationsPath, String linesPath) throws IOException {
+    public Graph<Station, EdgeData> loadNetwork(String stationsPath, String linesPath) throws IOException {
         loadStations(stationsPath);
         loadLines(linesPath);
         return graph;
@@ -176,279 +229,42 @@ public class StationLoaderService {
     /**
      * Retorna o número total de estações carregadas.
      *
-     * @return quantidade de estações no sistema
+     * @return number of stations in the system
      */
     public int getTotalStations() {
         return stationMap.size();
     }
 
     /**
-     * Retorna o número total de conexões (arestas) no grafo.
+     * Returns the total number of connections (edges) in the graph.
      *
-     * @return quantidade de ligações entre estações
+     * @return number of connections between stations
      */
     public int getTotalConnections() {
         return graph.numEdges();
     }
 
     /**
-     * Calcula o caminho mais curto entre duas estações escolhendo automaticamente
-     * o algoritmo adequado (Dijkstra ou Bellman-Ford).
+     * Returns the railway network graph.
+     * Forces initialization if not yet loaded.
      *
-     * Estratégia:
-     * 
-     *   <li>Tenta Dijkstra primeiro (mais eficiente)</li>
-     *   <li>Se falhar ou caminho tiver pesos negativos → Bellman-Ford</li>
-     *   <li>Detecta ciclos negativos e reporta estações/arestas envolvidas</li>
-     * </ul>
-     *
-     * @param departureId ID da estação de partida
-     * @param arrivalId ID da estação de chegada
-     * @return resultado com caminho, custo, algoritmo usado e detecção de ciclos,
-     *         ou { null} se estações não existirem
+     * @return graph with stations and connections
+     * @throws IOException if CSV files cannot be read
      */
-    public PathResultWithAlgorithm calculateBestPath(Integer departureId, Integer arrivalId) {
-        Station start = stationMap.get(departureId);
-        Station end = stationMap.get(arrivalId);
-        if (start == null || end == null) return null;
-
-        // 1. Encontra caminho com Dijkstra PRIMEIRO
-        LinkedList<Station> path = new LinkedList<>();
-        Double cost = Algorithms.shortestPath(graph, start, end, Double::compare, Double::sum, 0.0, path);
-
-        if (cost == null) {
-            // SEM CAMINHO - tenta Bellman-Ford para ciclo negativo
-            LinkedList<Station> pathBF = new LinkedList<>();
-            Double costBF = Algorithms.bellmanFord(graph, start, end, Double::compare, Double::sum, 0.0, pathBF);
-            if (costBF == null) {
-                Set<Station> cycleStations = findNegativeCycleStations(start);
-                Set<Edge<Station, Double>> cycleEdges = findNegativeCycleEdges(cycleStations);
-                PathResult result = new PathResult(new LinkedList<>(), null, true, cycleStations, cycleEdges);
-                return new PathResultWithAlgorithm(result, "Bellman-Ford", true);
-            }
-            // Bellman-Ford encontrou caminho
-            PathResult result = new PathResult(pathBF, costBF, false, Collections.emptySet(), Collections.emptySet());
-            return new PathResultWithAlgorithm(result, "Bellman-Ford", false);
-        }
-
-        // 2. Dijkstra encontrou caminho - VERIFICA se tem negativos
-        boolean hasNegativeInPath = hasNegativeEdgesInPath(path);
-
-        PathResult result = new PathResult(path, cost, false, Collections.emptySet(), Collections.emptySet());
-        String algorithm = hasNegativeInPath ? "Bellman-Ford" : "Dijkstra";
-
-        return new PathResultWithAlgorithm(result, algorithm, false);
-    }
-
-    /**
-     * Verifica se o caminho específico contém arestas com custo negativo.
-     *
-     * @param path lista ordenada de estações do caminho
-     * @return { true} se alguma aresta consecutiva tem custo negativo
-     */
-    private boolean hasNegativeEdgesInPath(List<Station> path) {
-        for (int i = 0; i < path.size() - 1; i++) {
-            Station from = path.get(i);
-            Station to = path.get(i + 1);
-            for (Edge<Station, Double> edge : graph.outgoingEdges(from)) {
-                if (edge.getVDest().equals(to) && edge.getWeight() < 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Encontra estações alcançáveis a partir de uma estação inicial usando DFS.
-     *
-     * @param current estação inicial
-     * @param reachable conjunto de estações alcançáveis (output)
-     */
-    private void dfsReachable(Station current, Set<Station> reachable) {
-        if (reachable.contains(current)) return;
-        reachable.add(current);
-        for (Edge<Station, Double> e : graph.outgoingEdges(current)) {
-            dfsReachable(e.getVDest(), reachable);
-        }
-    }
-
-    /**
-     * Identifica estações envolvidas em ciclos negativos alcançáveis da estação inicial.
-     *
-     * @param start estação inicial para determinar componente conectado
-     * @return conjunto de estações envolvidas em arestas negativas
-     */
-    private Set<Station> findNegativeCycleStations(Station start) {
-        Set<Station> reachable = new HashSet<>();
-        dfsReachable(start, reachable);
-
-        Set<Station> cycleStations = new HashSet<>();
-        for (Station v : reachable) {
-            for (Edge<Station, Double> e : graph.outgoingEdges(v)) {
-                if (e.getWeight() < 0 && reachable.contains(e.getVDest())) {
-                    cycleStations.add(v);
-                    cycleStations.add(e.getVDest());
-                }
-            }
-        }
-        return cycleStations;
-    }
-
-    /**
-     * Encontra arestas negativas entre as estações especificadas.
-     *
-     * @param cycleStations estações candidatas ao ciclo negativo
-     * @return conjunto de arestas negativas que formam o ciclo
-     */
-    private Set<Edge<Station, Double>> findNegativeCycleEdges(Set<Station> cycleStations) {
-        Set<Edge<Station, Double>> edges = new HashSet<>();
-        for (Station v : cycleStations) {
-            for (Edge<Station, Double> e : graph.outgoingEdges(v)) {
-                if (cycleStations.contains(e.getVDest()) && e.getWeight() < 0) {
-                    edges.add(e);
-                }
-            }
-        }
-        return edges;
-    }
-
-    /**
-     * Retorna o grafo da rede ferroviária.
-     *
-     * @return grafo com estações e conexões
-     */
-    public Graph<Station, Double> getGraph() {
+    public static Graph<Station, EdgeData> getGraph() throws IOException {
+        loadData();
         return graph;
     }
 
     /**
-     * Retorna o mapa de estações indexado por ID.
+     * Returns the station map indexed by ID.
+     * Forces initialization if not yet loaded.
      *
-     * @return mapa ID → Station
+     * @return map ID → Station
+     * @throws IOException if CSV files cannot be read
      */
-    public Map<Integer, Station> getStationMap() {
+    public static Map<Integer, Station> getStationMap() throws IOException {
+        loadData();
         return stationMap;
-    }
-
-    /**
-     * Resultado do cálculo de caminho mais curto com informação do algoritmo utilizado.
-     */
-    public static class PathResultWithAlgorithm {
-        /** Resultado detalhado do caminho */
-        private final PathResult pathResult;
-        /** Nome do algoritmo utilizado */
-        private final String algorithmUsed;
-        /** Indica se foi detetado ciclo negativo */
-        private final boolean hasNegativeCycle;
-
-        /**
-         * Construtor do resultado com algoritmo.
-         *
-         * @param pathResult resultado do caminho
-         * @param algorithmUsed nome do algoritmo ("Dijkstra" ou "Bellman-Ford")
-         * @param hasNegativeCycle true se ciclo negativo foi detetado
-         */
-        public PathResultWithAlgorithm(PathResult pathResult, String algorithmUsed, boolean hasNegativeCycle) {
-            this.pathResult = pathResult;
-            this.algorithmUsed = algorithmUsed;
-            this.hasNegativeCycle = hasNegativeCycle;
-        }
-
-        /** @return resultado detalhado do caminho */
-        public PathResult getPathResult() { return pathResult; }
-        /** @return nome do algoritmo utilizado */
-        public String getAlgorithmUsed() { return algorithmUsed; }
-        /** @return true se ciclo negativo foi detetado */
-        public boolean hasNegativeCycle() { return hasNegativeCycle; }
-    }
-
-    /**
-     * Resultado detalhado do cálculo de caminho mais curto.
-     */
-    public static class PathResult {
-        /** Sequência de estações do caminho */
-        final LinkedList<Station> path;
-        /** Custo total do caminho */
-        final Double totalCost;
-        /** Indica existência de ciclo negativo */
-        private final boolean hasNegativeCycle;
-        /** Estações envolvidas no ciclo negativo */
-        private final Set<Station> cycleStations;
-        /** Arestas do ciclo negativo */
-        private final Set<Edge<Station, Double>> cycleEdges;
-
-        /**
-         * Construtor do resultado do caminho.
-         *
-         * @param path sequência de estações
-         * @param totalCost custo total
-         * @param hasNegativeCycle true se ciclo negativo
-         * @param cycleStations estações do ciclo
-         * @param cycleEdges arestas do ciclo
-         */
-        public PathResult(LinkedList<Station> path, Double totalCost, boolean hasNegativeCycle,
-                          Set<Station> cycleStations, Set<Edge<Station, Double>> cycleEdges) {
-            this.path = path;
-            this.totalCost = totalCost;
-            this.hasNegativeCycle = hasNegativeCycle;
-            this.cycleStations = cycleStations;
-            this.cycleEdges = cycleEdges;
-        }
-
-        /**
-         * Formata o resultado para apresentação.
-         *
-         * Caso normal: mostra caminho com custo de cada aresta
-         * Ciclo negativo: lista estações e arestas envolvidas
-         *
-         * @return string formatada com caminho e custos
-         */
-        public String formatPath() {
-            if (hasNegativeCycle) {
-                StringBuilder sb = new StringBuilder("Ciclo negativo detetado envolvendo:\n");
-                sb.append("Estações: ");
-                sb.append(cycleStations.stream().map(Station::getName).collect(Collectors.joining(", ")));
-                sb.append("\n\nArestas: ");
-                sb.append(cycleEdges.stream()
-                        .map(e -> String.format("%s(%d)->%s(%d):%.2f",
-                                e.getVOrig().getName(), e.getVOrig().getFacilityId(),
-                                e.getVDest().getName(), e.getVDest().getFacilityId(), e.getWeight()))
-                        .collect(Collectors.joining(", ")));
-                return sb.toString();
-            }
-
-            StringBuilder sb = new StringBuilder();
-
-            // Caminho com custos individuais
-            double total = 0.0;
-            for (int i = 0; i < path.size() - 1; i++) {
-                Station from = path.get(i);
-                Station to = path.get(i + 1);
-
-                // Encontra aresta exata
-                Edge<Station, Double> edge = null;
-                for (Edge<Station, Double> e : graph.outgoingEdges(from)) {
-                    if (e.getVDest().equals(to)) {
-                        edge = e;
-                        break;
-                    }
-                }
-
-                double cost = edge != null ? edge.getWeight() : 0.0;
-                total += cost;
-
-                sb.append(String.format("%s(ID:%d) -> %s(ID:%d) [%.2f]",
-                        from.getName(), from.getFacilityId(),
-                        to.getName(), to.getFacilityId(), cost));
-
-                if (i < path.size() - 2) {
-                    sb.append(" -> ");
-                }
-            }
-
-            sb.append("\nCusto total: ").append(String.format("%.2f", total));
-            return sb.toString();
-        }
     }
 }
