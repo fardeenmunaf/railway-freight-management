@@ -1,6 +1,6 @@
 package app.db.dao.station;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Station;
 import app.model.FacilityType;
 
@@ -16,15 +16,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class StationDAOImpl implements StationDAO {
-
-    private final Connection connection;
+public class StationDAOImpl extends BaseDAOImpl implements StationDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public StationDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -179,7 +177,7 @@ public class StationDAOImpl implements StationDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM STATION WHERE FACILITY_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("STATION") + " WHERE STATION_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);

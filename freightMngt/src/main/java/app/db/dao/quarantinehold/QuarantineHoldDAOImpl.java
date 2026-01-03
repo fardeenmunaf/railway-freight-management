@@ -1,6 +1,6 @@
 package app.db.dao.quarantinehold;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.QuarantineHold;
 import app.model.ReturnOrder;
 
@@ -16,20 +16,19 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
-
-    private final Connection connection;
+public class QuarantineHoldDAOImpl extends BaseDAOImpl implements QuarantineHoldDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public QuarantineHoldDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(QuarantineHold hold) throws SQLException {
-        String sql = "INSERT INTO QUARANTINE_HOLD (QHOLD_ID, RETURN_ORDER_ID, STATUS, CREATED_AT, RELEASED_AT) " +
+        String sql = "INSERT INTO " + getTableName("QUARANTINE_HOLD") +
+                     " (HOLD_ID, LOT_ID, REASON, HOLD_DATE, RELEASE_DATE, STATUS) " +
                      "VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -65,7 +64,7 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
 
     @Override
     public QuarantineHold get(int id) throws SQLException {
-        String sql = "SELECT * FROM QUARANTINE_HOLD WHERE QHOLD_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("QUARANTINE_HOLD") + " WHERE HOLD_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -82,7 +81,7 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
     @Override
     public List<QuarantineHold> getAll() throws SQLException {
         List<QuarantineHold> holds = new ArrayList<>();
-        String sql = "SELECT * FROM QUARANTINE_HOLD ORDER BY QHOLD_ID";
+        String sql = "SELECT * FROM " + getTableName("QUARANTINE_HOLD") + " ORDER BY HOLD_DATE DESC";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -95,8 +94,9 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
 
     @Override
     public void update(QuarantineHold hold) throws SQLException {
-        String sql = "UPDATE QUARANTINE_HOLD SET RETURN_ORDER_ID = ?, STATUS = ?, CREATED_AT = ?, " +
-                     "RELEASED_AT = ? WHERE QHOLD_ID = ?";
+        String sql = "UPDATE " + getTableName("QUARANTINE_HOLD") +
+                     " SET LOT_ID = ?, REASON = ?, HOLD_DATE = ?, RELEASE_DATE = ?, STATUS = ? " +
+                     "WHERE HOLD_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (hold.getReturnOrder() != null && hold.getReturnOrder().getReturnId() != null) {
@@ -127,7 +127,7 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM QUARANTINE_HOLD WHERE QHOLD_ID = ?";
+        String sql = "DELETE FROM " + getTableName("QUARANTINE_HOLD") + " WHERE HOLD_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -138,7 +138,8 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
     @Override
     public List<QuarantineHold> getByReturnOrder(int returnOrderId) throws SQLException {
         List<QuarantineHold> holds = new ArrayList<>();
-        String sql = "SELECT * FROM QUARANTINE_HOLD WHERE RETURN_ORDER_ID = ? ORDER BY QHOLD_ID";
+        String sql = "SELECT * FROM " + getTableName("QUARANTINE_HOLD") +
+                     " WHERE RETURN_ORDER_ID = ? ORDER BY HOLD_DATE DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, returnOrderId);
@@ -152,10 +153,28 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
         return holds;
     }
 
+    public List<QuarantineHold> getByLot(int lotId) throws SQLException {
+        List<QuarantineHold> holds = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("QUARANTINE_HOLD") +
+                     " WHERE LOT_ID = ? ORDER BY HOLD_DATE DESC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, lotId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    holds.add(mapResultSetToQuarantineHold(rs));
+                }
+            }
+        }
+        return holds;
+    }
+
     @Override
     public List<QuarantineHold> getByStatus(String status) throws SQLException {
         List<QuarantineHold> holds = new ArrayList<>();
-        String sql = "SELECT * FROM QUARANTINE_HOLD WHERE STATUS = ? ORDER BY QHOLD_ID";
+        String sql = "SELECT * FROM " + getTableName("QUARANTINE_HOLD") +
+                     " WHERE STATUS = ? ORDER BY HOLD_DATE DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, status);
@@ -171,7 +190,7 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM QUARANTINE_HOLD WHERE QHOLD_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("QUARANTINE_HOLD") + " WHERE HOLD_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -193,7 +212,7 @@ public class QuarantineHoldDAOImpl implements QuarantineHoldDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(QHOLD_ID), 0) + 1 AS NEXT_ID FROM QUARANTINE_HOLD";
+        String sql = "SELECT NVL(MAX(HOLD_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("QUARANTINE_HOLD");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

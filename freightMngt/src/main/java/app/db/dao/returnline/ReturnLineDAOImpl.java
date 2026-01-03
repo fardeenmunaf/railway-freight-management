@@ -1,6 +1,6 @@
 package app.db.dao.returnline;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.ReturnLine;
 import app.model.ReturnOrder;
 
@@ -15,21 +15,19 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class ReturnLineDAOImpl implements ReturnLineDAO {
-
-    private final Connection connection;
+public class ReturnLineDAOImpl extends BaseDAOImpl implements ReturnLineDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public ReturnLineDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(ReturnLine returnLine) throws SQLException {
-        String sql = "INSERT INTO RETURN_LINE (RETURN_LINE_ID, RETURN_ORDER_ID, SKU, QTY, CONDITION) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("RETURN_LINE") +
+                     " (RETURN_LINE_ID, RETURN_ORDER_ID, SKU, QTY, CONDITION) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (returnLine.getReturnLineId() == null) {
@@ -60,7 +58,7 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
 
     @Override
     public ReturnLine get(int id) throws SQLException {
-        String sql = "SELECT * FROM RETURN_LINE WHERE RETURN_LINE_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("RETURN_LINE") + " WHERE RETURN_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -77,7 +75,7 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
     @Override
     public List<ReturnLine> getAll() throws SQLException {
         List<ReturnLine> returnLines = new ArrayList<>();
-        String sql = "SELECT * FROM RETURN_LINE ORDER BY RETURN_LINE_ID";
+        String sql = "SELECT * FROM " + getTableName("RETURN_LINE") + " ORDER BY RETURN_LINE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -90,8 +88,8 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
 
     @Override
     public void update(ReturnLine returnLine) throws SQLException {
-        String sql = "UPDATE RETURN_LINE SET RETURN_ORDER_ID = ?, SKU = ?, QTY = ?, CONDITION = ? " +
-                     "WHERE RETURN_LINE_ID = ?";
+        String sql = "UPDATE " + getTableName("RETURN_LINE") +
+                     " SET RETURN_ORDER_ID = ?, SKU = ?, QTY = ?, CONDITION = ? WHERE RETURN_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (returnLine.getReturnOrder() != null && returnLine.getReturnOrder().getReturnId() != null) {
@@ -117,7 +115,7 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM RETURN_LINE WHERE RETURN_LINE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("RETURN_LINE") + " WHERE RETURN_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -128,7 +126,8 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
     @Override
     public List<ReturnLine> getByReturnOrder(int returnOrderId) throws SQLException {
         List<ReturnLine> returnLines = new ArrayList<>();
-        String sql = "SELECT * FROM RETURN_LINE WHERE RETURN_ORDER_ID = ? ORDER BY RETURN_LINE_ID";
+        String sql = "SELECT * FROM " + getTableName("RETURN_LINE") +
+                     " WHERE RETURN_ORDER_ID = ? ORDER BY RETURN_LINE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, returnOrderId);
@@ -145,7 +144,8 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
     @Override
     public List<ReturnLine> getBySku(String sku) throws SQLException {
         List<ReturnLine> returnLines = new ArrayList<>();
-        String sql = "SELECT * FROM RETURN_LINE WHERE SKU = ? ORDER BY RETURN_LINE_ID";
+        String sql = "SELECT * FROM " + getTableName("RETURN_LINE") +
+                     " WHERE SKU = ? ORDER BY RETURN_LINE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, sku);
@@ -162,7 +162,8 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
     @Override
     public List<ReturnLine> getByCondition(String condition) throws SQLException {
         List<ReturnLine> returnLines = new ArrayList<>();
-        String sql = "SELECT * FROM RETURN_LINE WHERE CONDITION = ? ORDER BY RETURN_LINE_ID";
+        String sql = "SELECT * FROM " + getTableName("RETURN_LINE") +
+                     " WHERE CONDITION = ? ORDER BY RETURN_LINE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, condition);
@@ -178,7 +179,7 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM RETURN_LINE WHERE RETURN_LINE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("RETURN_LINE") + " WHERE RETURN_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -200,7 +201,7 @@ public class ReturnLineDAOImpl implements ReturnLineDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(RETURN_LINE_ID), 0) + 1 AS NEXT_ID FROM RETURN_LINE";
+        String sql = "SELECT NVL(MAX(RETURN_LINE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("RETURN_LINE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

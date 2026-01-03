@@ -1,6 +1,6 @@
 package app.db.dao.tracktype;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.TrackType;
 
 import java.sql.*;
@@ -14,15 +14,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class TrackTypeDAOImpl implements TrackTypeDAO {
-
-    private final Connection connection;
+public class TrackTypeDAOImpl extends BaseDAOImpl implements TrackTypeDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public TrackTypeDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -115,7 +113,7 @@ public class TrackTypeDAOImpl implements TrackTypeDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM TRACK_TYPE WHERE TRACK_TYPE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("TRACK_TYPE") + " WHERE TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);

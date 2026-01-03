@@ -1,6 +1,6 @@
 package app.db.dao.item;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Item;
 import app.model.ItemCategory;
 
@@ -15,15 +15,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class ItemDAOImpl implements ItemDAO {
-
-    private final Connection connection;
+public class ItemDAOImpl extends BaseDAOImpl implements ItemDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public ItemDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override

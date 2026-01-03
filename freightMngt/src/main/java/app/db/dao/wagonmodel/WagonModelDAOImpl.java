@@ -1,6 +1,7 @@
 package app.db.dao.wagonmodel;
 
 import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.WagonModel;
 import app.model.WagonType;
 import app.model.Dimensions;
@@ -16,15 +17,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class WagonModelDAOImpl implements WagonModelDAO {
-
-    private final Connection connection;
+public class WagonModelDAOImpl extends BaseDAOImpl implements WagonModelDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public WagonModelDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -308,4 +307,3 @@ public class WagonModelDAOImpl implements WagonModelDAO {
         return wagonModel;
     }
 }
-

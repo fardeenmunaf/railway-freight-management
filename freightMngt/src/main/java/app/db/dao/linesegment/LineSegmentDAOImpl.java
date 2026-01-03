@@ -1,6 +1,6 @@
 package app.db.dao.linesegment;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.LineSegment;
 import app.model.Line;
 import app.model.TrackType;
@@ -17,15 +17,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class LineSegmentDAOImpl implements LineSegmentDAO {
-
-    private final Connection connection;
+public class LineSegmentDAOImpl extends BaseDAOImpl implements LineSegmentDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public LineSegmentDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -183,7 +181,7 @@ public class LineSegmentDAOImpl implements LineSegmentDAO {
                      "l.NAME AS LINE_NAME, " +
                      "tt.NAME AS TRACK_TYPE_NAME, " +
                      "g.GAUGE_NAME, g.GAUGE_SIZE " +
-                     "FROM LINE_SEGMENT ls " +
+                     "FROM " + getTableName("LINE_SEGMENT") + " ls " +
                      "LEFT JOIN LINE l ON ls.LINE_ID = l.LINE_ID " +
                      "LEFT JOIN TRACK_TYPE tt ON ls.TRACK_TYPE_ID = tt.TRACK_TYPE_ID " +
                      "LEFT JOIN GAUGE g ON ls.GAUGE_ID = g.GAUGE_ID " +
@@ -227,7 +225,7 @@ public class LineSegmentDAOImpl implements LineSegmentDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(SEGMENT_ID), 0) + 1 AS NEXT_ID FROM LINE_SEGMENT";
+        String sql = "SELECT NVL(MAX(SEGMENT_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("LINE_SEGMENT");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

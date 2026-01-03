@@ -1,6 +1,6 @@
 package app.db.dao.returnorder;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.ReturnOrder;
 import app.model.Order;
 
@@ -16,20 +16,19 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class ReturnOrderDAOImpl implements ReturnOrderDAO {
-
-    private final Connection connection;
+public class ReturnOrderDAOImpl extends BaseDAOImpl implements ReturnOrderDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public ReturnOrderDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(ReturnOrder returnOrder) throws SQLException {
-        String sql = "INSERT INTO RETURN_ORDER (RETURN_ID, ORIG_ORDER_ID, REASON, STATUS, RECEIVED_AT) " +
+        String sql = "INSERT INTO " + getTableName("RETURN_ORDER") +
+                     " (RETURN_ID, ORIG_ORDER_ID, REASON, STATUS, RECEIVED_AT) " +
                      "VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -60,7 +59,7 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
 
     @Override
     public ReturnOrder get(int id) throws SQLException {
-        String sql = "SELECT * FROM RETURN_ORDER WHERE RETURN_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("RETURN_ORDER") + " WHERE RETURN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -77,7 +76,7 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
     @Override
     public List<ReturnOrder> getAll() throws SQLException {
         List<ReturnOrder> returnOrders = new ArrayList<>();
-        String sql = "SELECT * FROM RETURN_ORDER ORDER BY RETURN_ID";
+        String sql = "SELECT * FROM " + getTableName("RETURN_ORDER") + " ORDER BY RETURN_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -90,7 +89,8 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
 
     @Override
     public void update(ReturnOrder returnOrder) throws SQLException {
-        String sql = "UPDATE RETURN_ORDER SET ORIG_ORDER_ID = ?, REASON = ?, STATUS = ?, " +
+        String sql = "UPDATE " + getTableName("RETURN_ORDER") +
+                     " SET ORIG_ORDER_ID = ?, REASON = ?, STATUS = ?, " +
                      "RECEIVED_AT = ? WHERE RETURN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -117,7 +117,7 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM RETURN_ORDER WHERE RETURN_ID = ?";
+        String sql = "DELETE FROM " + getTableName("RETURN_ORDER") + " WHERE RETURN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -128,7 +128,8 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
     @Override
     public List<ReturnOrder> getByOriginalOrder(int originalOrderId) throws SQLException {
         List<ReturnOrder> returnOrders = new ArrayList<>();
-        String sql = "SELECT * FROM RETURN_ORDER WHERE ORIG_ORDER_ID = ? ORDER BY RETURN_ID";
+        String sql = "SELECT * FROM " + getTableName("RETURN_ORDER") +
+                     " WHERE ORIG_ORDER_ID = ? ORDER BY RETURN_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, originalOrderId);
@@ -145,7 +146,8 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
     @Override
     public List<ReturnOrder> getByStatus(String status) throws SQLException {
         List<ReturnOrder> returnOrders = new ArrayList<>();
-        String sql = "SELECT * FROM RETURN_ORDER WHERE STATUS = ? ORDER BY RETURN_ID";
+        String sql = "SELECT * FROM " + getTableName("RETURN_ORDER") +
+                     " WHERE STATUS = ? ORDER BY RETURN_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, status);
@@ -161,7 +163,7 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM RETURN_ORDER WHERE RETURN_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("RETURN_ORDER") + " WHERE RETURN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -183,7 +185,7 @@ public class ReturnOrderDAOImpl implements ReturnOrderDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(RETURN_ID), 0) + 1 AS NEXT_ID FROM RETURN_ORDER";
+        String sql = "SELECT NVL(MAX(RETURN_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("RETURN_ORDER");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

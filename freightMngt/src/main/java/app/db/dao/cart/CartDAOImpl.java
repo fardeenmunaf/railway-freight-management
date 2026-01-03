@@ -1,6 +1,6 @@
 package app.db.dao.cart;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Cart;
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,16 +13,15 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class CartDAOImpl implements CartDAO {
-    private final Connection connection;
+public class CartDAOImpl extends BaseDAOImpl implements CartDAO {
 
     public CartDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Cart cart) throws SQLException {
-        String sql = "INSERT INTO CART (CART_ID, NOME, MAX_WEIGHT) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("CART") + " (CART_ID, NAME, BAY_ID) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (cart.getCartId() == null) {
                 cart.setCartId(getNextId());
@@ -36,7 +35,7 @@ public class CartDAOImpl implements CartDAO {
 
     @Override
     public Cart get(int id) throws SQLException {
-        String sql = "SELECT CART_ID, NOME, MAX_WEIGHT FROM CART WHERE CART_ID = ?";
+        String sql = "SELECT CART_ID, NAME, BAY_ID FROM " + getTableName("CART") + " WHERE CART_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -54,7 +53,7 @@ public class CartDAOImpl implements CartDAO {
     @Override
     public List<Cart> getAll() throws SQLException {
         List<Cart> carts = new ArrayList<>();
-        String sql = "SELECT CART_ID, NOME, MAX_WEIGHT FROM CART ORDER BY CART_ID";
+        String sql = "SELECT CART_ID, NAME, BAY_ID FROM " + getTableName("CART") + " ORDER BY CART_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -69,7 +68,7 @@ public class CartDAOImpl implements CartDAO {
 
     @Override
     public void update(Cart cart) throws SQLException {
-        String sql = "UPDATE CART SET NOME = ?, MAX_WEIGHT = ? WHERE CART_ID = ?";
+        String sql = "UPDATE " + getTableName("CART") + " SET NAME = ?, BAY_ID = ? WHERE CART_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, cart.getName());
@@ -82,7 +81,7 @@ public class CartDAOImpl implements CartDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM CART WHERE CART_ID = ?";
+        String sql = "DELETE FROM " + getTableName("CART") + " WHERE CART_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -92,7 +91,7 @@ public class CartDAOImpl implements CartDAO {
 
     @Override
     public Cart getByName(String name) throws SQLException {
-        String sql = "SELECT CART_ID, NOME, MAX_WEIGHT FROM CART WHERE NOME = ?";
+        String sql = "SELECT CART_ID, NAME, BAY_ID FROM " + getTableName("CART") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -107,8 +106,24 @@ public class CartDAOImpl implements CartDAO {
         return null;
     }
 
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("CART") + " WHERE CART_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(CART_ID), 0) + 1 AS NEXT_ID FROM CART";
+        String sql = "SELECT NVL(MAX(CART_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("CART");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -129,4 +144,5 @@ public class CartDAOImpl implements CartDAO {
         );
     }
 }
+
 

@@ -1,6 +1,6 @@
 package app.db.dao.orderline;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.OrderLine;
 import app.model.Order;
 import app.model.Item;
@@ -16,20 +16,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class OrderLineDAOImpl implements OrderLineDAO {
-
-    private final Connection connection;
+public class OrderLineDAOImpl extends BaseDAOImpl implements OrderLineDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public OrderLineDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(OrderLine orderLine) throws SQLException {
-        String sql = "INSERT INTO ORDER_LINE (ORDER_LINE_ID, ORDER_ID, SKU, QTY) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("ORDER_LINE") + " (ORDER_LINE_ID, ORDER_ID, SKU, QTY) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (orderLine.getOrderLineId() == null) {
@@ -62,7 +60,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
 
     @Override
     public OrderLine get(int id) throws SQLException {
-        String sql = "SELECT * FROM ORDER_LINE WHERE ORDER_LINE_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("ORDER_LINE") + " WHERE ORDER_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -79,7 +77,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
     @Override
     public List<OrderLine> getAll() throws SQLException {
         List<OrderLine> orderLines = new ArrayList<>();
-        String sql = "SELECT * FROM ORDER_LINE ORDER BY ORDER_LINE_ID";
+        String sql = "SELECT * FROM " + getTableName("ORDER_LINE") + " ORDER BY ORDER_LINE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -92,7 +90,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
 
     @Override
     public void update(OrderLine orderLine) throws SQLException {
-        String sql = "UPDATE ORDER_LINE SET ORDER_ID = ?, SKU = ?, QTY = ? WHERE ORDER_LINE_ID = ?";
+        String sql = "UPDATE " + getTableName("ORDER_LINE") + " SET ORDER_ID = ?, SKU = ?, QTY = ? WHERE ORDER_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (orderLine.getOrder() != null && orderLine.getOrder().getOrderId() != null) {
@@ -121,7 +119,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM ORDER_LINE WHERE ORDER_LINE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("ORDER_LINE") + " WHERE ORDER_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -132,7 +130,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
     @Override
     public List<OrderLine> getByOrder(int orderId) throws SQLException {
         List<OrderLine> orderLines = new ArrayList<>();
-        String sql = "SELECT * FROM ORDER_LINE WHERE ORDER_ID = ? ORDER BY ORDER_LINE_ID";
+        String sql = "SELECT * FROM " + getTableName("ORDER_LINE") + " WHERE ORDER_ID = ? ORDER BY ORDER_LINE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, orderId);
@@ -149,7 +147,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
     @Override
     public List<OrderLine> getBySku(String sku) throws SQLException {
         List<OrderLine> orderLines = new ArrayList<>();
-        String sql = "SELECT * FROM ORDER_LINE WHERE SKU = ? ORDER BY ORDER_LINE_ID";
+        String sql = "SELECT * FROM " + getTableName("ORDER_LINE") + " WHERE SKU = ? ORDER BY ORDER_LINE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, sku);
@@ -165,7 +163,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM ORDER_LINE WHERE ORDER_LINE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("ORDER_LINE") + " WHERE ORDER_LINE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -187,7 +185,7 @@ public class OrderLineDAOImpl implements OrderLineDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(ORDER_LINE_ID), 0) + 1 AS NEXT_ID FROM ORDER_LINE";
+        String sql = "SELECT NVL(MAX(ORDER_LINE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("ORDER_LINE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -231,4 +229,3 @@ public class OrderLineDAOImpl implements OrderLineDAO {
         return orderLine;
     }
 }
-

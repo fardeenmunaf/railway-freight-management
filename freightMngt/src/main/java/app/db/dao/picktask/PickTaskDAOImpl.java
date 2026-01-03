@@ -1,6 +1,6 @@
 package app.db.dao.picktask;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.PickTask;
 import app.model.PickWave;
 import app.model.OrderLine;
@@ -17,21 +17,21 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class PickTaskDAOImpl implements PickTaskDAO {
-
-    private final Connection connection;
+public class PickTaskDAOImpl extends BaseDAOImpl implements PickTaskDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public PickTaskDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(PickTask pickTask) throws SQLException {
-        String sql = "INSERT INTO PICK_TASK (PICK_ID, ORDER_LINE_ID, BALANCE_ID, QTY, POS_SEQ) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("PICK_TASK") +
+                     " (TASK_ID, WAVE_ID, ORDER_LINE_ID, LOT_ID, FROM_BAY_ID, " +
+                     "QTY_REQUIRED, QTY_PICKED, STATUS, ASSIGNED_TO, PRIORITY, CREATED_AT) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (pickTask.getPickTaskId() == null) {
@@ -75,7 +75,7 @@ public class PickTaskDAOImpl implements PickTaskDAO {
 
     @Override
     public PickTask get(int id) throws SQLException {
-        String sql = "SELECT * FROM PICK_TASK WHERE PICK_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("PICK_TASK") + " WHERE TASK_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -94,8 +94,8 @@ public class PickTaskDAOImpl implements PickTaskDAO {
 
     @Override
     public List<PickTask> getAll() throws SQLException {
-        List<PickTask> pickTasks = new ArrayList<>();
-        String sql = "SELECT * FROM PICK_TASK ORDER BY PICK_ID";
+        List<PickTask> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("PICK_TASK") + " ORDER BY PRIORITY DESC, CREATED_AT ASC";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -103,16 +103,18 @@ public class PickTaskDAOImpl implements PickTaskDAO {
                 PickTask pickTask = mapResultSetToPickTask(rs);
                 // Load associated PickWaves for each task
                 pickTask.setPickWaves(getPickWavesForTask(pickTask.getPickTaskId()));
-                pickTasks.add(pickTask);
+                tasks.add(pickTask);
             }
         }
-        return pickTasks;
+        return tasks;
     }
 
     @Override
     public void update(PickTask pickTask) throws SQLException {
-        String sql = "UPDATE PICK_TASK SET ORDER_LINE_ID = ?, BALANCE_ID = ?, QTY = ?, POS_SEQ = ? " +
-                     "WHERE PICK_ID = ?";
+        String sql = "UPDATE " + getTableName("PICK_TASK") +
+                     " SET WAVE_ID = ?, ORDER_LINE_ID = ?, LOT_ID = ?, FROM_BAY_ID = ?, " +
+                     "QTY_REQUIRED = ?, QTY_PICKED = ?, STATUS = ?, ASSIGNED_TO = ?, PRIORITY = ? " +
+                     "WHERE TASK_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (pickTask.getOrderLine() != null && pickTask.getOrderLine().getOrderLineId() != null) {
@@ -153,12 +155,12 @@ public class PickTaskDAOImpl implements PickTaskDAO {
 
     @Override
     public void delete(int id) throws SQLException {
+        String sql = "DELETE FROM " + getTableName("PICK_TASK") + " WHERE TASK_ID = ?";
+
         // First delete associations
         deletePickTaskWaveAssociations(id);
 
         // Then delete the pick task
-        String sql = "DELETE FROM PICK_TASK WHERE PICK_ID = ?";
-
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
@@ -167,10 +169,9 @@ public class PickTaskDAOImpl implements PickTaskDAO {
 
     @Override
     public List<PickTask> getByWave(int waveId) throws SQLException {
-        List<PickTask> pickTasks = new ArrayList<>();
-        String sql = "SELECT pt.* FROM PICK_TASK pt " +
-                     "JOIN PICK_TASK_WAVE ptw ON pt.PICK_ID = ptw.PICK_ID " +
-                     "WHERE ptw.WAVE_ID = ? ORDER BY pt.PICK_ID";
+        List<PickTask> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("PICK_TASK") +
+                     " WHERE WAVE_ID = ? ORDER BY PRIORITY DESC, CREATED_AT ASC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, waveId);
@@ -179,16 +180,73 @@ public class PickTaskDAOImpl implements PickTaskDAO {
                 while (rs.next()) {
                     PickTask pickTask = mapResultSetToPickTask(rs);
                     pickTask.setPickWaves(getPickWavesForTask(pickTask.getPickTaskId()));
-                    pickTasks.add(pickTask);
+                    tasks.add(pickTask);
                 }
             }
         }
-        return pickTasks;
+        return tasks;
+    }
+
+    public List<PickTask> getByStatus(String status) throws SQLException {
+        List<PickTask> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("PICK_TASK") +
+                     " WHERE STATUS = ? ORDER BY PRIORITY DESC, CREATED_AT ASC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    PickTask pickTask = mapResultSetToPickTask(rs);
+                    pickTask.setPickWaves(getPickWavesForTask(pickTask.getPickTaskId()));
+                    tasks.add(pickTask);
+                }
+            }
+        }
+        return tasks;
+    }
+
+    public List<PickTask> getByUser(int userId) throws SQLException {
+        List<PickTask> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("PICK_TASK") +
+                     " WHERE ASSIGNED_TO = ? ORDER BY PRIORITY DESC, CREATED_AT ASC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    PickTask pickTask = mapResultSetToPickTask(rs);
+                    pickTask.setPickWaves(getPickWavesForTask(pickTask.getPickTaskId()));
+                    tasks.add(pickTask);
+                }
+            }
+        }
+        return tasks;
+    }
+
+    public List<PickTask> getByOrderLine(int orderLineId) throws SQLException {
+        List<PickTask> tasks = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("PICK_TASK") +
+                     " WHERE ORDER_LINE_ID = ? ORDER BY CREATED_AT ASC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, orderLineId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    PickTask pickTask = mapResultSetToPickTask(rs);
+                    pickTask.setPickWaves(getPickWavesForTask(pickTask.getPickTaskId()));
+                    tasks.add(pickTask);
+                }
+            }
+        }
+        return tasks;
     }
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM PICK_TASK WHERE PICK_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("PICK_TASK") + " WHERE TASK_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -210,7 +268,7 @@ public class PickTaskDAOImpl implements PickTaskDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(PICK_ID), 0) + 1 AS NEXT_ID FROM PICK_TASK";
+        String sql = "SELECT NVL(MAX(TASK_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("PICK_TASK");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

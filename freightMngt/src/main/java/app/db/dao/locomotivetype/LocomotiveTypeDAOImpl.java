@@ -1,6 +1,6 @@
 package app.db.dao.locomotivetype;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.LocomotiveType;
 
 import java.sql.*;
@@ -14,20 +14,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
-
-    private final Connection connection;
+public class LocomotiveTypeDAOImpl extends BaseDAOImpl implements LocomotiveTypeDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public LocomotiveTypeDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(LocomotiveType locomotiveType) throws SQLException {
-        String sql = "INSERT INTO LOCOMOTIVE_TYPE (LOCOMOTIVE_TYPE_ID, NAME) VALUES (?, ?)";
+        String sql = "INSERT INTO " + getTableName("LOCOMOTIVE_TYPE") + " (LOCOMOTIVE_TYPE_ID, NAME) VALUES (?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (locomotiveType.getLocomotiveTypeId() == null) {
@@ -43,7 +41,7 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
 
     @Override
     public LocomotiveType get(int id) throws SQLException {
-        String sql = "SELECT LOCOMOTIVE_TYPE_ID, NAME FROM LOCOMOTIVE_TYPE WHERE LOCOMOTIVE_TYPE_ID = ?";
+        String sql = "SELECT LOCOMOTIVE_TYPE_ID, NAME FROM " + getTableName("LOCOMOTIVE_TYPE") + " WHERE LOCOMOTIVE_TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -61,7 +59,7 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
     @Override
     public List<LocomotiveType> getAll() throws SQLException {
         List<LocomotiveType> types = new ArrayList<>();
-        String sql = "SELECT LOCOMOTIVE_TYPE_ID, NAME FROM LOCOMOTIVE_TYPE ORDER BY LOCOMOTIVE_TYPE_ID";
+        String sql = "SELECT LOCOMOTIVE_TYPE_ID, NAME FROM " + getTableName("LOCOMOTIVE_TYPE") + " ORDER BY LOCOMOTIVE_TYPE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -76,7 +74,7 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
 
     @Override
     public void update(LocomotiveType locomotiveType) throws SQLException {
-        String sql = "UPDATE LOCOMOTIVE_TYPE SET NAME = ? WHERE LOCOMOTIVE_TYPE_ID = ?";
+        String sql = "UPDATE " + getTableName("LOCOMOTIVE_TYPE") + " SET NAME = ? WHERE LOCOMOTIVE_TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, locomotiveType.getName());
@@ -88,7 +86,7 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM LOCOMOTIVE_TYPE WHERE LOCOMOTIVE_TYPE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("LOCOMOTIVE_TYPE") + " WHERE LOCOMOTIVE_TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -98,7 +96,7 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
 
     @Override
     public LocomotiveType getByName(String name) throws SQLException {
-        String sql = "SELECT LOCOMOTIVE_TYPE_ID, NAME FROM LOCOMOTIVE_TYPE WHERE NAME = ?";
+        String sql = "SELECT LOCOMOTIVE_TYPE_ID, NAME FROM " + getTableName("LOCOMOTIVE_TYPE") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -115,7 +113,7 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM LOCOMOTIVE_TYPE WHERE LOCOMOTIVE_TYPE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("LOCOMOTIVE_TYPE") + " WHERE LOCOMOTIVE_TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -137,7 +135,7 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(LOCOMOTIVE_TYPE_ID), 0) + 1 AS NEXT_ID FROM LOCOMOTIVE_TYPE";
+        String sql = "SELECT NVL(MAX(LOCOMOTIVE_TYPE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("LOCOMOTIVE_TYPE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -164,4 +162,3 @@ public class LocomotiveTypeDAOImpl implements LocomotiveTypeDAO {
         );
     }
 }
-

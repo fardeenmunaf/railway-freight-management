@@ -1,6 +1,6 @@
 package app.db.dao.itemcategory;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.ItemCategory;
 
 import java.sql.*;
@@ -14,20 +14,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class ItemCategoryDAOImpl implements ItemCategoryDAO {
-
-    private final Connection connection;
+public class ItemCategoryDAOImpl extends BaseDAOImpl implements ItemCategoryDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public ItemCategoryDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(ItemCategory itemCategory) throws SQLException {
-        String sql = "INSERT INTO ITEM_CATEGORY (CATEGORY_ID, NAME) VALUES (?, ?)";
+        String sql = "INSERT INTO " + getTableName("ITEM_CATEGORY") + " (CATEGORY_ID, NAME) VALUES (?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (itemCategory.getCategoryId() == null) {
@@ -43,7 +41,7 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
 
     @Override
     public ItemCategory get(int id) throws SQLException {
-        String sql = "SELECT CATEGORY_ID, NAME FROM ITEM_CATEGORY WHERE CATEGORY_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("ITEM_CATEGORY") + " WHERE CATEGORY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -61,7 +59,7 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
     @Override
     public List<ItemCategory> getAll() throws SQLException {
         List<ItemCategory> categories = new ArrayList<>();
-        String sql = "SELECT CATEGORY_ID, NAME FROM ITEM_CATEGORY ORDER BY CATEGORY_ID";
+        String sql = "SELECT * FROM " + getTableName("ITEM_CATEGORY") + " ORDER BY CATEGORY_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -76,7 +74,7 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
 
     @Override
     public void update(ItemCategory itemCategory) throws SQLException {
-        String sql = "UPDATE ITEM_CATEGORY SET NAME = ? WHERE CATEGORY_ID = ?";
+        String sql = "UPDATE " + getTableName("ITEM_CATEGORY") + " SET NAME = ? WHERE CATEGORY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, itemCategory.getName());
@@ -88,7 +86,7 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM ITEM_CATEGORY WHERE CATEGORY_ID = ?";
+        String sql = "DELETE FROM " + getTableName("ITEM_CATEGORY") + " WHERE CATEGORY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -98,7 +96,7 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
 
     @Override
     public ItemCategory getByName(String name) throws SQLException {
-        String sql = "SELECT CATEGORY_ID, NAME FROM ITEM_CATEGORY WHERE NAME = ?";
+        String sql = "SELECT * FROM " + getTableName("ITEM_CATEGORY") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -115,7 +113,7 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM ITEM_CATEGORY WHERE CATEGORY_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("ITEM_CATEGORY") + " WHERE CATEGORY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -137,7 +135,7 @@ public class ItemCategoryDAOImpl implements ItemCategoryDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(CATEGORY_ID), 0) + 1 AS NEXT_ID FROM ITEM_CATEGORY";
+        String sql = "SELECT NVL(MAX(CATEGORY_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("ITEM_CATEGORY");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

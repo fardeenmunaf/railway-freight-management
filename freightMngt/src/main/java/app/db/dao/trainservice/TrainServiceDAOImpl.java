@@ -1,6 +1,6 @@
 package app.db.dao.trainservice;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.TrainService;
 import app.model.Train;
 import app.model.User;
@@ -17,15 +17,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class TrainServiceDAOImpl implements TrainServiceDAO {
-
-    private final Connection connection;
+public class TrainServiceDAOImpl extends BaseDAOImpl implements TrainServiceDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public TrainServiceDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -241,7 +239,7 @@ public class TrainServiceDAOImpl implements TrainServiceDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM TRAIN_SERVICE WHERE SERVICE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("TRAIN_SERVICE") + " WHERE SERVICE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -317,4 +315,3 @@ public class TrainServiceDAOImpl implements TrainServiceDAO {
         return service;
     }
 }
-

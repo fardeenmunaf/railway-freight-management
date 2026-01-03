@@ -1,6 +1,6 @@
- package app.db.dao.role;
+package app.db.dao.role;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Role;
 
 import java.sql.*;
@@ -14,17 +14,15 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class RoleDAOImpl implements RoleDAO {
-
-    private final Connection connection;
+public class RoleDAOImpl extends BaseDAOImpl implements RoleDAO {
 
     public RoleDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Role role) throws SQLException {
-        String sql = "INSERT INTO \"ROLE\" (ROLE_ID, NAME) VALUES (?, ?)";
+        String sql = "INSERT INTO " + getTableName("ROLE") + " (ROLE_ID, NAME) VALUES (?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (role.getRoleId() == null) {
@@ -40,7 +38,7 @@ public class RoleDAOImpl implements RoleDAO {
 
     @Override
     public Role get(int id) throws SQLException {
-        String sql = "SELECT ROLE_ID, NAME FROM \"ROLE\" WHERE ROLE_ID = ?";
+        String sql = "SELECT ROLE_ID, NAME FROM " + getTableName("ROLE") + " WHERE ROLE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -58,7 +56,7 @@ public class RoleDAOImpl implements RoleDAO {
     @Override
     public List<Role> getAll() throws SQLException {
         List<Role> roles = new ArrayList<>();
-        String sql = "SELECT ROLE_ID, NAME FROM \"ROLE\" ORDER BY ROLE_ID";
+        String sql = "SELECT ROLE_ID, NAME FROM " + getTableName("ROLE") + " ORDER BY ROLE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -73,7 +71,7 @@ public class RoleDAOImpl implements RoleDAO {
 
     @Override
     public void update(Role role) throws SQLException {
-        String sql = "UPDATE \"ROLE\" SET NAME = ? WHERE ROLE_ID = ?";
+        String sql = "UPDATE " + getTableName("ROLE") + " SET NAME = ? WHERE ROLE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, role.getRoleName());
@@ -85,7 +83,7 @@ public class RoleDAOImpl implements RoleDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM \"ROLE\" WHERE ROLE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("ROLE") + " WHERE ROLE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -95,7 +93,7 @@ public class RoleDAOImpl implements RoleDAO {
 
     @Override
     public Role getByName(String name) throws SQLException {
-        String sql = "SELECT ROLE_ID, NAME FROM \"ROLE\" WHERE NAME = ?";
+        String sql = "SELECT ROLE_ID, NAME FROM " + getTableName("ROLE") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -110,8 +108,24 @@ public class RoleDAOImpl implements RoleDAO {
         return null;
     }
 
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("ROLE") + " WHERE ROLE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(ROLE_ID), 0) + 1 AS NEXT_ID FROM \"ROLE\"";
+        String sql = "SELECT NVL(MAX(ROLE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("ROLE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -131,4 +145,5 @@ public class RoleDAOImpl implements RoleDAO {
         );
     }
 }
+
 

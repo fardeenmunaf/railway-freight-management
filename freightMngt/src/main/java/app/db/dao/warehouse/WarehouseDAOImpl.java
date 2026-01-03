@@ -1,6 +1,7 @@
 package app.db.dao.warehouse;
 
 import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Warehouse;
 import app.model.Facility;
 
@@ -15,15 +16,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class WarehouseDAOImpl implements WarehouseDAO {
-
-    private final Connection connection;
+public class WarehouseDAOImpl extends BaseDAOImpl implements WarehouseDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public WarehouseDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -218,4 +217,3 @@ public class WarehouseDAOImpl implements WarehouseDAO {
         return warehouse;
     }
 }
-

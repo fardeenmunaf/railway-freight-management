@@ -1,6 +1,6 @@
 package app.db.dao.pickwave;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.PickWave;
 import app.model.Cart;
 
@@ -15,21 +15,19 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class PickWaveDAOImpl implements PickWaveDAO {
-
-    private final Connection connection;
+public class PickWaveDAOImpl extends BaseDAOImpl implements PickWaveDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public PickWaveDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(PickWave pickWave) throws SQLException {
-        String sql = "INSERT INTO PICK_WAVE (WAVE_ID, CART_ID, STRATEGY, STATUS, CREATED_AT) " +
-                     "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
+        String sql = "INSERT INTO " + getTableName("PICK_WAVE") +
+                     " (WAVE_ID, CART_ID, STRATEGY, STATUS, CREATED_AT) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (pickWave.getPickWaveId() == null) {
@@ -53,7 +51,7 @@ public class PickWaveDAOImpl implements PickWaveDAO {
 
     @Override
     public PickWave get(int id) throws SQLException {
-        String sql = "SELECT * FROM PICK_WAVE WHERE WAVE_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("PICK_WAVE") + " WHERE WAVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -70,7 +68,7 @@ public class PickWaveDAOImpl implements PickWaveDAO {
     @Override
     public List<PickWave> getAll() throws SQLException {
         List<PickWave> pickWaves = new ArrayList<>();
-        String sql = "SELECT * FROM PICK_WAVE ORDER BY WAVE_ID";
+        String sql = "SELECT * FROM " + getTableName("PICK_WAVE") + " ORDER BY WAVE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -83,7 +81,8 @@ public class PickWaveDAOImpl implements PickWaveDAO {
 
     @Override
     public void update(PickWave pickWave) throws SQLException {
-        String sql = "UPDATE PICK_WAVE SET CART_ID = ?, STRATEGY = ?, STATUS = ? WHERE WAVE_ID = ?";
+        String sql = "UPDATE " + getTableName("PICK_WAVE") +
+                     " SET CART_ID = ?, STRATEGY = ?, STATUS = ? WHERE WAVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (pickWave.getCart() != null && pickWave.getCart().getCartId() != null) {
@@ -102,7 +101,7 @@ public class PickWaveDAOImpl implements PickWaveDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM PICK_WAVE WHERE WAVE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("PICK_WAVE") + " WHERE WAVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -113,7 +112,8 @@ public class PickWaveDAOImpl implements PickWaveDAO {
     @Override
     public List<PickWave> getByStatus(String status) throws SQLException {
         List<PickWave> pickWaves = new ArrayList<>();
-        String sql = "SELECT * FROM PICK_WAVE WHERE STATUS = ? ORDER BY WAVE_ID";
+        String sql = "SELECT * FROM " + getTableName("PICK_WAVE") +
+                     " WHERE STATUS = ? ORDER BY WAVE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, status);
@@ -129,7 +129,7 @@ public class PickWaveDAOImpl implements PickWaveDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM PICK_WAVE WHERE WAVE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("PICK_WAVE") + " WHERE WAVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -151,7 +151,7 @@ public class PickWaveDAOImpl implements PickWaveDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(WAVE_ID), 0) + 1 AS NEXT_ID FROM PICK_WAVE";
+        String sql = "SELECT NVL(MAX(WAVE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("PICK_WAVE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -187,4 +187,5 @@ public class PickWaveDAOImpl implements PickWaveDAO {
         return pickWave;
     }
 }
+
 

@@ -1,6 +1,6 @@
 package app.db.dao.gauge;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Gauge;
 
 import java.sql.*;
@@ -14,20 +14,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class GaugeDAOImpl implements GaugeDAO {
-
-    private final Connection connection;
+public class GaugeDAOImpl extends BaseDAOImpl implements GaugeDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public GaugeDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Gauge gauge) throws SQLException {
-        String sql = "INSERT INTO GAUGE (GAUGE_ID, GAUGE_NAME, GAUGE_SIZE) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("GAUGE") + " (GAUGE_ID, NAME, GAUGE_MM) VALUES (?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (gauge.getGaugeId() == null) {
@@ -44,7 +42,7 @@ public class GaugeDAOImpl implements GaugeDAO {
 
     @Override
     public Gauge get(int id) throws SQLException {
-        String sql = "SELECT GAUGE_ID, GAUGE_NAME, GAUGE_SIZE FROM GAUGE WHERE GAUGE_ID = ?";
+        String sql = "SELECT GAUGE_ID, NAME, GAUGE_MM FROM " + getTableName("GAUGE") + " WHERE GAUGE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -62,7 +60,7 @@ public class GaugeDAOImpl implements GaugeDAO {
     @Override
     public List<Gauge> getAll() throws SQLException {
         List<Gauge> gauges = new ArrayList<>();
-        String sql = "SELECT GAUGE_ID, GAUGE_NAME, GAUGE_SIZE FROM GAUGE ORDER BY GAUGE_ID";
+        String sql = "SELECT GAUGE_ID, NAME, GAUGE_MM FROM " + getTableName("GAUGE") + " ORDER BY GAUGE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -77,7 +75,7 @@ public class GaugeDAOImpl implements GaugeDAO {
 
     @Override
     public void update(Gauge gauge) throws SQLException {
-        String sql = "UPDATE GAUGE SET GAUGE_NAME = ?, GAUGE_SIZE = ? WHERE GAUGE_ID = ?";
+        String sql = "UPDATE " + getTableName("GAUGE") + " SET NAME = ?, GAUGE_MM = ? WHERE GAUGE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, gauge.getGaugeName());
@@ -90,7 +88,7 @@ public class GaugeDAOImpl implements GaugeDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM GAUGE WHERE GAUGE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("GAUGE") + " WHERE GAUGE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -100,7 +98,7 @@ public class GaugeDAOImpl implements GaugeDAO {
 
     @Override
     public Gauge getByName(String name) throws SQLException {
-        String sql = "SELECT GAUGE_ID, GAUGE_NAME, GAUGE_SIZE FROM GAUGE WHERE GAUGE_NAME = ?";
+        String sql = "SELECT GAUGE_ID, NAME, GAUGE_MM FROM " + getTableName("GAUGE") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -117,7 +115,7 @@ public class GaugeDAOImpl implements GaugeDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM GAUGE WHERE GAUGE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("GAUGE") + " WHERE GAUGE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -139,7 +137,7 @@ public class GaugeDAOImpl implements GaugeDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(GAUGE_ID), 0) + 1 AS NEXT_ID FROM GAUGE";
+        String sql = "SELECT NVL(MAX(GAUGE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("GAUGE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -167,4 +165,5 @@ public class GaugeDAOImpl implements GaugeDAO {
         );
     }
 }
+
 

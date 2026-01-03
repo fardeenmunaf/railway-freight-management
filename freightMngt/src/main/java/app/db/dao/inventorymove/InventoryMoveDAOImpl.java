@@ -1,6 +1,6 @@
 package app.db.dao.inventorymove;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.InventoryMove;
 import app.model.InventoryLot;
 import app.model.WarehouseBay;
@@ -17,17 +17,17 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class InventoryMoveDAOImpl implements InventoryMoveDAO {
-
-    private final Connection connection;
+public class InventoryMoveDAOImpl extends BaseDAOImpl implements InventoryMoveDAO {
 
     public InventoryMoveDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(InventoryMove inventoryMove) throws SQLException {
-        String sql = "INSERT INTO INVENTORY_MOVE (MOVE_ID, LOT_ID, FROM_BAY_ID, TO_BAY_ID, QTY, REASON, CREATED_AT) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("INVENTORY_MOVE") +
+                     " (MOVE_ID, LOT_ID, FROM_BAY_ID, TO_BAY_ID, QUANTITY, MOVE_DATE, USER_ID, REASON) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (inventoryMove.getMoveId() == null) {
@@ -48,7 +48,7 @@ public class InventoryMoveDAOImpl implements InventoryMoveDAO {
 
     @Override
     public InventoryMove get(int id) throws SQLException {
-        String sql = "SELECT MOVE_ID, LOT_ID, FROM_BAY_ID, TO_BAY_ID, QTY, REASON, CREATED_AT FROM INVENTORY_MOVE WHERE MOVE_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_MOVE") + " WHERE MOVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -65,31 +65,50 @@ public class InventoryMoveDAOImpl implements InventoryMoveDAO {
 
     @Override
     public List<InventoryMove> getAll() throws SQLException {
-        List<InventoryMove> inventoryMoves = new ArrayList<>();
-        String sql = "SELECT MOVE_ID, LOT_ID, FROM_BAY_ID, TO_BAY_ID, QTY, REASON, CREATED_AT FROM INVENTORY_MOVE ORDER BY MOVE_ID";
+        List<InventoryMove> moves = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_MOVE") + " ORDER BY MOVE_DATE DESC";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                inventoryMoves.add(mapResultSetToInventoryMove(rs));
+                moves.add(mapResultSetToInventoryMove(rs));
             }
         }
 
-        return inventoryMoves;
+        return moves;
     }
 
     @Override
     public void update(InventoryMove inventoryMove) throws SQLException {
-        String sql = "UPDATE INVENTORY_MOVE SET LOT_ID = ?, FROM_BAY_ID = ?, TO_BAY_ID = ?, QTY = ?, REASON = ? WHERE MOVE_ID = ?";
+        String sql = "UPDATE " + getTableName("INVENTORY_MOVE") +
+                     " SET LOT_ID = ?, FROM_BAY_ID = ?, TO_BAY_ID = ?, QUANTITY = ?, " +
+                     "MOVE_DATE = ?, USER_ID = ?, REASON = ? WHERE MOVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, inventoryMove.getLot() != null ? inventoryMove.getLot().getLotId() : null);
-            pstmt.setInt(2, inventoryMove.getFromBay() != null ? inventoryMove.getFromBay().getBayId() : null);
-            pstmt.setInt(3, inventoryMove.getToBay() != null ? inventoryMove.getToBay().getBayId() : null);
+            if (inventoryMove.getLot() != null && inventoryMove.getLot().getLotId() != null) {
+                pstmt.setInt(1, inventoryMove.getLot().getLotId());
+            } else {
+                pstmt.setNull(1, Types.INTEGER);
+            }
+
+            if (inventoryMove.getFromBay() != null && inventoryMove.getFromBay().getBayId() != null) {
+                pstmt.setInt(2, inventoryMove.getFromBay().getBayId());
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+
+            if (inventoryMove.getToBay() != null && inventoryMove.getToBay().getBayId() != null) {
+                pstmt.setInt(3, inventoryMove.getToBay().getBayId());
+            } else {
+                pstmt.setNull(3, Types.INTEGER);
+            }
+
             pstmt.setInt(4, inventoryMove.getQty());
-            pstmt.setString(5, inventoryMove.getReason());
-            pstmt.setInt(6, inventoryMove.getMoveId());
+            pstmt.setTimestamp(5, inventoryMove.getCreatedAt() != null ? Timestamp.valueOf(inventoryMove.getCreatedAt()) : Timestamp.valueOf(LocalDateTime.now()));
+            pstmt.setInt(6, 1); // USER_ID placeholder
+            pstmt.setString(7, inventoryMove.getReason());
+            pstmt.setInt(8, inventoryMove.getMoveId());
 
             pstmt.executeUpdate();
         }
@@ -97,7 +116,7 @@ public class InventoryMoveDAOImpl implements InventoryMoveDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM INVENTORY_MOVE WHERE MOVE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("INVENTORY_MOVE") + " WHERE MOVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -107,60 +126,114 @@ public class InventoryMoveDAOImpl implements InventoryMoveDAO {
 
     @Override
     public List<InventoryMove> getByLot(int lotId) throws SQLException {
-        List<InventoryMove> inventoryMoves = new ArrayList<>();
-        String sql = "SELECT MOVE_ID, LOT_ID, FROM_BAY_ID, TO_BAY_ID, QTY, REASON, CREATED_AT FROM INVENTORY_MOVE WHERE LOT_ID = ? ORDER BY CREATED_AT DESC";
+        List<InventoryMove> moves = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_MOVE") + " WHERE LOT_ID = ? ORDER BY MOVE_DATE DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, lotId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    inventoryMoves.add(mapResultSetToInventoryMove(rs));
+                    moves.add(mapResultSetToInventoryMove(rs));
                 }
             }
         }
 
-        return inventoryMoves;
+        return moves;
     }
 
     @Override
-    public List<InventoryMove> getByFromBay(int fromBayId) throws SQLException {
-        List<InventoryMove> inventoryMoves = new ArrayList<>();
-        String sql = "SELECT MOVE_ID, LOT_ID, FROM_BAY_ID, TO_BAY_ID, QTY, REASON, CREATED_AT FROM INVENTORY_MOVE WHERE FROM_BAY_ID = ? ORDER BY CREATED_AT DESC";
+    public List<InventoryMove> getByFromBay(int bayId) throws SQLException {
+        List<InventoryMove> moves = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_MOVE") +
+                     " WHERE FROM_BAY_ID = ? ORDER BY MOVE_DATE DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, fromBayId);
+            pstmt.setInt(1, bayId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    inventoryMoves.add(mapResultSetToInventoryMove(rs));
+                    moves.add(mapResultSetToInventoryMove(rs));
                 }
             }
         }
 
-        return inventoryMoves;
+        return moves;
     }
 
     @Override
-    public List<InventoryMove> getByToBay(int toBayId) throws SQLException {
-        List<InventoryMove> inventoryMoves = new ArrayList<>();
-        String sql = "SELECT MOVE_ID, LOT_ID, FROM_BAY_ID, TO_BAY_ID, QTY, REASON, CREATED_AT FROM INVENTORY_MOVE WHERE TO_BAY_ID = ? ORDER BY CREATED_AT DESC";
+    public List<InventoryMove> getByToBay(int bayId) throws SQLException {
+        List<InventoryMove> moves = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_MOVE") +
+                     " WHERE TO_BAY_ID = ? ORDER BY MOVE_DATE DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, toBayId);
+            pstmt.setInt(1, bayId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    inventoryMoves.add(mapResultSetToInventoryMove(rs));
+                    moves.add(mapResultSetToInventoryMove(rs));
                 }
             }
         }
 
-        return inventoryMoves;
+        return moves;
+    }
+
+    public List<InventoryMove> getByBay(int bayId) throws SQLException {
+        List<InventoryMove> moves = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_MOVE") +
+                     " WHERE FROM_BAY_ID = ? OR TO_BAY_ID = ? ORDER BY MOVE_DATE DESC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, bayId);
+            pstmt.setInt(2, bayId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    moves.add(mapResultSetToInventoryMove(rs));
+                }
+            }
+        }
+
+        return moves;
+    }
+
+    public List<InventoryMove> getByUser(int userId) throws SQLException {
+        List<InventoryMove> moves = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_MOVE") + " WHERE USER_ID = ? ORDER BY MOVE_DATE DESC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, userId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    moves.add(mapResultSetToInventoryMove(rs));
+                }
+            }
+        }
+
+        return moves;
+    }
+
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("INVENTORY_MOVE") + " WHERE MOVE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
     }
 
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(MOVE_ID), 0) + 1 AS NEXT_ID FROM INVENTORY_MOVE";
+        String sql = "SELECT NVL(MAX(MOVE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("INVENTORY_MOVE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

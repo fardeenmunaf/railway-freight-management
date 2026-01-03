@@ -359,4 +359,3 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
         return wagon;
     }
 }
-

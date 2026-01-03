@@ -1,6 +1,6 @@
 package app.db.dao.train;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Train;
 import app.model.Company;
 
@@ -15,20 +15,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class TrainDAOImpl implements TrainDAO {
-
-    private final Connection connection;
+public class TrainDAOImpl extends BaseDAOImpl implements TrainDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public TrainDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Train train) throws SQLException {
-        String sql = "INSERT INTO TRAIN (TRAIN_ID, CODE, DEPARTURE, DESTINATION, OPERATOR_ID) " +
+        String sql = "INSERT INTO " + getTableName("TRAIN") + " (TRAIN_ID, CODE, DEPARTURE, DESTINATION, OPERATOR_ID) " +
                      "VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -61,7 +59,7 @@ public class TrainDAOImpl implements TrainDAO {
     public Train get(int id) throws SQLException {
         String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
                      "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM TRAIN t " +
+                     "FROM " + getTableName("TRAIN") + " t " +
                      "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "WHERE t.TRAIN_ID = ?";
 
@@ -83,7 +81,7 @@ public class TrainDAOImpl implements TrainDAO {
         List<Train> trains = new ArrayList<>();
         String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
                      "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM TRAIN t " +
+                     "FROM " + getTableName("TRAIN") + " t " +
                      "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "ORDER BY t.TRAIN_ID";
 
@@ -100,7 +98,7 @@ public class TrainDAOImpl implements TrainDAO {
 
     @Override
     public void update(Train train) throws SQLException {
-        String sql = "UPDATE TRAIN SET CODE = ?, DEPARTURE = ?, DESTINATION = ?, OPERATOR_ID = ? " +
+        String sql = "UPDATE " + getTableName("TRAIN") + " SET CODE = ?, DEPARTURE = ?, DESTINATION = ?, OPERATOR_ID = ? " +
                      "WHERE TRAIN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -127,7 +125,7 @@ public class TrainDAOImpl implements TrainDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM TRAIN WHERE TRAIN_ID = ?";
+        String sql = "DELETE FROM " + getTableName("TRAIN") + " WHERE TRAIN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -139,7 +137,7 @@ public class TrainDAOImpl implements TrainDAO {
     public Train getByCode(int code) throws SQLException {
         String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
                      "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM TRAIN t " +
+                     "FROM " + getTableName("TRAIN") + " t " +
                      "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "WHERE t.CODE = ?";
 
@@ -161,7 +159,7 @@ public class TrainDAOImpl implements TrainDAO {
         List<Train> trains = new ArrayList<>();
         String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
                      "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM TRAIN t " +
+                     "FROM " + getTableName("TRAIN") + " t " +
                      "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "WHERE t.OPERATOR_ID = ? " +
                      "ORDER BY t.TRAIN_ID";
@@ -184,7 +182,7 @@ public class TrainDAOImpl implements TrainDAO {
         List<Train> trains = new ArrayList<>();
         String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
                      "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM TRAIN t " +
+                     "FROM " + getTableName("TRAIN") + " t " +
                      "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "WHERE t.DEPARTURE = ? " +
                      "ORDER BY t.TRAIN_ID";
@@ -207,7 +205,7 @@ public class TrainDAOImpl implements TrainDAO {
         List<Train> trains = new ArrayList<>();
         String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
                      "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM TRAIN t " +
+                     "FROM " + getTableName("TRAIN") + " t " +
                      "LEFT JOIN COMPANY c ON t.OPERATOR_ID = c.COMPANY_ID " +
                      "WHERE t.DESTINATION = ? " +
                      "ORDER BY t.TRAIN_ID";
@@ -227,7 +225,7 @@ public class TrainDAOImpl implements TrainDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM TRAIN WHERE TRAIN_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("TRAIN") + " WHERE TRAIN_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -242,14 +240,8 @@ public class TrainDAOImpl implements TrainDAO {
         return false;
     }
 
-    /**
-     * Gets the next available ID for a new Train.
-     *
-     * @return the next available ID
-     * @throws SQLException if an error occurs during the operation
-     */
-    private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(TRAIN_ID), 0) + 1 AS NEXT_ID FROM TRAIN";
+    public int getNextId() throws SQLException {
+        String sql = "SELECT NVL(MAX(TRAIN_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("TRAIN");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -294,4 +286,3 @@ public class TrainDAOImpl implements TrainDAO {
         return train;
     }
 }
-

@@ -1,6 +1,6 @@
 package app.db.dao.inventorybalance;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.InventoryBalance;
 import app.model.InventoryLot;
 import app.model.WarehouseBay;
@@ -16,17 +16,16 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
-
-    private final Connection connection;
+public class InventoryBalanceDAOImpl extends BaseDAOImpl implements InventoryBalanceDAO {
 
     public InventoryBalanceDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(InventoryBalance balance) throws SQLException {
-        String sql = "INSERT INTO INVENTORY_BALANCE (BALANCE_ID, BAY_ID, QTY) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("INVENTORY_BALANCE") +
+                     " (BALANCE_ID, LOT_ID, BAY_ID, QUANTITY, LAST_UPDATED) VALUES (?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (balance.getBalanceId() == null) {
@@ -34,8 +33,23 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
             }
 
             pstmt.setInt(1, balance.getBalanceId());
-            pstmt.setInt(2, balance.getBay() != null ? balance.getBay().getBayId() : null);
-            pstmt.setInt(3, balance.getQty());
+
+            // LOT_ID - use first lot from the list if available
+            if (balance.getLots() != null && !balance.getLots().isEmpty() && balance.getLots().get(0).getLotId() != null) {
+                pstmt.setInt(2, balance.getLots().get(0).getLotId());
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+
+            // BAY_ID
+            if (balance.getBay() != null && balance.getBay().getBayId() != null) {
+                pstmt.setInt(3, balance.getBay().getBayId());
+            } else {
+                pstmt.setNull(3, Types.INTEGER);
+            }
+
+            pstmt.setInt(4, balance.getQty());
+            pstmt.setTimestamp(5, Timestamp.valueOf(java.time.LocalDateTime.now()));
 
             pstmt.executeUpdate();
 
@@ -48,7 +62,7 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
 
     @Override
     public InventoryBalance get(int id) throws SQLException {
-        String sql = "SELECT BALANCE_ID, BAY_ID, QTY FROM INVENTORY_BALANCE WHERE BALANCE_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_BALANCE") + " WHERE BALANCE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -68,7 +82,7 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
     @Override
     public List<InventoryBalance> getAll() throws SQLException {
         List<InventoryBalance> balances = new ArrayList<>();
-        String sql = "SELECT BALANCE_ID, BAY_ID, QTY FROM INVENTORY_BALANCE ORDER BY BALANCE_ID";
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_BALANCE") + " ORDER BY BALANCE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -85,12 +99,27 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
 
     @Override
     public void update(InventoryBalance balance) throws SQLException {
-        String sql = "UPDATE INVENTORY_BALANCE SET BAY_ID = ?, QTY = ? WHERE BALANCE_ID = ?";
+        String sql = "UPDATE " + getTableName("INVENTORY_BALANCE") +
+                     " SET LOT_ID = ?, BAY_ID = ?, QUANTITY = ?, LAST_UPDATED = ? WHERE BALANCE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, balance.getBay() != null ? balance.getBay().getBayId() : null);
-            pstmt.setInt(2, balance.getQty());
-            pstmt.setInt(3, balance.getBalanceId());
+            // LOT_ID - use first lot from the list if available
+            if (balance.getLots() != null && !balance.getLots().isEmpty() && balance.getLots().get(0).getLotId() != null) {
+                pstmt.setInt(1, balance.getLots().get(0).getLotId());
+            } else {
+                pstmt.setNull(1, Types.INTEGER);
+            }
+
+            // BAY_ID
+            if (balance.getBay() != null && balance.getBay().getBayId() != null) {
+                pstmt.setInt(2, balance.getBay().getBayId());
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+
+            pstmt.setInt(3, balance.getQty());
+            pstmt.setTimestamp(4, Timestamp.valueOf(java.time.LocalDateTime.now()));
+            pstmt.setInt(5, balance.getBalanceId());
 
             pstmt.executeUpdate();
 
@@ -106,7 +135,7 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
     public void delete(int id) throws SQLException {
         deleteBalanceLots(id);
 
-        String sql = "DELETE FROM INVENTORY_BALANCE WHERE BALANCE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("INVENTORY_BALANCE") + " WHERE BALANCE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -117,7 +146,7 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
     @Override
     public List<InventoryBalance> getByBay(int bayId) throws SQLException {
         List<InventoryBalance> balances = new ArrayList<>();
-        String sql = "SELECT BALANCE_ID, BAY_ID, QTY FROM INVENTORY_BALANCE WHERE BAY_ID = ? ORDER BY BALANCE_ID";
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_BALANCE") + " WHERE BAY_ID = ? ORDER BY BALANCE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, bayId);
@@ -137,11 +166,7 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
     @Override
     public List<InventoryBalance> getByLot(int lotId) throws SQLException {
         List<InventoryBalance> balances = new ArrayList<>();
-        String sql = "SELECT b.BALANCE_ID, b.BAY_ID, b.QTY " +
-                     "FROM INVENTORY_BALANCE b " +
-                     "JOIN BALANCE_LOT bl ON b.BALANCE_ID = bl.BALANCE_ID " +
-                     "WHERE bl.LOT_ID = ? " +
-                     "ORDER BY b.BALANCE_ID";
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_BALANCE") + " WHERE LOT_ID = ? ORDER BY BAY_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, lotId);
@@ -158,8 +183,43 @@ public class InventoryBalanceDAOImpl implements InventoryBalanceDAO {
         return balances;
     }
 
+    public InventoryBalance getByLotAndBay(int lotId, int bayId) throws SQLException {
+        String sql = "SELECT * FROM " + getTableName("INVENTORY_BALANCE") + " WHERE LOT_ID = ? AND BAY_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, lotId);
+            pstmt.setInt(2, bayId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    InventoryBalance balance = mapResultSetToInventoryBalance(rs);
+                    balance.setLots(getLotsForBalance(balance.getBalanceId()));
+                    return balance;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("INVENTORY_BALANCE") + " WHERE BALANCE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(BALANCE_ID), 0) + 1 AS NEXT_ID FROM INVENTORY_BALANCE";
+        String sql = "SELECT NVL(MAX(BALANCE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("INVENTORY_BALANCE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

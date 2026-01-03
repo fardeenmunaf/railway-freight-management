@@ -1,6 +1,6 @@
 package app.db.dao.facilityfeaturetype;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.FacilityFeatureType;
 
 import java.sql.*;
@@ -14,17 +14,15 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
-
-    private final Connection connection;
+public class FacilityFeatureTypeDAOImpl extends BaseDAOImpl implements FacilityFeatureTypeDAO {
 
     public FacilityFeatureTypeDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(FacilityFeatureType facilityFeatureType) throws SQLException {
-        String sql = "INSERT INTO FACILITY_FEATURE_TYPE (FEATURE_ID, NAME) VALUES (?, ?)";
+        String sql = "INSERT INTO " + getTableName("FACILITY_FEATURE_TYPE") + " (FEATURE_ID, NAME) VALUES (?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (facilityFeatureType.getFeatureId() == null) {
@@ -40,7 +38,7 @@ public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
 
     @Override
     public FacilityFeatureType get(int id) throws SQLException {
-        String sql = "SELECT FEATURE_ID, NAME FROM FACILITY_FEATURE_TYPE WHERE FEATURE_ID = ?";
+        String sql = "SELECT FEATURE_ID, NAME FROM " + getTableName("FACILITY_FEATURE_TYPE") + " WHERE FEATURE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -58,7 +56,7 @@ public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
     @Override
     public List<FacilityFeatureType> getAll() throws SQLException {
         List<FacilityFeatureType> facilityFeatureTypes = new ArrayList<>();
-        String sql = "SELECT FEATURE_ID, NAME FROM FACILITY_FEATURE_TYPE ORDER BY FEATURE_ID";
+        String sql = "SELECT FEATURE_ID, NAME FROM " + getTableName("FACILITY_FEATURE_TYPE") + " ORDER BY FEATURE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -73,7 +71,7 @@ public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
 
     @Override
     public void update(FacilityFeatureType facilityFeatureType) throws SQLException {
-        String sql = "UPDATE FACILITY_FEATURE_TYPE SET NAME = ? WHERE FEATURE_ID = ?";
+        String sql = "UPDATE " + getTableName("FACILITY_FEATURE_TYPE") + " SET NAME = ? WHERE FEATURE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, facilityFeatureType.getName());
@@ -85,7 +83,7 @@ public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM FACILITY_FEATURE_TYPE WHERE FEATURE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("FACILITY_FEATURE_TYPE") + " WHERE FEATURE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -95,7 +93,7 @@ public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
 
     @Override
     public FacilityFeatureType getByName(String name) throws SQLException {
-        String sql = "SELECT FEATURE_ID, NAME FROM FACILITY_FEATURE_TYPE WHERE NAME = ?";
+        String sql = "SELECT FEATURE_ID, NAME FROM " + getTableName("FACILITY_FEATURE_TYPE") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -110,8 +108,24 @@ public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
         return null;
     }
 
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("FACILITY_FEATURE_TYPE") + " WHERE FEATURE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(FEATURE_ID), 0) + 1 AS NEXT_ID FROM FACILITY_FEATURE_TYPE";
+        String sql = "SELECT NVL(MAX(FEATURE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("FACILITY_FEATURE_TYPE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -131,4 +145,5 @@ public class FacilityFeatureTypeDAOImpl implements FacilityFeatureTypeDAO {
         );
     }
 }
+
 

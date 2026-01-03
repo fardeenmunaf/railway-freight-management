@@ -1,23 +1,21 @@
 package app.db.dao.order;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Order;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderDAOImpl implements OrderDAO {
-
-    private final Connection connection;
+public class OrderDAOImpl extends BaseDAOImpl implements OrderDAO {
 
     public OrderDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Order order) throws SQLException {
-        String sql = "INSERT INTO \"ORDER\" (ORDER_ID, STATUS, PRIORITY, DUE_DATE, CREATED_AT) " +
+        String sql = "INSERT INTO " + getTableName("\"ORDER\"") + " (ORDER_ID, STATUS, PRIORITY, DUE_DATE, CREATED_AT) " +
                      "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -41,7 +39,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public Order get(int id) throws SQLException {
-        String sql = "SELECT * FROM \"ORDER\" WHERE ORDER_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("\"ORDER\"") + " WHERE ORDER_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -58,7 +56,7 @@ public class OrderDAOImpl implements OrderDAO {
     @Override
     public List<Order> getAll() throws SQLException {
         List<Order> orders = new ArrayList<>();
-        String sql = "SELECT * FROM \"ORDER\" ORDER BY ORDER_ID";
+        String sql = "SELECT * FROM " + getTableName("\"ORDER\"") + " ORDER BY ORDER_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -71,7 +69,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public void update(Order order) throws SQLException {
-        String sql = "UPDATE \"ORDER\" SET STATUS = ?, PRIORITY = ?, DUE_DATE = ? WHERE ORDER_ID = ?";
+        String sql = "UPDATE " + getTableName("\"ORDER\"") + " SET STATUS = ?, PRIORITY = ?, DUE_DATE = ? WHERE ORDER_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, order.getStatus());
@@ -91,7 +89,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM \"ORDER\" WHERE ORDER_ID = ?";
+        String sql = "DELETE FROM " + getTableName("\"ORDER\"") + " WHERE ORDER_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -102,7 +100,7 @@ public class OrderDAOImpl implements OrderDAO {
     @Override
     public List<Order> getByStatus(String status) throws SQLException {
         List<Order> orders = new ArrayList<>();
-        String sql = "SELECT * FROM \"ORDER\" WHERE STATUS = ? ORDER BY ORDER_ID";
+        String sql = "SELECT * FROM " + getTableName("\"ORDER\"") + " WHERE STATUS = ? ORDER BY ORDER_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, status);
@@ -119,7 +117,7 @@ public class OrderDAOImpl implements OrderDAO {
     @Override
     public List<Order> getByPriority(int priority) throws SQLException {
         List<Order> orders = new ArrayList<>();
-        String sql = "SELECT * FROM \"ORDER\" WHERE PRIORITY = ? ORDER BY ORDER_ID";
+        String sql = "SELECT * FROM " + getTableName("\"ORDER\"") + " WHERE PRIORITY = ? ORDER BY ORDER_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, priority);
@@ -135,7 +133,7 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM \"ORDER\" WHERE ORDER_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("\"ORDER\"") + " WHERE ORDER_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -157,7 +155,7 @@ public class OrderDAOImpl implements OrderDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(ORDER_ID), 0) + 1 AS NEXT_ID FROM \"ORDER\"";
+        String sql = "SELECT NVL(MAX(ORDER_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("\"ORDER\"");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -181,4 +179,3 @@ public class OrderDAOImpl implements OrderDAO {
         return new Order();
     }
 }
-

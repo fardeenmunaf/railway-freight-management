@@ -1,6 +1,6 @@
 package app.db.dao.facilitytype;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.FacilityType;
 
 import java.sql.*;
@@ -14,17 +14,15 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class FacilityTypeDAOImpl implements FacilityTypeDAO {
-
-    private final Connection connection;
+public class FacilityTypeDAOImpl extends BaseDAOImpl implements FacilityTypeDAO {
 
     public FacilityTypeDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(FacilityType facilityType) throws SQLException {
-        String sql = "INSERT INTO FACILITY_TYPE (FACILITY_TYPE_ID, NAME) VALUES (?, ?)";
+        String sql = "INSERT INTO " + getTableName("FACILITY_TYPE") + " (FACILITY_TYPE_ID, NAME) VALUES (?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (facilityType.getFacilityTypeId() == null) {
@@ -40,7 +38,7 @@ public class FacilityTypeDAOImpl implements FacilityTypeDAO {
 
     @Override
     public FacilityType get(int id) throws SQLException {
-        String sql = "SELECT FACILITY_TYPE_ID, NAME FROM FACILITY_TYPE WHERE FACILITY_TYPE_ID = ?";
+        String sql = "SELECT FACILITY_TYPE_ID, NAME FROM " + getTableName("FACILITY_TYPE") + " WHERE FACILITY_TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -58,7 +56,7 @@ public class FacilityTypeDAOImpl implements FacilityTypeDAO {
     @Override
     public List<FacilityType> getAll() throws SQLException {
         List<FacilityType> facilityTypes = new ArrayList<>();
-        String sql = "SELECT FACILITY_TYPE_ID, NAME FROM FACILITY_TYPE ORDER BY FACILITY_TYPE_ID";
+        String sql = "SELECT FACILITY_TYPE_ID, NAME FROM " + getTableName("FACILITY_TYPE") + " ORDER BY FACILITY_TYPE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -73,7 +71,7 @@ public class FacilityTypeDAOImpl implements FacilityTypeDAO {
 
     @Override
     public void update(FacilityType facilityType) throws SQLException {
-        String sql = "UPDATE FACILITY_TYPE SET NAME = ? WHERE FACILITY_TYPE_ID = ?";
+        String sql = "UPDATE " + getTableName("FACILITY_TYPE") + " SET NAME = ? WHERE FACILITY_TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, facilityType.getName());
@@ -85,7 +83,7 @@ public class FacilityTypeDAOImpl implements FacilityTypeDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM FACILITY_TYPE WHERE FACILITY_TYPE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("FACILITY_TYPE") + " WHERE FACILITY_TYPE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -95,7 +93,7 @@ public class FacilityTypeDAOImpl implements FacilityTypeDAO {
 
     @Override
     public FacilityType getByName(String name) throws SQLException {
-        String sql = "SELECT FACILITY_TYPE_ID, NAME FROM FACILITY_TYPE WHERE NAME = ?";
+        String sql = "SELECT FACILITY_TYPE_ID, NAME FROM " + getTableName("FACILITY_TYPE") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -110,8 +108,24 @@ public class FacilityTypeDAOImpl implements FacilityTypeDAO {
         return null;
     }
 
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("FACILITY_TYPE") + " WHERE FACILITY_TYPE_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(FACILITY_TYPE_ID), 0) + 1 AS NEXT_ID FROM FACILITY_TYPE";
+        String sql = "SELECT NVL(MAX(FACILITY_TYPE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("FACILITY_TYPE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -131,4 +145,5 @@ public class FacilityTypeDAOImpl implements FacilityTypeDAO {
         );
     }
 }
+
 

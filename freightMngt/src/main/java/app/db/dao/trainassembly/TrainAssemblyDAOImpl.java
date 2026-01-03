@@ -1,6 +1,7 @@
 package app.db.dao.trainassembly;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
+
 import java.sql.*;
 
 /**
@@ -10,15 +11,13 @@ import java.sql.*;
  * @author G113 2DK
  * @version 1.0
  */
-public class TrainAssemblyDAOImpl implements TrainAssemblyDAO {
-
-    private final Connection connection;
+public class TrainAssemblyDAOImpl extends BaseDAOImpl implements TrainAssemblyDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public TrainAssemblyDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -58,4 +57,5 @@ public class TrainAssemblyDAOImpl implements TrainAssemblyDAO {
         }
     }
 }
+
 

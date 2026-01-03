@@ -1,6 +1,6 @@
 package app.db.dao.wagontype;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.WagonType;
 
 import java.sql.*;
@@ -14,12 +14,10 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class WagonTypeDAOImpl implements WagonTypeDAO {
-
-    private final Connection connection;
+public class WagonTypeDAOImpl extends BaseDAOImpl implements WagonTypeDAO {
 
     public WagonTypeDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -131,4 +129,3 @@ public class WagonTypeDAOImpl implements WagonTypeDAO {
         );
     }
 }
-

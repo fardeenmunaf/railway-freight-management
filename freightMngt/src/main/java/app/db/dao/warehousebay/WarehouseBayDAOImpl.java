@@ -1,13 +1,18 @@
 package app.db.dao.warehousebay;
+
 import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.WarehouseBay;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WarehouseBayDAOImpl implements WarehouseBayDAO {
-    private final Connection connection;
-    public WarehouseBayDAOImpl() { this.connection = DatabaseConnection.getInstance().getConnection(); }
+public class WarehouseBayDAOImpl extends BaseDAOImpl implements WarehouseBayDAO {
+
+    public WarehouseBayDAOImpl() {
+        super();
+    }
 
     @Override
     public void create(WarehouseBay bay) throws SQLException {

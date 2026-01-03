@@ -1,6 +1,6 @@
 package app.db.dao.facility;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Facility;
 import app.model.FacilityType;
 
@@ -15,17 +15,15 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class FacilityDAOImpl implements FacilityDAO {
-
-    private final Connection connection;
+public class FacilityDAOImpl extends BaseDAOImpl implements FacilityDAO {
 
     public FacilityDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Facility facility) throws SQLException {
-        String sql = "INSERT INTO FACILITY (FACILITY_ID, NAME, FACILITY_TYPE_ID, LAT, LON, IS_INTERMODAL) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("FACILITY") + " (FACILITY_ID, NAME, FACILITY_TYPE_ID, LAT, LON, IS_INTERMODAL) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (facility.getFacilityId() == null) {
@@ -53,8 +51,8 @@ public class FacilityDAOImpl implements FacilityDAO {
     public Facility get(int id) throws SQLException {
         String sql = "SELECT f.FACILITY_ID, f.NAME, f.LAT, f.LON, f.IS_INTERMODAL, " +
                      "ft.FACILITY_TYPE_ID, ft.NAME as TYPE_NAME " +
-                     "FROM FACILITY f " +
-                     "LEFT JOIN FACILITY_TYPE ft ON f.FACILITY_TYPE_ID = ft.FACILITY_TYPE_ID " +
+                     "FROM " + getTableName("FACILITY") + " f " +
+                     "LEFT JOIN " + getTableName("FACILITY_TYPE") + " ft ON f.FACILITY_TYPE_ID = ft.FACILITY_TYPE_ID " +
                      "WHERE f.FACILITY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -75,8 +73,8 @@ public class FacilityDAOImpl implements FacilityDAO {
         List<Facility> facilities = new ArrayList<>();
         String sql = "SELECT f.FACILITY_ID, f.NAME, f.LAT, f.LON, f.IS_INTERMODAL, " +
                      "ft.FACILITY_TYPE_ID, ft.NAME as TYPE_NAME " +
-                     "FROM FACILITY f " +
-                     "LEFT JOIN FACILITY_TYPE ft ON f.FACILITY_TYPE_ID = ft.FACILITY_TYPE_ID " +
+                     "FROM " + getTableName("FACILITY") + " f " +
+                     "LEFT JOIN " + getTableName("FACILITY_TYPE") + " ft ON f.FACILITY_TYPE_ID = ft.FACILITY_TYPE_ID " +
                      "ORDER BY f.FACILITY_ID";
 
         try (Statement stmt = connection.createStatement();
@@ -92,7 +90,7 @@ public class FacilityDAOImpl implements FacilityDAO {
 
     @Override
     public void update(Facility facility) throws SQLException {
-        String sql = "UPDATE FACILITY SET NAME = ?, FACILITY_TYPE_ID = ?, LAT = ?, LON = ?, IS_INTERMODAL = ? WHERE FACILITY_ID = ?";
+        String sql = "UPDATE " + getTableName("FACILITY") + " SET NAME = ?, FACILITY_TYPE_ID = ?, LAT = ?, LON = ?, IS_INTERMODAL = ? WHERE FACILITY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, facility.getName());
@@ -114,7 +112,7 @@ public class FacilityDAOImpl implements FacilityDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM FACILITY WHERE FACILITY_ID = ?";
+        String sql = "DELETE FROM " + getTableName("FACILITY") + " WHERE FACILITY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -127,8 +125,8 @@ public class FacilityDAOImpl implements FacilityDAO {
         List<Facility> facilities = new ArrayList<>();
         String sql = "SELECT f.FACILITY_ID, f.NAME, f.LAT, f.LON, f.IS_INTERMODAL, " +
                      "ft.FACILITY_TYPE_ID, ft.NAME as TYPE_NAME " +
-                     "FROM FACILITY f " +
-                     "LEFT JOIN FACILITY_TYPE ft ON f.FACILITY_TYPE_ID = ft.FACILITY_TYPE_ID " +
+                     "FROM " + getTableName("FACILITY") + " f " +
+                     "LEFT JOIN " + getTableName("FACILITY_TYPE") + " ft ON f.FACILITY_TYPE_ID = ft.FACILITY_TYPE_ID " +
                      "WHERE f.IS_INTERMODAL = ? " +
                      "ORDER BY f.FACILITY_ID";
 
@@ -146,7 +144,7 @@ public class FacilityDAOImpl implements FacilityDAO {
     }
 
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(FACILITY_ID), 0) + 1 AS NEXT_ID FROM FACILITY";
+        String sql = "SELECT NVL(MAX(FACILITY_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("FACILITY");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -178,4 +176,5 @@ public class FacilityDAOImpl implements FacilityDAO {
         );
     }
 }
+
 

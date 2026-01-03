@@ -1,6 +1,6 @@
 package app.db.dao.servicelocomotive;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.ServiceLocomotive;
 import app.model.TrainService;
 import app.model.Locomotive;
@@ -16,15 +16,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class ServiceLocomotiveDAOImpl implements ServiceLocomotiveDAO {
-
-    private final Connection connection;
+public class ServiceLocomotiveDAOImpl extends BaseDAOImpl implements ServiceLocomotiveDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public ServiceLocomotiveDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -204,7 +202,7 @@ public class ServiceLocomotiveDAOImpl implements ServiceLocomotiveDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(SERVICE_LOCOMOTIVE_ID), 0) + 1 AS NEXT_ID FROM SERVICE_LOCOMOTIVE";
+        String sql = "SELECT NVL(MAX(SERVICE_LOCOMOTIVE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("SERVICE_LOCOMOTIVE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

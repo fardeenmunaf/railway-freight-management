@@ -1,6 +1,7 @@
 package app.db.dao.warehouseaisle;
 
 import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.WarehouseAisle;
 import app.model.Warehouse;
 
@@ -15,15 +16,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class WarehouseAisleDAOImpl implements WarehouseAisleDAO {
-
-    private final Connection connection;
+public class WarehouseAisleDAOImpl extends BaseDAOImpl implements WarehouseAisleDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public WarehouseAisleDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -221,4 +220,3 @@ public class WarehouseAisleDAOImpl implements WarehouseAisleDAO {
         return aisle;
     }
 }
-

@@ -1,6 +1,6 @@
 package app.db.dao.trainstop;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.TrainStop;
 import app.model.TrainService;
 import app.model.Facility;
@@ -18,15 +18,13 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class TrainStopDAOImpl implements TrainStopDAO {
-
-    private final Connection connection;
+public class TrainStopDAOImpl extends BaseDAOImpl implements TrainStopDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public TrainStopDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
@@ -310,7 +308,7 @@ public class TrainStopDAOImpl implements TrainStopDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(TRAIN_STOP_ID), 0) + 1 AS NEXT_ID FROM TRAIN_STOP";
+        String sql = "SELECT NVL(MAX(STOP_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("TRAIN_STOP");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

@@ -1,10 +1,9 @@
 package app.db.dao.qainspection;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.QaInspection;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,21 +14,20 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class QaInspectionDAOImpl implements QaInspectionDAO {
-
-    private final Connection connection;
+public class QaInspectionDAOImpl extends BaseDAOImpl implements QaInspectionDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public QaInspectionDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(QaInspection inspection) throws SQLException {
-        String sql = "INSERT INTO QA_INSPECTION (QA_ID, RETURN_LINE_ID, STATUS, INSPECTED_AT) " +
-                     "VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("QA_INSPECTION") +
+                     " (INSPECTION_ID, LOT_ID, INSPECTOR_ID, INSPECTION_DATE, RESULT, NOTES) " +
+                     "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (inspection.getQaId() == null) {
@@ -58,7 +56,7 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
 
     @Override
     public QaInspection get(int id) throws SQLException {
-        String sql = "SELECT * FROM QA_INSPECTION WHERE QA_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("QA_INSPECTION") + " WHERE INSPECTION_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -75,7 +73,7 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
     @Override
     public List<QaInspection> getAll() throws SQLException {
         List<QaInspection> inspections = new ArrayList<>();
-        String sql = "SELECT * FROM QA_INSPECTION ORDER BY QA_ID";
+        String sql = "SELECT * FROM " + getTableName("QA_INSPECTION") + " ORDER BY INSPECTION_DATE DESC";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -88,8 +86,9 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
 
     @Override
     public void update(QaInspection inspection) throws SQLException {
-        String sql = "UPDATE QA_INSPECTION SET RETURN_LINE_ID = ?, STATUS = ?, INSPECTED_AT = ? " +
-                     "WHERE QA_ID = ?";
+        String sql = "UPDATE " + getTableName("QA_INSPECTION") +
+                     " SET LOT_ID = ?, INSPECTOR_ID = ?, INSPECTION_DATE = ?, RESULT = ?, NOTES = ? " +
+                     "WHERE INSPECTION_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (inspection.getReturnLineId() != null) {
@@ -114,7 +113,7 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM QA_INSPECTION WHERE QA_ID = ?";
+        String sql = "DELETE FROM " + getTableName("QA_INSPECTION") + " WHERE INSPECTION_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -122,13 +121,13 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
         }
     }
 
-    @Override
-    public List<QaInspection> getByReturnLine(int returnLineId) throws SQLException {
+    public List<QaInspection> getByLot(int lotId) throws SQLException {
         List<QaInspection> inspections = new ArrayList<>();
-        String sql = "SELECT * FROM QA_INSPECTION WHERE RETURN_LINE_ID = ? ORDER BY QA_ID";
+        String sql = "SELECT * FROM " + getTableName("QA_INSPECTION") +
+                     " WHERE LOT_ID = ? ORDER BY INSPECTION_DATE DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, returnLineId);
+            pstmt.setInt(1, lotId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -139,13 +138,13 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
         return inspections;
     }
 
-    @Override
-    public List<QaInspection> getByStatus(String status) throws SQLException {
+    public List<QaInspection> getByInspector(int inspectorId) throws SQLException {
         List<QaInspection> inspections = new ArrayList<>();
-        String sql = "SELECT * FROM QA_INSPECTION WHERE STATUS = ? ORDER BY QA_ID";
+        String sql = "SELECT * FROM " + getTableName("QA_INSPECTION") +
+                     " WHERE INSPECTOR_ID = ? ORDER BY INSPECTION_DATE DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, status);
+            pstmt.setInt(1, inspectorId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -158,7 +157,7 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM QA_INSPECTION WHERE QA_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("QA_INSPECTION") + " WHERE INSPECTION_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -180,7 +179,7 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(QA_ID), 0) + 1 AS NEXT_ID FROM QA_INSPECTION";
+        String sql = "SELECT NVL(MAX(INSPECTION_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("QA_INSPECTION");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -215,6 +214,42 @@ public class QaInspectionDAOImpl implements QaInspectionDAO {
         }
 
         return inspection;
+    }
+
+    @Override
+    public List<QaInspection> getByReturnLine(int returnLineId) throws SQLException {
+        List<QaInspection> inspections = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("QA_INSPECTION") +
+                     " WHERE RETURN_LINE_ID = ? ORDER BY INSPECTED_AT DESC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, returnLineId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    inspections.add(mapResultSetToQaInspection(rs));
+                }
+            }
+        }
+        return inspections;
+    }
+
+    @Override
+    public List<QaInspection> getByStatus(String status) throws SQLException {
+        List<QaInspection> inspections = new ArrayList<>();
+        String sql = "SELECT * FROM " + getTableName("QA_INSPECTION") +
+                     " WHERE STATUS = ? ORDER BY INSPECTED_AT DESC";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, status);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    inspections.add(mapResultSetToQaInspection(rs));
+                }
+            }
+        }
+        return inspections;
     }
 }
 
