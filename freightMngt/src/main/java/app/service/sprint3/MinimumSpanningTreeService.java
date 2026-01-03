@@ -1,5 +1,6 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.utils.graph.Edge;
 import app.utils.graph.Graph;
@@ -25,12 +26,12 @@ public class MinimumSpanningTreeService {
      * Result of MST computation containing the MST graph and metadata.
      */
     public static class MSTResult {
-        private final Graph<Station, Double> mstGraph;
+        private final Graph<Station, EdgeData> mstGraph;
         private final double totalDistance;
         private final List<List<Station>> connectedComponents;
         private final String timeComplexity;
 
-        public MSTResult(Graph<Station, Double> mstGraph, double totalDistance,
+        public MSTResult(Graph<Station, EdgeData> mstGraph, double totalDistance,
                         List<List<Station>> connectedComponents, String timeComplexity) {
             this.mstGraph = mstGraph;
             this.totalDistance = totalDistance;
@@ -38,7 +39,7 @@ public class MinimumSpanningTreeService {
             this.timeComplexity = timeComplexity;
         }
 
-        public Graph<Station, Double> getMstGraph() { return mstGraph; }
+        public Graph<Station, EdgeData> getMstGraph() { return mstGraph; }
         public double getTotalDistance() { return totalDistance; }
         public List<List<Station>> getConnectedComponents() { return connectedComponents; }
         public String getTimeComplexity() { return timeComplexity; }
@@ -96,10 +97,10 @@ public class MinimumSpanningTreeService {
      * Wrapper class to fix edge counting for undirected graphs.
      * MapGraph counts each undirected edge twice (A->B and B->A), but tests expect logical count.
      */
-    private static class MSTGraphWrapper implements Graph<Station, Double> {
-        private final Graph<Station, Double> innerGraph;
+    private static class MSTGraphWrapper implements Graph<Station, EdgeData> {
+        private final Graph<Station, EdgeData> innerGraph;
 
-        public MSTGraphWrapper(Graph<Station, Double> graph) {
+        public MSTGraphWrapper(Graph<Station, EdgeData> graph) {
             this.innerGraph = graph;
         }
 
@@ -150,17 +151,17 @@ public class MinimumSpanningTreeService {
         }
 
         @Override
-        public Collection<Edge<Station, Double>> edges() {
+        public Collection<Edge<Station, EdgeData>> edges() {
             return innerGraph.edges();
         }
 
         @Override
-        public Edge<Station, Double> edge(Station vOrig, Station vDest) {
+        public Edge<Station, EdgeData> edge(Station vOrig, Station vDest) {
             return innerGraph.edge(vOrig, vDest);
         }
 
         @Override
-        public Edge<Station, Double> edge(int vOrigKey, int vDestKey) {
+        public Edge<Station, EdgeData> edge(int vOrigKey, int vDestKey) {
             return innerGraph.edge(vOrigKey, vDestKey);
         }
 
@@ -175,12 +176,12 @@ public class MinimumSpanningTreeService {
         }
 
         @Override
-        public Collection<Edge<Station, Double>> outgoingEdges(Station vert) {
+        public Collection<Edge<Station, EdgeData>> outgoingEdges(Station vert) {
             return innerGraph.outgoingEdges(vert);
         }
 
         @Override
-        public Collection<Edge<Station, Double>> incomingEdges(Station vert) {
+        public Collection<Edge<Station, EdgeData>> incomingEdges(Station vert) {
             return innerGraph.incomingEdges(vert);
         }
 
@@ -190,7 +191,7 @@ public class MinimumSpanningTreeService {
         }
 
         @Override
-        public boolean addEdge(Station vOrig, Station vDest, Double weight) {
+        public boolean addEdge(Station vOrig, Station vDest, EdgeData weight) {
             return innerGraph.addEdge(vOrig, vDest, weight);
         }
 
@@ -205,7 +206,7 @@ public class MinimumSpanningTreeService {
         }
 
         @Override
-        public Graph<Station, Double> clone() {
+        public Graph<Station, EdgeData> clone() {
             return new MSTGraphWrapper(innerGraph.clone());
         }
 
@@ -225,7 +226,7 @@ public class MinimumSpanningTreeService {
      * @return MSTResult containing the MST graph and metadata
      * @throws IllegalArgumentException if graph is null or directed
      */
-    public MSTResult computeMST(Graph<Station, Double> graph) {
+    public MSTResult computeMST(Graph<Station, EdgeData> graph) {
         if (graph == null) {
             throw new IllegalArgumentException("Graph cannot be null");
         }
@@ -234,7 +235,7 @@ public class MinimumSpanningTreeService {
         }
 
         // Create MST graph (undirected)
-        Graph<Station, Double> mstGraph = new MapGraph<>(false);
+        Graph<Station, EdgeData> mstGraph = new MapGraph<>(false);
 
         // Add all vertices to MST graph
         for (Station station : graph.vertices()) {
@@ -243,13 +244,13 @@ public class MinimumSpanningTreeService {
 
         // Handle empty graph
         if (graph.numVertices() == 0) {
-            return new MSTResult(new MSTGraphWrapper(mstGraph), 0.0, new ArrayList<>(), "O(E log V)");
+            return new MSTResult(mstGraph, 0.0, new ArrayList<>(), "O(E log V)");
         }
 
-        // Get all edges and sort by weight
-        List<Edge<Station, Double>> edges = new ArrayList<>(graph.edges());
-        edges.removeIf(edge -> edge.getWeight() == null); // Remove null weights
-        edges.sort(Comparator.comparing(Edge::getWeight));
+        // Get all edges and sort by distance
+        List<Edge<Station, EdgeData>> edges = new ArrayList<>(graph.edges());
+        edges.removeIf(edge -> edge.getWeight() == null);
+        edges.sort(Comparator.comparing(edge -> edge.getWeight().getDistance()));
 
         // Initialize Union-Find
         UnionFind<Station> uf = new UnionFind<>();
@@ -262,13 +263,13 @@ public class MinimumSpanningTreeService {
         int edgesAdded = 0;
         int maxPossibleEdges = graph.numVertices() - 1; // For a connected graph
 
-        for (Edge<Station, Double> edge : edges) {
+        for (Edge<Station, EdgeData> edge : edges) {
             Station u = edge.getVOrig();
             Station v = edge.getVDest();
 
             if (uf.union(u, v)) {
                 mstGraph.addEdge(u, v, edge.getWeight());
-                totalDistance += edge.getWeight();
+                totalDistance += edge.getWeight().getDistance();
                 edgesAdded++;
 
                 // Early termination if we have a spanning tree for all vertices
@@ -281,10 +282,7 @@ public class MinimumSpanningTreeService {
         // Find connected components
         List<List<Station>> components = findConnectedComponents(mstGraph);
 
-        // Wrap the MST graph to fix edge counting for tests
-        Graph<Station, Double> wrappedMstGraph = new MSTGraphWrapper(mstGraph);
-
-        return new MSTResult(wrappedMstGraph, totalDistance, components, "O(E log V)");
+        return new MSTResult(mstGraph, totalDistance, components, "O(E log V)");
     }
 
     /**
@@ -293,7 +291,7 @@ public class MinimumSpanningTreeService {
      * @param graph the graph to analyze
      * @return list of connected components, each component is a list of stations
      */
-    private List<List<Station>> findConnectedComponents(Graph<Station, Double> graph) {
+    private List<List<Station>> findConnectedComponents(Graph<Station, EdgeData> graph) {
         List<List<Station>> components = new ArrayList<>();
         Set<Station> visited = new HashSet<>();
 
@@ -311,7 +309,7 @@ public class MinimumSpanningTreeService {
     /**
      * DFS helper for finding connected components.
      */
-    private void dfsComponent(Graph<Station, Double> graph, Station station,
+    private void dfsComponent(Graph<Station, EdgeData> graph, Station station,
                             Set<Station> visited, List<Station> component) {
         visited.add(station);
         component.add(station);

@@ -1,5 +1,6 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.utils.graph.Edge;
 import app.utils.graph.Graph;
@@ -52,7 +53,7 @@ public class MSTDotExportService {
      * @return ExportResult containing export information
      * @throws IOException if file operations fail
      */
-    public ExportResult exportMSTToDot(Graph<Station, Double> mstGraph, String outputPath, boolean generateSvg) throws IOException {
+    public ExportResult exportMSTToDot(Graph<Station, EdgeData> mstGraph, String outputPath, boolean generateSvg) throws IOException {
         if (mstGraph == null) {
             throw new IllegalArgumentException("MST graph cannot be null");
         }
@@ -101,7 +102,7 @@ public class MSTDotExportService {
      * @param mstGraph the MST graph
      * @return DOT format string
      */
-    private String generateDotContent(Graph<Station, Double> mstGraph) {
+    private String generateDotContent(Graph<Station, EdgeData> mstGraph) {
         StringBuilder dot = new StringBuilder();
 
         // DOT header for undirected graph
@@ -129,16 +130,17 @@ public class MSTDotExportService {
 
         dot.append("\n");
 
-        // Add edges with weights
-        Collection<Edge<Station, Double>> edges = mstGraph.edges();
-        for (Edge<Station, Double> edge : edges) {
+        // Add edges with weights (extract distance from EdgeData)
+        Collection<Edge<Station, EdgeData>> edges = mstGraph.edges();
+        for (Edge<Station, EdgeData> edge : edges) {
             String origName = escapeStationName(edge.getVOrig());
             String destName = escapeStationName(edge.getVDest());
 
             dot.append("  \"").append(origName).append("\" -- \"").append(destName).append("\"");
 
             if (edge.getWeight() != null) {
-                dot.append(" [label=\"").append(String.format("%.2f", edge.getWeight())).append("\"]");
+                double distance = edge.getWeight().getDistance();
+                dot.append(" [label=\"").append(String.format("%.2f", distance)).append("\"]");
             }
 
             dot.append(";\n");

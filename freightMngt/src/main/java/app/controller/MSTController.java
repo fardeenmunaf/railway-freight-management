@@ -1,5 +1,6 @@
 package app.controller;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.service.sprint3.MinimumSpanningTreeService;
 import app.service.sprint3.MSTDotExportService;
@@ -44,7 +45,7 @@ public class MSTController {
      * @param stationGraph the input undirected graph
      * @return MST computation result
      */
-    public MinimumSpanningTreeService.MSTResult computeMinimumSpanningTree(Graph<Station, Double> stationGraph) {
+    public MinimumSpanningTreeService.MSTResult computeMinimumSpanningTree(Graph<Station, EdgeData> stationGraph) {
         if (stationGraph == null) {
             throw new IllegalArgumentException("Station graph cannot be null");
         }
@@ -82,7 +83,7 @@ public class MSTController {
      * @return combined result with MST data and export information
      * @throws IOException if export operations fail
      */
-    public WorkflowResult computeAndExportMST(Graph<Station, Double> stationGraph,
+    public WorkflowResult computeAndExportMST(Graph<Station, EdgeData> stationGraph,
                                             String outputPath,
                                             boolean generateSvg) throws IOException {
 

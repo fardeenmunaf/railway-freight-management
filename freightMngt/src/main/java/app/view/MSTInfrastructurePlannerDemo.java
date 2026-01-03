@@ -1,6 +1,7 @@
 package app.view;
 
 import app.controller.MSTController;
+import app.model.EdgeData;
 import app.model.Station;
 import app.service.sprint3.StationLoaderService;
 import app.service.sprint3.MSTValidationService;
@@ -9,7 +10,6 @@ import app.utils.graph.Graph;
 import app.utils.graph.map.MapGraph;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * User Interface / Demonstration for MST (Minimum Spanning Tree) Infrastructure Planning.
@@ -38,9 +38,9 @@ public class MSTInfrastructurePlannerDemo {
     private final StationLoaderService loaderService;
     private final MSTValidationService validationService;
 
-    public MSTInfrastructurePlannerDemo() {
+    public MSTInfrastructurePlannerDemo() throws IOException {
         this.controller = new MSTController();
-        this.loaderService = new StationLoaderService();
+        this.loaderService = StationLoaderService.getInstance();
         this.validationService = new MSTValidationService();
     }
 
@@ -71,7 +71,7 @@ public class MSTInfrastructurePlannerDemo {
         System.out.println("--- Scenario 1: Belgian Railway Network (Minimal Backbone) ---\n");
 
         // Load network from CSV
-        Graph<Station, Double> network = loaderService.loadNetwork(
+        Graph<Station, EdgeData> network = loaderService.loadNetwork(
             "src/main/java/app/sampleDataset/stations.csv",
             "src/main/java/app/sampleDataset/lines.csv"
         );
@@ -101,13 +101,13 @@ public class MSTInfrastructurePlannerDemo {
         System.out.println("--- Scenario 2: Disconnected Regional Networks ---\n");
 
         // Load full network
-        Graph<Station, Double> fullNetwork = loaderService.loadNetwork(
+        Graph<Station, EdgeData> fullNetwork = loaderService.loadNetwork(
             "src/main/java/app/sampleDataset/stations.csv",
             "src/main/java/app/sampleDataset/lines.csv"
         );
 
         // Create subset with limited connections
-        Graph<Station, Double> subset = createLimitedSubset(fullNetwork, 10, 4);
+        Graph<Station, EdgeData> subset = createLimitedSubset(fullNetwork, 10, 4);
 
         System.out.println("Subset network: " + subset.numVertices() + " stations, " +
                           subset.numEdges() + " connections\n");
@@ -126,14 +126,15 @@ public class MSTInfrastructurePlannerDemo {
     public void demonstrateIsolatedStations() throws IOException {
         System.out.println("--- Scenario 3: Isolated Stations (No Edges) ---\n");
 
-        // Load stations only
-        List<Station> stations = loaderService.loadStations(
-            "src/main/java/app/sampleDataset/stations.csv");
+        // Load full network first
+        Graph<Station, EdgeData> fullNetwork = loaderService.getNetwork();
 
         // Create graph with first 5 stations, no edges
-        Graph<Station, Double> isolatedGraph = new MapGraph<>(false);
-        for (int i = 0; i < Math.min(5, stations.size()); i++) {
-            isolatedGraph.addVertex(stations.get(i));
+        Graph<Station, EdgeData> isolatedGraph = new MapGraph<>(false);
+        int count = 0;
+        for (Station station : fullNetwork.vertices()) {
+            if (count++ >= 5) break;
+            isolatedGraph.addVertex(station);
         }
 
         System.out.println("Isolated network: " + isolatedGraph.numVertices() + " stations, " +
@@ -151,9 +152,9 @@ public class MSTInfrastructurePlannerDemo {
      * Creates a limited subset of the network for testing disconnected components.
      * This is a helper method for demonstration purposes.
      */
-    private Graph<Station, Double> createLimitedSubset(Graph<Station, Double> fullNetwork,
+    private Graph<Station, EdgeData> createLimitedSubset(Graph<Station, EdgeData> fullNetwork,
                                                        int maxVertices, int maxEdgesPerVertex) {
-        Graph<Station, Double> subset = new MapGraph<>(false);
+        Graph<Station, EdgeData> subset = new MapGraph<>(false);
 
         // Add limited vertices
         int count = 0;
@@ -167,11 +168,11 @@ public class MSTInfrastructurePlannerDemo {
             int edgeCount = 0;
             for (Station adj : fullNetwork.adjVertices(station)) {
                 if (subset.validVertex(adj) && edgeCount++ < maxEdgesPerVertex) {
-                    Edge<Station, Double> existingEdge = subset.edge(station, adj);
+                    Edge<Station, EdgeData> existingEdge = subset.edge(station, adj);
                     if (existingEdge == null) {
-                        Double weight = fullNetwork.edge(station, adj).getWeight();
-                        if (weight != null) {
-                            subset.addEdge(station, adj, weight);
+                        EdgeData edgeData = fullNetwork.edge(station, adj).getWeight();
+                        if (edgeData != null) {
+                            subset.addEdge(station, adj, edgeData);
                         }
                     }
                 }
