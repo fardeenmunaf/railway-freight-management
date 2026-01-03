@@ -5,6 +5,7 @@ import app.model.*;
 import app.repositories.CartRepository;
 import app.repositories.Repositories;
 import app.repositories.WarehouseAisleRepository;
+import app.service.sprint3.StationLoaderService;
 import app.utils.CsvReader;
 
 import java.time.LocalDateTime;
@@ -414,8 +415,22 @@ public class AppInitializer implements Runnable {
                 continue;
             }
 
+            // Attempt to read an explicit station id from the CSV (common column names)
+            Integer parsedId = null;
+            String[] idCandidates = {"station_id", "Station id", "Station Id", "StationID", "stid", "id", "stationid"};
+            for (String key : idCandidates) {
+                if (row.containsKey(key) && row.get(key) != null && !row.get(key).trim().isEmpty()) {
+                    try {
+                        parsedId = Integer.valueOf((int) Double.parseDouble(row.get(key).trim()));
+                        break;
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            int facilityIdToUse = (parsedId != null) ? parsedId : stationIdCounter;
+
             Station station = new Station(
-                    stationIdCounter,
+                    facilityIdToUse,
                     name,
                     stationType,
                     latitude,
@@ -430,7 +445,8 @@ public class AppInitializer implements Runnable {
             );
 
             repositories.getFacilityRepository().addFacility(station);
-            stationIdCounter++;
+            if (parsedId == null) stationIdCounter++;
+            else System.out.printf("Loaded station with explicit id %d: %s%n", facilityIdToUse, name);
         }
 
         System.out.printf("✅ Stations loaded: %d | ❌ Rejected: %d%n",
