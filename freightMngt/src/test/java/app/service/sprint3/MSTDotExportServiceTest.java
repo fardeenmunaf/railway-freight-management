@@ -1,5 +1,6 @@
 package app.service.sprint3;
 
+import app.model.EdgeData;
 import app.model.Station;
 import app.utils.graph.Graph;
 import app.utils.graph.map.MapGraph;
@@ -48,7 +49,7 @@ class MSTDotExportServiceTest {
         @DisplayName("Should generate valid DOT format for MST with XY coordinates")
         void testDotGenerationWithCoordinates() throws IOException {
             // Arrange
-            Graph<Station, Double> mst = createTestMSTWithCoordinates();
+            Graph<Station, EdgeData> mst = createTestMSTWithCoordinates();
             String outputPath = tempDir.resolve("test_mst").toString();
 
             // Act
@@ -78,7 +79,7 @@ class MSTDotExportServiceTest {
         @DisplayName("Should handle stations without coordinates")
         void testDotGenerationWithoutCoordinates() throws IOException {
             // Arrange
-            Graph<Station, Double> mst = createTestMSTWithoutCoordinates();
+            Graph<Station, EdgeData> mst = createTestMSTWithoutCoordinates();
             String outputPath = tempDir.resolve("test_mst_no_coords").toString();
 
             // Act
@@ -99,7 +100,7 @@ class MSTDotExportServiceTest {
         @DisplayName("Should generate DOT for empty MST")
         void testEmptyMSTDot() throws IOException {
             // Arrange
-            Graph<Station, Double> mst = new MapGraph<>(false);
+            Graph<Station, EdgeData> mst = new MapGraph<>(false);
             String outputPath = tempDir.resolve("empty_mst").toString();
 
             // Act
@@ -229,7 +230,7 @@ class MSTDotExportServiceTest {
         @DisplayName("Should handle invalid file paths gracefully")
         void testInvalidFilePath() {
             // Arrange
-            Graph<Station, Double> mst = new MapGraph<>(false);
+            Graph<Station, EdgeData> mst = new MapGraph<>(false);
             String invalidPath = "/invalid/path/that/does/not/exist/test";
 
             // Act & Assert - should throw IOException
@@ -242,14 +243,14 @@ class MSTDotExportServiceTest {
         @DisplayName("Should handle stations with null names")
         void testStationsWithNullNames() throws IOException {
             // Arrange
-            Graph<Station, Double> mst = new MapGraph<>(false);
+            Graph<Station, EdgeData> mst = new MapGraph<>(false);
             Station s1 = createStation(1, null, 1.0, 1.0); // null name
             Station s2 = new Station(); // all null
             s2.setFacilityId(2);
 
             mst.addVertex(s1);
             mst.addVertex(s2);
-            mst.addEdge(s1, s2, 5.0);
+            mst.addEdge(s1, s2, new EdgeData(5.0, 100, 10.0));
 
             String outputPath = tempDir.resolve("null_names").toString();
 
@@ -275,7 +276,7 @@ class MSTDotExportServiceTest {
         @DisplayName("Should attempt SVG generation when requested")
         void testSvgGenerationAttempt() throws IOException {
             // Arrange
-            Graph<Station, Double> mst = createTestMSTWithCoordinates();
+            Graph<Station, EdgeData> mst = createTestMSTWithCoordinates();
             String outputPath = tempDir.resolve("svg_test").toString();
 
             // Act - request SVG generation (may fail if neato not installed)
@@ -294,7 +295,7 @@ class MSTDotExportServiceTest {
         @DisplayName("Should not generate SVG when not requested")
         void testNoSvgGeneration() throws IOException {
             // Arrange
-            Graph<Station, Double> mst = createTestMSTWithCoordinates();
+            Graph<Station, EdgeData> mst = createTestMSTWithCoordinates();
             String outputPath = tempDir.resolve("no_svg_test").toString();
 
             // Act
@@ -309,8 +310,8 @@ class MSTDotExportServiceTest {
     /**
      * Helper method to create test MST with coordinates.
      */
-    private Graph<Station, Double> createTestMSTWithCoordinates() {
-        Graph<Station, Double> mst = new MapGraph<>(false);
+    private Graph<Station, EdgeData> createTestMSTWithCoordinates() {
+        Graph<Station, EdgeData> mst = new MapGraph<>(false);
 
         Station s1 = createStation(1, "StationA", 38.7169, -9.1395); // Lisbon coordinates
         Station s2 = createStation(2, "StationB", 41.1579, -8.6291); // Porto coordinates
@@ -320,8 +321,8 @@ class MSTDotExportServiceTest {
         mst.addVertex(s2);
         mst.addVertex(s3);
 
-        mst.addEdge(s1, s2, 275.0); // Approximate distance Lisbon-Porto
-        mst.addEdge(s2, s3, 120.0); // Approximate distance Porto-Coimbra
+        mst.addEdge(s1, s2, new EdgeData(275.0, 1000, 100.0)); // Approximate distance Lisbon-Porto
+        mst.addEdge(s2, s3, new EdgeData(120.0, 800, 50.0)); // Approximate distance Porto-Coimbra
 
         return mst;
     }
@@ -329,15 +330,15 @@ class MSTDotExportServiceTest {
     /**
      * Helper method to create test MST without coordinates.
      */
-    private Graph<Station, Double> createTestMSTWithoutCoordinates() {
-        Graph<Station, Double> mst = new MapGraph<>(false);
+    private Graph<Station, EdgeData> createTestMSTWithoutCoordinates() {
+        Graph<Station, EdgeData> mst = new MapGraph<>(false);
 
         Station s1 = createStation(1, "StationX", null, null);
         Station s2 = createStation(2, "StationY", null, null);
 
         mst.addVertex(s1);
         mst.addVertex(s2);
-        mst.addEdge(s1, s2, 100.0);
+        mst.addEdge(s1, s2, new EdgeData(100.0, 500, 25.0));
 
         return mst;
     }
