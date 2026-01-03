@@ -69,9 +69,11 @@ public class StationLoaderService {
      * A primeira linha (cabeçalho) é ignorada.
      *
      * @param filePath caminho completo para o ficheiro CSV de estações
+     * @return lista de estações carregadas
      * @throws IOException caso ocorra erro na leitura do ficheiro
      */
-    void loadStations(String filePath) throws IOException {
+    public List<Station> loadStations(String filePath) throws IOException {
+        List<Station> stations = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             boolean firstLine = true;
@@ -87,9 +89,11 @@ public class StationLoaderService {
                     station.setName(name);
                     stationMap.put(id, station);
                     graph.addVertex(station);
+                    stations.add(station);
                 } catch (NumberFormatException ignored) {}
             }
         }
+        return stations;
     }
 
     /**
@@ -143,6 +147,30 @@ public class StationLoaderService {
                 .sorted(Comparator.comparing(Station::getFacilityId))
                 .map(s -> String.format("ID: %d | %s", s.getFacilityId(), s.getName()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Retorna o grafo da rede ferroviária carregada.
+     *
+     * @return grafo não-direcionado com estações e suas conexões
+     */
+    public Graph<Station, Double> getNetwork() {
+        return graph;
+    }
+
+    /**
+     * Carrega a rede ferroviária completa dos ficheiros CSV especificados
+     * e retorna o grafo pronto para uso.
+     *
+     * @param stationsPath caminho para o ficheiro de estações
+     * @param linesPath caminho para o ficheiro de linhas/conexões
+     * @return grafo não-direcionado representando a rede ferroviária
+     * @throws IOException caso ocorra erro na leitura dos ficheiros
+     */
+    public Graph<Station, Double> loadNetwork(String stationsPath, String linesPath) throws IOException {
+        loadStations(stationsPath);
+        loadLines(linesPath);
+        return graph;
     }
 
     /**
