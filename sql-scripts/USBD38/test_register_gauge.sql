@@ -34,7 +34,7 @@ BEGIN
 
     -- Verify insertion
     IF v_result LIKE 'SUCCESS%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Gauge registered successfully');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Gauge registered successfully');
 
         -- Display the inserted data
         FOR rec IN (SELECT * FROM GAUGE WHERE gauge_id = 100) LOOP
@@ -43,7 +43,7 @@ BEGIN
             DBMS_OUTPUT.PUT_LINE('  - Size: ' || rec.size_mm || 'mm');
         END LOOP;
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected SUCCESS but got error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected SUCCESS but got error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -73,9 +73,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND (v_result LIKE '%already exists%' OR v_result LIKE '%Duplicate%') THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Duplicate key correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Duplicate key correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected duplicate key error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected duplicate key error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -105,9 +105,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%already exists%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Duplicate gauge correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Duplicate gauge correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected duplicate gauge error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected duplicate gauge error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -137,9 +137,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%Gauge ID%' AND v_result LIKE '%NULL%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: NULL gauge_id correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: NULL gauge_id correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected NULL gauge_id error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected NULL gauge_id error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -169,9 +169,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%name%' AND v_result LIKE '%NULL%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: NULL name correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: NULL name correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected NULL name error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected NULL name error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -201,9 +201,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%name%' AND (v_result LIKE '%NULL%' OR v_result LIKE '%empty%') THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Empty name correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Empty name correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected empty name error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected empty name error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -233,9 +233,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%size%' AND v_result LIKE '%NULL%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: NULL size correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: NULL size correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected NULL size error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected NULL size error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -265,9 +265,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%positive%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Negative size correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Negative size correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected negative size error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected negative size error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -297,9 +297,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%positive%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Zero size correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Zero size correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected zero size error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected zero size error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -329,9 +329,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND v_result LIKE '%maximum%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Excessive size correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Excessive size correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected excessive size error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected excessive size error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -361,7 +361,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'SUCCESS%' THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Second gauge registered successfully');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Second gauge registered successfully');
 
         -- Display the inserted data
         FOR rec IN (SELECT * FROM GAUGE WHERE gauge_id = 108) LOOP
@@ -370,7 +370,7 @@ BEGIN
             DBMS_OUTPUT.PUT_LINE('  - Size: ' || rec.size_mm || 'mm');
         END LOOP;
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected SUCCESS but got error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected SUCCESS but got error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
@@ -400,9 +400,9 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('Result: ' || v_result);
 
     IF v_result LIKE 'ERROR%' AND (v_result LIKE '%already exists%' OR v_result LIKE '%Duplicate%') THEN
-        DBMS_OUTPUT.PUT_LINE('✓ TEST PASSED: Existing gauge ID correctly rejected');
+        DBMS_OUTPUT.PUT_LINE(' TEST PASSED: Existing gauge ID correctly rejected');
     ELSE
-        DBMS_OUTPUT.PUT_LINE('✗ TEST FAILED: Expected duplicate key error');
+        DBMS_OUTPUT.PUT_LINE(' TEST FAILED: Expected duplicate key error');
     END IF;
 
     DBMS_OUTPUT.PUT_LINE('');
