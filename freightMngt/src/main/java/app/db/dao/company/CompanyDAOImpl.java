@@ -1,6 +1,6 @@
 package app.db.dao.company;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Company;
 
 import java.sql.*;
@@ -14,20 +14,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class CompanyDAOImpl implements CompanyDAO {
-
-    private final Connection connection;
+public class CompanyDAOImpl extends BaseDAOImpl implements CompanyDAO {
 
     /**
      * Construtor que inicializa a conexão com a base de dados.
      */
     public CompanyDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Company company) throws SQLException {
-        String sql = "INSERT INTO COMPANY (COMPANY_ID, NAME, SHORT_NAME, VAT) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO " + getTableName("COMPANY") + " (COMPANY_ID, NAME, SHORT_NAME, VAT) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             // Se o ID não foi definido, obtém o próximo ID disponível
@@ -46,7 +44,7 @@ public class CompanyDAOImpl implements CompanyDAO {
 
     @Override
     public Company get(int id) throws SQLException {
-        String sql = "SELECT COMPANY_ID, NAME, SHORT_NAME, VAT FROM COMPANY WHERE COMPANY_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("COMPANY") + " WHERE COMPANY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -64,7 +62,7 @@ public class CompanyDAOImpl implements CompanyDAO {
     @Override
     public List<Company> getAll() throws SQLException {
         List<Company> companies = new ArrayList<>();
-        String sql = "SELECT COMPANY_ID, NAME, SHORT_NAME, VAT FROM COMPANY ORDER BY COMPANY_ID";
+        String sql = "SELECT * FROM " + getTableName("COMPANY") + " ORDER BY COMPANY_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -79,7 +77,7 @@ public class CompanyDAOImpl implements CompanyDAO {
 
     @Override
     public void update(Company company) throws SQLException {
-        String sql = "UPDATE COMPANY SET NAME = ?, SHORT_NAME = ?, VAT = ? WHERE COMPANY_ID = ?";
+        String sql = "UPDATE " + getTableName("COMPANY") + " SET NAME = ?, SHORT_NAME = ?, VAT = ? WHERE COMPANY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, company.getName());
@@ -93,7 +91,7 @@ public class CompanyDAOImpl implements CompanyDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM COMPANY WHERE COMPANY_ID = ?";
+        String sql = "DELETE FROM " + getTableName("COMPANY") + " WHERE COMPANY_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -103,7 +101,7 @@ public class CompanyDAOImpl implements CompanyDAO {
 
     @Override
     public Company getByName(String name) throws SQLException {
-        String sql = "SELECT COMPANY_ID, NAME, SHORT_NAME, VAT FROM COMPANY WHERE NAME = ?";
+        String sql = "SELECT * FROM " + getTableName("COMPANY") + " WHERE NAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, name);
@@ -118,9 +116,37 @@ public class CompanyDAOImpl implements CompanyDAO {
         return null;
     }
 
+    public Company getByVat(String vat) throws SQLException {
+        String sql = "SELECT * FROM " + getTableName("COMPANY") + " WHERE VAT = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, vat);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToCompany(rs);
+                }
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public boolean exists(int id) throws SQLException {
-        return get(id) != null;
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("COMPANY") + " WHERE COMPANY_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -130,7 +156,7 @@ public class CompanyDAOImpl implements CompanyDAO {
      * @throws SQLException se ocorrer erro na operacao
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(COMPANY_ID), 0) + 1 AS NEXT_ID FROM COMPANY";
+        String sql = "SELECT NVL(MAX(COMPANY_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("COMPANY");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {

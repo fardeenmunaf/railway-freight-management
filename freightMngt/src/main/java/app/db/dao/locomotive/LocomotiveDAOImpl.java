@@ -1,10 +1,9 @@
 package app.db.dao.locomotive;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Locomotive;
-import app.model.LocomotiveType;
-import app.model.User;
 
+import java.awt.Dimension;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,20 +15,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class LocomotiveDAOImpl implements LocomotiveDAO {
-
-    private final Connection connection;
+public class LocomotiveDAOImpl extends BaseDAOImpl implements LocomotiveDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public LocomotiveDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Locomotive locomotive) throws SQLException {
-        String sql = "INSERT INTO LOCOMOTIVE (LOCOMOTIVE_ID, OPERATOR_ID, LOCOMOTIVE_TYPE, NAME, BRAND, MODEL, " +
+        String sql = "INSERT INTO " + getTableName("LOCOMOTIVE") + " (LOCOMOTIVE_ID, OPERATOR_ID, LOCOMOTIVE_TYPE, NAME, BRAND, MODEL, " +
                      "YEAR, POWER_KW, ACCELERATION_MS2, LENGTH_M, WIDTH_M, HEIGHT_M, MAX_WEIGHT_T, TOTAL_WEIGHT_T, " +
                      "MAX_SPEED_KMH, OPERATIONAL_SPEED_KMH, NUM_BOGIES, BOGIE_TYPE, TRACTION_KN, CREATED_AT) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
@@ -65,7 +62,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
 
     @Override
     public Locomotive get(int id) throws SQLException {
-        String sql = "SELECT * FROM LOCOMOTIVE WHERE LOCOMOTIVE_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("LOCOMOTIVE") + " WHERE LOCOMOTIVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -82,7 +79,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
     @Override
     public List<Locomotive> getAll() throws SQLException {
         List<Locomotive> locomotives = new ArrayList<>();
-        String sql = "SELECT * FROM LOCOMOTIVE ORDER BY LOCOMOTIVE_ID";
+        String sql = "SELECT * FROM " + getTableName("LOCOMOTIVE") + " ORDER BY LOCOMOTIVE_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -95,7 +92,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
 
     @Override
     public void update(Locomotive locomotive) throws SQLException {
-        String sql = "UPDATE LOCOMOTIVE SET OPERATOR_ID = ?, LOCOMOTIVE_TYPE = ?, NAME = ?, BRAND = ?, MODEL = ?, " +
+        String sql = "UPDATE " + getTableName("LOCOMOTIVE") + " SET OPERATOR_ID = ?, LOCOMOTIVE_TYPE = ?, NAME = ?, BRAND = ?, MODEL = ?, " +
                      "YEAR = ?, POWER_KW = ?, UPDATED_AT = CURRENT_TIMESTAMP WHERE LOCOMOTIVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -114,7 +111,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM LOCOMOTIVE WHERE LOCOMOTIVE_ID = ?";
+        String sql = "DELETE FROM " + getTableName("LOCOMOTIVE") + " WHERE LOCOMOTIVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -125,7 +122,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
     @Override
     public List<Locomotive> getByOperator(int operatorId) throws SQLException {
         List<Locomotive> locomotives = new ArrayList<>();
-        String sql = "SELECT * FROM LOCOMOTIVE WHERE OPERATOR_ID = ? ORDER BY LOCOMOTIVE_ID";
+        String sql = "SELECT * FROM " + getTableName("LOCOMOTIVE") + " WHERE OPERATOR_ID = ? ORDER BY LOCOMOTIVE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, operatorId);
@@ -142,7 +139,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
     @Override
     public List<Locomotive> getByType(int locomotiveTypeId) throws SQLException {
         List<Locomotive> locomotives = new ArrayList<>();
-        String sql = "SELECT * FROM LOCOMOTIVE WHERE LOCOMOTIVE_TYPE = ? ORDER BY LOCOMOTIVE_ID";
+        String sql = "SELECT * FROM " + getTableName("LOCOMOTIVE") + " WHERE LOCOMOTIVE_TYPE = ? ORDER BY LOCOMOTIVE_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, locomotiveTypeId);
@@ -158,7 +155,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM LOCOMOTIVE WHERE LOCOMOTIVE_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("LOCOMOTIVE") + " WHERE LOCOMOTIVE_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -173,6 +170,31 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
         return false;
     }
 
+    @Override
+    public List<Locomotive> getAvailableForRoute(Integer departureFacilityId) throws SQLException {
+        List<Locomotive> locomotives = new ArrayList<>();
+        String sql = "{? = call fn_get_available_locomotives(?)}";
+
+        try (CallableStatement cstmt = connection.prepareCall(sql)) {
+            // Register OUT parameter for the cursor
+            cstmt.registerOutParameter(1, oracle.jdbc.OracleTypes.CURSOR);
+            // Set IN parameter
+            cstmt.setInt(2, departureFacilityId);
+
+            // Execute the function
+            cstmt.execute();
+
+            // Get the cursor result
+            try (ResultSet rs = (ResultSet) cstmt.getObject(1)) {
+                while (rs.next()) {
+                    locomotives.add(mapResultSetToAvailableLocomotive(rs));
+                }
+            }
+        }
+
+        return locomotives;
+    }
+
     /**
      * Gets the next available ID for a new Locomotive.
      *
@@ -180,7 +202,7 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(LOCOMOTIVE_ID), 0) + 1 AS NEXT_ID FROM LOCOMOTIVE";
+        String sql = "SELECT NVL(MAX(LOCOMOTIVE_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("LOCOMOTIVE");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -199,9 +221,72 @@ public class LocomotiveDAOImpl implements LocomotiveDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private Locomotive mapResultSetToLocomotive(ResultSet rs) throws SQLException {
-        // Simplified - returns basic Locomotive object
-        // TODO: Complete mapping with all fields
-        return new Locomotive();
+        Locomotive locomotive = new Locomotive();
+
+        // Basic fields from LOCOMOTIVE table
+        locomotive.setLocomotiveId(rs.getInt("LOCOMOTIVE_ID"));
+        locomotive.setBrand(rs.getString("BRAND"));
+        locomotive.setModel(rs.getString("MODEL"));
+        locomotive.setYear(rs.getInt("YEAR"));
+        locomotive.setPower(rs.getInt("POWER_KW"));
+        locomotive.setAcceleration(rs.getDouble("ACCELERATION_MS2"));
+        locomotive.setMaxSpeed(rs.getDouble("MAX_SPEED_KMH"));
+        locomotive.setOperationalSpeed(rs.getDouble("OPERATIONAL_SPEED_KMH"));
+        locomotive.setMaxWeight(rs.getDouble("MAX_WEIGHT_T"));
+        locomotive.setTotalWeight(rs.getDouble("TOTAL_WEIGHT_T"));
+        locomotive.setMaxBogies(rs.getInt("NUM_BOGIES"));
+        locomotive.setBogieType(rs.getString("BOGIE_TYPE"));
+        locomotive.setTraction(rs.getString("TRACTION_KN"));
+        locomotive.setStartFacility(rs.getInt("START_FACILITY"));
+
+        // Dimensions - create Dimension object from length, width, height
+        double length = rs.getDouble("LENGTH_M");
+        double width = rs.getDouble("WIDTH_M");
+        double height = rs.getDouble("HEIGHT_M");
+        locomotive.setDimensions(new Dimension((int)(width * 100), (int)(height * 100))); // Convert to cm
+
+        // Note: operator_id and locomotive_type are FKs - would need separate queries to populate
+        // those objects if needed. For now, just displaying basic locomotive data.
+
+        return locomotive;
+    }
+
+    /**
+     * Maps a ResultSet from fn_get_available_locomotives to a Locomotive object
+     * with USLP09 transient fields populated.
+     *
+     * @param rs the ResultSet from the PL/SQL function
+     * @return the Locomotive object with all fields populated
+     * @throws SQLException if an error occurs during the operation
+     */
+    private Locomotive mapResultSetToAvailableLocomotive(ResultSet rs) throws SQLException {
+        Locomotive locomotive = new Locomotive();
+
+        // Basic fields from database
+        locomotive.setLocomotiveId(rs.getInt("locomotive_id"));
+        locomotive.setBrand(rs.getString("brand"));
+        locomotive.setModel(rs.getString("model"));
+        locomotive.setYear(rs.getInt("year"));
+        locomotive.setPower(rs.getInt("power_kw"));
+        locomotive.setMaxSpeed(rs.getDouble("max_speed_kmh"));
+        locomotive.setOperationalSpeed(rs.getDouble("operational_speed_kmh"));
+        locomotive.setTotalWeight(rs.getDouble("total_weight_t"));
+
+        // Dimensions - using length_m for Dimension object (simplified)
+        Double length = rs.getDouble("length_m");
+        locomotive.setDimensions(new java.awt.Dimension(length.intValue(), length.intValue()));
+
+        // USLP09 transient fields
+        locomotive.setCurrentLocationName(rs.getString("current_location"));
+        locomotive.setLocationId(rs.getInt("location_id"));
+        locomotive.setLocationLat(rs.getDouble("location_lat"));
+        locomotive.setLocationLon(rs.getDouble("location_lon"));
+        locomotive.setDistanceFromDeparture(rs.getDouble("distance_from_departure_km"));
+        locomotive.setStatus(rs.getString("status"));
+        locomotive.setTransitDestination(rs.getString("transit_destination"));
+        locomotive.setTransitArrivalDate(rs.getTimestamp("transit_arrival_date"));
+        locomotive.setOperatorCompanyName(rs.getString("operator_company"));
+
+        return locomotive;
     }
 }
-

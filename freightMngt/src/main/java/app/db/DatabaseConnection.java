@@ -23,9 +23,19 @@ public class DatabaseConnection {
     private Connection connection;
     
     // Oracle XEPDB1 Configuration
-    private static final String DB_URL = "jdbc:oracle:thin:@localhost:1521:XEPDB1";
-    private static final String DB_USER = "system"; // Altere para seu usuário
-    private static final String DB_PASSWORD = "oracle"; // Altere para sua senha
+    // Using service name format (/) instead of SID format (:)
+    private static final String DB_URL = "jdbc:oracle:thin:@localhost:1521/XEPDB1";
+
+    // IMPORTANT: Use the user that OWNS the tables (LOCOMOTIVE, WAGON, etc.)
+    // Common usernames: "system", "freight_user", "g113", "admin", etc.
+    // You can check the owner by running in SQL*Plus: SELECT OWNER FROM ALL_TABLES WHERE TABLE_NAME = 'LOCOMOTIVE';
+    private static final String DB_USER = "system"; // Change to your schema owner username
+    private static final String DB_PASSWORD = "admin"; // Change to your password
+
+    // If you're connecting as a different user, specify the schema owner here
+    // Example: If tables are owned by "freight_user" but you connect as "system", set this to "freight_user"
+    // Leave as empty string ("") if DB_USER is the schema owner
+    public static final String SCHEMA_OWNER = "APPUSER"; // Tables are owned by APPUSER schema
 
     /**
      * Private constructor to prevent instantiation.
@@ -37,16 +47,14 @@ public class DatabaseConnection {
             connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
             connection.setAutoCommit(true);
             
-            System.out.println("✓ Conexão com Oracle XEPDB1 estabelecida com sucesso!");
-            
-            // Initialize database schema if needed
-            initializeDatabase();
-            
+            System.out.println("✓ Connection to Oracle XEPDB1 established successfully!");
+
+
         } catch (ClassNotFoundException e) {
-            System.err.println("✗ Driver Oracle JDBC não encontrado: " + e.getMessage());
+            System.err.println("✗ Oracle JDBC Driver not found: " + e.getMessage());
             e.printStackTrace();
         } catch (SQLException e) {
-            System.err.println("✗ Falha ao conectar à base de dados Oracle: " + e.getMessage());
+            System.err.println("✗ Failed to connect to Oracle database: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -79,7 +87,7 @@ public class DatabaseConnection {
                 instance = new DatabaseConnection();
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao verificar estado da conexão: " + e.getMessage());
+            System.err.println("Error checking connection state: " + e.getMessage());
         }
         return connection;
     }
@@ -94,22 +102,22 @@ public class DatabaseConnection {
         try {
             // Execute schema.sql if file exists
             if (Files.exists(Paths.get(schemaPath))) {
-                System.out.println("Executando schema.sql...");
+                System.out.println("Executing schema.sql...");
                 executeSQLFile(schemaPath);
-                System.out.println("✓ Schema inicializado com sucesso!");
+                System.out.println("✓ Schema initialized successfully!");
             }
             
-            // Execute data.sql if file exists (comentado - descomente se quiser carregar dados)
+            // Execute data.sql if file exists (commented - uncomment if you want to load data)
             /*
             if (Files.exists(Paths.get(dataPath))) {
-                System.out.println("Executando data.sql...");
+                System.out.println("Executing data.sql...");
                 executeSQLFile(dataPath);
-                System.out.println("✓ Dados de exemplo carregados com sucesso!");
+                System.out.println("✓ Sample data loaded successfully!");
             }
             */
             
         } catch (Exception e) {
-            System.err.println("Erro ao inicializar base de dados: " + e.getMessage());
+            System.err.println("Error initializing database: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -149,8 +157,8 @@ public class DatabaseConnection {
                         // Ignore table/object already exists errors
                         if (!e.getMessage().contains("already exists") && 
                             !e.getMessage().contains("ORA-00955")) {
-                            System.err.println("Erro ao executar: " + statement.substring(0, Math.min(100, statement.length())));
-                            System.err.println("Erro: " + e.getMessage());
+                            System.err.println("Error executing: " + statement.substring(0, Math.min(100, statement.length())));
+                            System.err.println("Error: " + e.getMessage());
                         }
                     }
                 }
@@ -165,10 +173,10 @@ public class DatabaseConnection {
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
-                System.out.println("✓ Conexão com a base de dados encerrada com sucesso!");
+                System.out.println("✓ Database connection closed successfully!");
             }
         } catch (SQLException e) {
-            System.err.println("Erro ao fechar conexão: " + e.getMessage());
+            System.err.println("Error closing connection: " + e.getMessage());
             e.printStackTrace();
         }
     }

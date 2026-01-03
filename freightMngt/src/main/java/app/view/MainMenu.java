@@ -30,6 +30,7 @@ public class MainMenu {
             System.out.println("| 14. Freights Route View         |");
             System.out.println("| 15. Aware Shortest Paths        |");
             System.out.println("| 16. Rail Hub Centrality         |");
+            System.out.println("| 17. Train Assembly (USLP09)     |");
             System.out.println("| 0. Exit                         |");
             System.out.println("-----------------------------------");
             System.out.print("Enter your choice (0-17): ");

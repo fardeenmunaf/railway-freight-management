@@ -1,8 +1,9 @@
 package app.db.dao.wagon;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Wagon;
 import app.model.WagonModel;
+import app.model.Dimensions;
 import app.model.User;
 
 import java.sql.*;
@@ -16,20 +17,18 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class WagonDAOImpl implements WagonDAO {
-
-    private final Connection connection;
+public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
 
     /**
      * Constructor that initializes the database connection.
      */
     public WagonDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(Wagon wagon) throws SQLException {
-        String sql = "INSERT INTO WAGON (WAGON_ID, WAGON_MODEL_ID, OPERATOR_ID, SERVICE_YEAR) " +
+        String sql = "INSERT INTO " + getTableName("WAGON") + " (WAGON_ID, WAGON_MODEL_ID, OPERATOR_ID, SERVICE_YEAR) " +
                      "VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -65,8 +64,8 @@ public class WagonDAOImpl implements WagonDAO {
     public Wagon get(int id) throws SQLException {
         String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
-                     "FROM WAGON w " +
-                     "LEFT JOIN WAGON_MODEL wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "FROM " + getTableName("WAGON") + " w " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
                      "WHERE w.WAGON_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -87,8 +86,8 @@ public class WagonDAOImpl implements WagonDAO {
         List<Wagon> wagons = new ArrayList<>();
         String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
-                     "FROM WAGON w " +
-                     "LEFT JOIN WAGON_MODEL wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "FROM " + getTableName("WAGON") + " w " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
                      "ORDER BY w.WAGON_ID";
 
         try (Statement stmt = connection.createStatement();
@@ -104,7 +103,7 @@ public class WagonDAOImpl implements WagonDAO {
 
     @Override
     public void update(Wagon wagon) throws SQLException {
-        String sql = "UPDATE WAGON SET WAGON_MODEL_ID = ?, OPERATOR_ID = ?, SERVICE_YEAR = ? " +
+        String sql = "UPDATE " + getTableName("WAGON") + " SET WAGON_MODEL_ID = ?, OPERATOR_ID = ?, SERVICE_YEAR = ? " +
                      "WHERE WAGON_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -134,7 +133,7 @@ public class WagonDAOImpl implements WagonDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM WAGON WHERE WAGON_ID = ?";
+        String sql = "DELETE FROM " + getTableName("WAGON") + " WHERE WAGON_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -147,8 +146,8 @@ public class WagonDAOImpl implements WagonDAO {
         List<Wagon> wagons = new ArrayList<>();
         String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
-                     "FROM WAGON w " +
-                     "LEFT JOIN WAGON_MODEL wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "FROM " + getTableName("WAGON") + " w " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
                      "WHERE w.WAGON_MODEL_ID = ? " +
                      "ORDER BY w.WAGON_ID";
 
@@ -170,8 +169,8 @@ public class WagonDAOImpl implements WagonDAO {
         List<Wagon> wagons = new ArrayList<>();
         String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
-                     "FROM WAGON w " +
-                     "LEFT JOIN WAGON_MODEL wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "FROM " + getTableName("WAGON") + " w " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
                      "WHERE w.OPERATOR_ID = ? " +
                      "ORDER BY w.WAGON_ID";
 
@@ -193,8 +192,8 @@ public class WagonDAOImpl implements WagonDAO {
         List<Wagon> wagons = new ArrayList<>();
         String sql = "SELECT w.WAGON_ID, w.WAGON_MODEL_ID, w.OPERATOR_ID, w.SERVICE_YEAR, " +
                      "wm.NAME AS MODEL_NAME " +
-                     "FROM WAGON w " +
-                     "LEFT JOIN WAGON_MODEL wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
+                     "FROM " + getTableName("WAGON") + " w " +
+                     "LEFT JOIN " + getTableName("WAGON_MODEL") + " wm ON w.WAGON_MODEL_ID = wm.WAGON_MODEL_ID " +
                      "WHERE w.SERVICE_YEAR = ? " +
                      "ORDER BY w.WAGON_ID";
 
@@ -213,7 +212,7 @@ public class WagonDAOImpl implements WagonDAO {
 
     @Override
     public boolean exists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) AS COUNT FROM WAGON WHERE WAGON_ID = ?";
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("WAGON") + " WHERE WAGON_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -228,6 +227,31 @@ public class WagonDAOImpl implements WagonDAO {
         return false;
     }
 
+    @Override
+    public List<Wagon> getAvailableForRoute(Integer departureFacilityId) throws SQLException {
+        List<Wagon> wagons = new ArrayList<>();
+        String sql = "{? = call fn_get_available_wagons(?)}";
+
+        try (CallableStatement cstmt = connection.prepareCall(sql)) {
+            // Register OUT parameter for the cursor
+            cstmt.registerOutParameter(1, oracle.jdbc.OracleTypes.CURSOR);
+            // Set IN parameter
+            cstmt.setInt(2, departureFacilityId);
+
+            // Execute the function
+            cstmt.execute();
+
+            // Get the cursor result
+            try (ResultSet rs = (ResultSet) cstmt.getObject(1)) {
+                while (rs.next()) {
+                    wagons.add(mapResultSetToAvailableWagon(rs));
+                }
+            }
+        }
+
+        return wagons;
+    }
+
     /**
      * Gets the next available ID for a new Wagon.
      *
@@ -235,7 +259,7 @@ public class WagonDAOImpl implements WagonDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(WAGON_ID), 0) + 1 AS NEXT_ID FROM WAGON";
+        String sql = "SELECT NVL(MAX(WAGON_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("WAGON");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -278,6 +302,59 @@ public class WagonDAOImpl implements WagonDAO {
         if (rs.getObject("SERVICE_YEAR") != null) {
             wagon.setServiceYear(rs.getInt("SERVICE_YEAR"));
         }
+
+        return wagon;
+    }
+
+    /**
+     * Maps a ResultSet from fn_get_available_wagons to a Wagon object
+     * with USLP09 transient fields populated.
+     *
+     * @param rs the ResultSet from the PL/SQL function
+     * @return the Wagon object with all fields populated
+     * @throws SQLException if an error occurs during the operation
+     */
+    private Wagon mapResultSetToAvailableWagon(ResultSet rs) throws SQLException {
+        Wagon wagon = new Wagon();
+
+        // Basic fields from database
+        wagon.setWagonId(rs.getInt("wagon_id"));
+        wagon.setServiceYear(rs.getInt("service_year"));
+
+        // Set WagonModel with data from function
+        WagonModel model = new WagonModel();
+        model.setName(rs.getString("model_name"));
+        model.setConstructor(rs.getString("constructor"));
+        model.setPayloadWeight(rs.getDouble("payload_t"));
+        model.setTareWeight(rs.getDouble("tare_t"));
+        model.setMaxSpeed(rs.getDouble("max_speed_kmh"));
+
+        // Set Dimensions
+        Dimensions dimensions = new Dimensions();
+        dimensions.setLength(rs.getDouble("length_m"));
+        dimensions.setWidth(rs.getDouble("width_m"));
+        dimensions.setHeight(rs.getDouble("height_m"));
+        model.setDimensions(dimensions);
+
+        wagon.setWagonModel(model);
+
+        // USLP09 transient fields
+        wagon.setCurrentLocationName(rs.getString("current_location"));
+        wagon.setLocationId(rs.getInt("location_id"));
+        wagon.setLocationLat(rs.getDouble("location_lat"));
+        wagon.setLocationLon(rs.getDouble("location_lon"));
+        wagon.setDistanceFromDeparture(rs.getDouble("distance_from_departure_km"));
+        wagon.setStatus(rs.getString("status"));
+        wagon.setParkingTrackName(rs.getString("parking_track_name"));
+
+        Integer parkingTrackId = (Integer) rs.getObject("parking_track_id");
+        wagon.setParkingTrackId(parkingTrackId);
+
+        Integer parkingPosition = (Integer) rs.getObject("parking_position");
+        wagon.setParkingPosition(parkingPosition);
+
+        wagon.setOperatorCompanyName(rs.getString("operator_company"));
+        wagon.setInActiveFreight(rs.getInt("in_active_freight"));
 
         return wagon;
     }

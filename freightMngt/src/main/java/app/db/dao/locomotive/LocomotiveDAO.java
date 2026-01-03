@@ -80,5 +80,17 @@ public interface LocomotiveDAO {
      * @throws SQLException if an error occurs during the operation
      */
     boolean exists(int id) throws SQLException;
+
+    /**
+     * Retrieves all available locomotives for a specific departure facility.
+     * Uses PL/SQL function fn_get_available_locomotives to return locomotives
+     * with status (PARKED/IN_TRANSIT) and distance from departure.
+     * USLP09 - Train Assembly
+     *
+     * @param departureFacilityId the facility ID of the departure point
+     * @return list of Locomotives with extended USLP09 fields populated
+     * @throws SQLException if an error occurs during the operation
+     */
+    List<Locomotive> getAvailableForRoute(Integer departureFacilityId) throws SQLException;
 }
 

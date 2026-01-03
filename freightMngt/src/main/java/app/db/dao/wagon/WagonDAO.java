@@ -89,5 +89,17 @@ public interface WagonDAO {
      * @throws SQLException if an error occurs during the operation
      */
     boolean exists(int id) throws SQLException;
+
+    /**
+     * Retrieves all available wagons for a specific departure facility.
+     * Uses PL/SQL function fn_get_available_wagons to return wagons
+     * with status (PARKED/IN_TRANSIT/WAITING) and distance from departure.
+     * USLP09 - Train Assembly
+     *
+     * @param departureFacilityId the facility ID of the departure point
+     * @return list of Wagons with extended USLP09 fields populated
+     * @throws SQLException if an error occurs during the operation
+     */
+    List<Wagon> getAvailableForRoute(Integer departureFacilityId) throws SQLException;
 }
 

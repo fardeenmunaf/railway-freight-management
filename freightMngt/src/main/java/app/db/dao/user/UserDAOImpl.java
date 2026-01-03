@@ -1,6 +1,6 @@
 package app.db.dao.user;
 
-import app.db.DatabaseConnection;
+import app.db.dao.BaseDAOImpl;
 import app.model.Company;
 import app.model.User;
 
@@ -15,17 +15,15 @@ import java.util.List;
  * @author G113 2DK
  * @version 1.0
  */
-public class UserDAOImpl implements UserDAO {
-
-    private final Connection connection;
+public class UserDAOImpl extends BaseDAOImpl implements UserDAO {
 
     public UserDAOImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+        super();
     }
 
     @Override
     public void create(User user) throws SQLException {
-        String sql = "INSERT INTO \"USER\" (USER_ID, USERNAME, EMAIL, PASSWORD, COMPANY_ID, IS_ACTIVE, CREATED_AT) " +
+        String sql = "INSERT INTO " + getTableName("\"USER\"") + " (USER_ID, USERNAME, EMAIL, PASSWORD, COMPANY_ID, IS_ACTIVE, CREATED_AT) " +
                      "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -52,11 +50,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public User get(int id) throws SQLException {
-        String sql = "SELECT u.USER_ID, u.USERNAME, u.EMAIL, u.PASSWORD, u.IS_ACTIVE, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM \"USER\" u " +
-                     "LEFT JOIN COMPANY c ON u.COMPANY_ID = c.COMPANY_ID " +
-                     "WHERE u.USER_ID = ?";
+        String sql = "SELECT * FROM " + getTableName("\"USER\"") + " WHERE USER_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -74,11 +68,7 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public List<User> getAll() throws SQLException {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT u.USER_ID, u.USERNAME, u.EMAIL, u.PASSWORD, u.IS_ACTIVE, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM \"USER\" u " +
-                     "LEFT JOIN COMPANY c ON u.COMPANY_ID = c.COMPANY_ID " +
-                     "ORDER BY u.USER_ID";
+        String sql = "SELECT * FROM " + getTableName("\"USER\"") + " ORDER BY USER_ID";
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -93,8 +83,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void update(User user) throws SQLException {
-        String sql = "UPDATE \"USER\" SET USERNAME = ?, EMAIL = ?, PASSWORD = ?, COMPANY_ID = ?, IS_ACTIVE = ? " +
-                     "WHERE USER_ID = ?";
+        String sql = "UPDATE " + getTableName("\"USER\"") + " SET USERNAME = ?, EMAIL = ?, PASSWORD = ?, COMPANY_ID = ?, IS_ACTIVE = ? WHERE USER_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, user.getUsername());
@@ -116,7 +105,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void delete(int id) throws SQLException {
-        String sql = "DELETE FROM \"USER\" WHERE USER_ID = ?";
+        String sql = "DELETE FROM " + getTableName("\"USER\"") + " WHERE USER_ID = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, id);
@@ -126,11 +115,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public User getByUsername(String username) throws SQLException {
-        String sql = "SELECT u.USER_ID, u.USERNAME, u.EMAIL, u.PASSWORD, u.IS_ACTIVE, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM \"USER\" u " +
-                     "LEFT JOIN COMPANY c ON u.COMPANY_ID = c.COMPANY_ID " +
-                     "WHERE u.USERNAME = ?";
+        String sql = "SELECT * FROM " + getTableName("\"USER\"") + " WHERE USERNAME = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, username);
@@ -147,11 +132,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public User getByEmail(String email) throws SQLException {
-        String sql = "SELECT u.USER_ID, u.USERNAME, u.EMAIL, u.PASSWORD, u.IS_ACTIVE, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM \"USER\" u " +
-                     "LEFT JOIN COMPANY c ON u.COMPANY_ID = c.COMPANY_ID " +
-                     "WHERE u.EMAIL = ?";
+        String sql = "SELECT * FROM " + getTableName("\"USER\"") + " WHERE EMAIL = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, email);
@@ -169,12 +150,7 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public List<User> getByCompany(int companyId) throws SQLException {
         List<User> users = new ArrayList<>();
-        String sql = "SELECT u.USER_ID, u.USERNAME, u.EMAIL, u.PASSWORD, u.IS_ACTIVE, " +
-                     "c.COMPANY_ID, c.NAME, c.SHORT_NAME, c.VAT " +
-                     "FROM \"USER\" u " +
-                     "LEFT JOIN COMPANY c ON u.COMPANY_ID = c.COMPANY_ID " +
-                     "WHERE u.COMPANY_ID = ? " +
-                     "ORDER BY u.USER_ID";
+        String sql = "SELECT * FROM " + getTableName("\"USER\"") + " WHERE COMPANY_ID = ? ORDER BY USER_ID";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, companyId);
@@ -189,8 +165,24 @@ public class UserDAOImpl implements UserDAO {
         return users;
     }
 
+    public boolean exists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS COUNT FROM " + getTableName("\"USER\"") + " WHERE USER_ID = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("COUNT") > 0;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(USER_ID), 0) + 1 AS NEXT_ID FROM \"USER\"";
+        String sql = "SELECT NVL(MAX(USER_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("\"USER\"");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
