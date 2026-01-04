@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * @author G113 2DK
  * @version 1.0
  */
-public class TrainServiceAssemblyService {
+public class TrainAssemblyService {
 
     private final TrainDAO trainDAO;
     private final TrainServiceDAO trainServiceDAO;
@@ -48,7 +48,7 @@ public class TrainServiceAssemblyService {
     /**
      * Constructor that initializes the service with DAO implementations.
      */
-    public TrainServiceAssemblyService() {
+    public TrainAssemblyService() {
         this.trainDAO = new TrainDAOImpl();
         this.trainServiceDAO = new TrainServiceDAOImpl();
         this.trainStopDAO = new TrainStopDAOImpl();

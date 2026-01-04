@@ -1,7 +1,7 @@
 package app.view;
 
 import app.model.*;
-import app.service.sprint3.TrainServiceAssemblyService;
+import app.service.sprint3.TrainAssemblyService;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -21,12 +21,12 @@ import java.util.Scanner;
  */
 public class TrainAssemblyView {
 
-    private final TrainServiceAssemblyService service;
+    private final TrainAssemblyService service;
     private final Scanner scanner;
     private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     private TrainAssemblyView(Scanner scanner) {
-        this.service = new TrainServiceAssemblyService();
+        this.service = new TrainAssemblyService();
         this.scanner = scanner;
     }
 
@@ -109,7 +109,7 @@ public class TrainAssemblyView {
 
             // Step 4: Define route stops
             System.out.println("\n[STEP 4/7] DEFINE ROUTE STOPS");
-            List<TrainServiceAssemblyService.RouteStop> routeStops = defineRouteStopsInteractive(
+            List<TrainAssemblyService.RouteStop> routeStops = defineRouteStopsInteractive(
                     departureFacilityId, locomotiveIds, wagonIds);
             if (routeStops == null || routeStops.size() < 2) {
                 System.out.println("[ERROR] At least 2 stops (departure and destination) required. Aborting.");
@@ -170,7 +170,7 @@ public class TrainAssemblyView {
 
             // Execute assembly
             System.out.println("\n[INFO] Assembling train service...");
-            TrainServiceAssemblyService.AssemblyResult result = service.assembleCompleteTrainService(
+            TrainAssemblyService.AssemblyResult result = service.assembleCompleteTrainService(
                     locomotiveIds, wagonIds, routeStops, departureDate, arrivalDate, driverId, operatorId
             );
 
@@ -321,9 +321,9 @@ public class TrainAssemblyView {
      * @param wagonIds list of selected wagon IDs (can be empty)
      * @return list of route stops with calculated arrival/departure times
      */
-    private List<TrainServiceAssemblyService.RouteStop> defineRouteStopsInteractive(
+    private List<TrainAssemblyService.RouteStop> defineRouteStopsInteractive(
             Integer departureFacilityId, List<Integer> locomotiveIds, List<Integer> wagonIds) {
-        List<TrainServiceAssemblyService.RouteStop> stops = new ArrayList<>();
+        List<TrainAssemblyService.RouteStop> stops = new ArrayList<>();
 
         try {
             System.out.println("\n═══════════════════════════════════════════════════════════");
@@ -339,7 +339,7 @@ public class TrainAssemblyView {
             LocalDateTime currentTime = readDateTime("Departure time (yyyy-MM-dd HH:mm): ");
             if (currentTime == null) return null;
 
-            stops.add(new TrainServiceAssemblyService.RouteStop(
+            stops.add(new TrainAssemblyService.RouteStop(
                     departureFacilityId, currentTime, currentTime, 0));
 
             Facility previousFacility = service.getFacilityById(departureFacilityId);
@@ -408,7 +408,7 @@ public class TrainAssemblyView {
                     System.out.println("  │ Calculated departure: " + departureTime.format(dateTimeFormatter));
                     System.out.println("  └─────────────────────────────────────────────────");
 
-                    stops.add(new TrainServiceAssemblyService.RouteStop(
+                    stops.add(new TrainAssemblyService.RouteStop(
                             facilityId, arrivalTime, departureTime, STOP_TIME_MINUTES));
 
                     // Update for next iteration
