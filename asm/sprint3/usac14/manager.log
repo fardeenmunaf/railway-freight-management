@@ -1,0 +1,11 @@
+user=op action=EXIT
+user=0 action=EXIT
+user=o action=EXIT
+user=o action=LIGHTS_ON
+user=o action=LIGHTS_ON
+user=o action=EXIT
+user=op action=EXIT
+user=g action=LIGHTS_ON
+user=g action=LIGHTS_ON
+user=g action=LIGHTS_ON
+user=g action=EXIT
