@@ -23,18 +23,11 @@ public class DatabaseConnection {
     private Connection connection;
     
     // Oracle XEPDB1 Configuration
-    // Using service name format (/) instead of SID format (:)
     private static final String DB_URL = "jdbc:oracle:thin:@localhost:1521/XEPDB1";
 
-    // IMPORTANT: Use the user that OWNS the tables (LOCOMOTIVE, WAGON, etc.)
-    // Common usernames: "system", "freight_user", "g113", "admin", etc.
-    // You can check the owner by running in SQL*Plus: SELECT OWNER FROM ALL_TABLES WHERE TABLE_NAME = 'LOCOMOTIVE';
-    private static final String DB_USER = "APPUSER"; // Using SYSTEM user to access APPUSER schema
-    private static final String DB_PASSWORD = "admin"; // SYSTEM password
+    private static final String DB_USER = "APPUSER"; // Using APPUSER user
+    private static final String DB_PASSWORD = "admin"; // APPUSER password
 
-    // If you're connecting as a different user, specify the schema owner here
-    // Example: If tables are owned by "freight_user" but you connect as "system", set this to "freight_user"
-    // Leave as empty string ("") if DB_USER is the schema owner
     public static final String SCHEMA_OWNER = "APPUSER"; // Tables are owned by APPUSER schema
 
     /**
