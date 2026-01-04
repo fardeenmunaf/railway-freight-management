@@ -162,7 +162,7 @@ int main(void) {
                 }
 
                 if (!running) break;
-                sleep(1);
+                sleep(2);  // DHT11 precisa de 2 segundos entre leituras
             }
 
             if (!running) break;  // sai também do while principal

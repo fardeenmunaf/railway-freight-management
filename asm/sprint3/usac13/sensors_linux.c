@@ -120,13 +120,45 @@ SensorData request_sensors(int fd) {
         return sd;
     }
 
-    if (strncmp(buf, "ERROR", 5) == 0) {
-        sd.error = true;
-    } else if (sscanf(buf,
-                      "TEMP&unit:C&value:%f#HUM&unit:%%&value:%f",
-                      &sd.temperature, &sd.humidity) == 2) {
-        sd.error = false;
+    buf[n] = '\0';  // garantir null-termination
+    
+    // Procurar pela linha que contém T: e H: (parsing linha por linha)
+    char line[128];
+    int lineIdx = 0;
+    
+    for (int i = 0; i <= n; i++) {
+        char ch = (i < n) ? buf[i] : '\n';
+        
+        if (ch == '\n' || ch == '\r' || i == n) {
+            if (lineIdx > 0) {
+                line[lineIdx] = '\0';
+                
+                if (strncmp(line, "ERROR", 5) == 0) {
+                    sd.error = true;
+                    return sd;
+                }
+                
+                if (sscanf(line, "T:%f,H:%f", &sd.temperature, &sd.humidity) == 2) {
+                    // Formato do Pico W: T:20.2,H:60.7
+                    sd.error = false;
+                    return sd;
+                }
+                
+                if (sscanf(line, "TEMP&unit:C&value:%f#HUM&unit:%%&value:%f",
+                           &sd.temperature, &sd.humidity) == 2) {
+                    // Formato antigo (fallback)
+                    sd.error = false;
+                    return sd;
+                }
+                
+                lineIdx = 0;
+            }
+        } else if (lineIdx < 127) {
+            line[lineIdx++] = ch;
+        }
     }
+    
+    sd.error = true;
 
     return sd;
 }
