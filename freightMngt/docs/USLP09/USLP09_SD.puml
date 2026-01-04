@@ -1,0 +1,349 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+title SD for USLP09: Complete Train Service Assembly
+
+autonumber
+
+actor "User" as USER
+participant ":TrainAssemblyView" as UI
+participant ":TrainAssemblyService" as SERVICE
+participant ":FacilityDAO" as FACILITY_DAO
+participant ":LocomotiveDAO" as LOCO_DAO
+participant ":WagonDAO" as WAGON_DAO
+participant ":TrainDAO" as TRAIN_DAO
+participant ":TrainServiceDAO" as TS_DAO
+participant ":TrainStopDAO" as STOP_DAO
+participant ":TrainAssemblyDAO" as ASSEMBLY_DAO
+participant "database\n:OracleDB" as DB
+
+activate USER
+
+== STEP 1: SELECT DEPARTURE FACILITY ==
+
+USER -> UI : "Select option 1: Assemble Complete Train Service"
+activate UI
+    UI -> SERVICE : getAllFacilities()
+    activate SERVICE
+        SERVICE -> FACILITY_DAO : getAll()
+        activate FACILITY_DAO
+            FACILITY_DAO -> DB : SELECT * FROM FACILITIES
+            activate DB
+            DB --> FACILITY_DAO : ResultSet
+            deactivate DB
+            FACILITY_DAO --> SERVICE : List<Facility>
+        deactivate FACILITY_DAO
+        SERVICE --> UI : List<Facility>
+    deactivate SERVICE
+    UI --> USER : "Display available facilities (first 20)"
+deactivate UI
+
+USER -> UI : "Enter departure facility ID: 19"
+activate UI
+    UI -> UI : store departureFacilityId = 19
+
+== STEP 2: SELECT LOCOMOTIVES ==
+
+    UI -> SERVICE : getAvailableLocomotives(19)
+    activate SERVICE
+        SERVICE -> LOCO_DAO : getAvailableForRoute(19)
+        activate LOCO_DAO
+            LOCO_DAO -> DB : "SELECT locomotives WITH PARKED status\nORDERED BY distance from facility 19"
+            activate DB
+            DB --> LOCO_DAO : ResultSet
+            deactivate DB
+            LOCO_DAO --> SERVICE : List<Locomotive>
+        deactivate LOCO_DAO
+        SERVICE --> UI : List<Locomotive> (with distances)
+    deactivate SERVICE
+    UI --> USER : "Display available locomotives with distances"
+deactivate UI
+
+USER -> UI : "Enter locomotive IDs: 5623"
+activate UI
+    UI -> UI : store locomotiveIds = [5623]
+
+== STEP 3: SELECT WAGONS (OPTIONAL) ==
+
+    UI --> USER : "Do you want to add wagons? (y/n)"
+deactivate UI
+
+USER -> UI : "y"
+activate UI
+    UI -> SERVICE : getAvailableWagons(19)
+    activate SERVICE
+        SERVICE -> WAGON_DAO : getAvailableForRoute(19)
+        activate WAGON_DAO
+            WAGON_DAO -> DB : "SELECT wagons WITH PARKED status\nORDERED BY distance from facility 19"
+            activate DB
+            DB --> WAGON_DAO : ResultSet
+            deactivate DB
+            WAGON_DAO --> SERVICE : List<Wagon>
+        deactivate WAGON_DAO
+        SERVICE --> UI : List<Wagon> (with distances)
+    deactivate SERVICE
+    UI --> USER : "Display available wagons with distances"
+deactivate UI
+
+USER -> UI : "Enter wagon IDs: 3330008"
+activate UI
+    UI -> UI : store wagonIds = [3330008]
+
+== STEP 4: DEFINE ROUTE STOPS ==
+
+    UI --> USER : "Display route definition header"
+    UI --> USER : "[STOP 1 - DEPARTURE]\nEnter departure time: yyyy-MM-dd HH:mm"
+deactivate UI
+
+USER -> UI : "2026-12-23 09:00"
+activate UI
+    UI -> UI : store departureTime = 2026-12-23 09:00
+    UI -> UI : routeStops.add(RouteStop(19, 09:00, 09:00, 0))
+    UI --> USER : "[STOP 2] Enter facility ID (or 0 to finish)"
+deactivate UI
+
+USER -> UI : "12"
+activate UI
+    UI -> SERVICE : getFacilityById(12)
+    activate SERVICE
+        SERVICE -> FACILITY_DAO : get(12)
+        activate FACILITY_DAO
+            FACILITY_DAO -> DB : SELECT * FROM FACILITIES WHERE FACILITY_ID = 12
+            activate DB
+            DB --> FACILITY_DAO : ResultSet
+            deactivate DB
+            FACILITY_DAO --> SERVICE : Facility(12, "Darque", ...)
+        deactivate FACILITY_DAO
+        SERVICE --> UI : Facility(12)
+    deactivate SERVICE
+
+    UI -> UI : calculate distance = 9.87 km (Haversine formula)
+
+    UI -> SERVICE : calculateTravelTimeBetweenStops(19, 12, [5623], [3330008])
+    activate SERVICE
+        SERVICE -> FACILITY_DAO : get(19)
+        activate FACILITY_DAO
+            FACILITY_DAO -> DB : SELECT * FROM FACILITIES WHERE FACILITY_ID = 19
+            activate DB
+            DB --> FACILITY_DAO : ResultSet
+            deactivate DB
+            FACILITY_DAO --> SERVICE : Facility(19)
+        deactivate FACILITY_DAO
+
+        SERVICE -> FACILITY_DAO : get(12)
+        activate FACILITY_DAO
+            FACILITY_DAO -> DB : SELECT * FROM FACILITIES WHERE FACILITY_ID = 12
+            activate DB
+            DB --> FACILITY_DAO : ResultSet
+            deactivate DB
+            FACILITY_DAO --> SERVICE : Facility(12)
+        deactivate FACILITY_DAO
+
+        SERVICE -> SERVICE : calculate distance = 9.87 km
+
+        SERVICE -> LOCO_DAO : getLocomotiveSpecs([5623])
+        activate LOCO_DAO
+            LOCO_DAO -> DB : SELECT power, weight FROM LOCOMOTIVES WHERE ID IN (5623)
+            activate DB
+            DB --> LOCO_DAO : ResultSet
+            deactivate DB
+            LOCO_DAO --> SERVICE : LocomotiveSpecs(power=5600kW, weight=87t)
+        deactivate LOCO_DAO
+
+        SERVICE -> WAGON_DAO : getWagonTotalWeight([3330008])
+        activate WAGON_DAO
+            WAGON_DAO -> DB : SELECT weight FROM WAGONS WHERE ID IN (3330008)
+            activate DB
+            DB --> WAGON_DAO : ResultSet
+            deactivate DB
+            WAGON_DAO --> SERVICE : totalWeight = 50t
+        deactivate WAGON_DAO
+
+        SERVICE -> SERVICE : totalWeight = 87t + 50t = 137t
+
+        SERVICE -> DB : "SELECT speed_limit FROM track\nBETWEEN facility 19 AND 12"
+        activate DB
+        DB --> SERVICE : trackSpeedLimit = 120 km/h
+        deactivate DB
+
+        SERVICE -> SERVICE : calculateEffectiveSpeed(5600kW, 137t, 120km/h)\n= min(120, 560, weightLimit) = 98.7 km/h
+
+        SERVICE -> SERVICE : travelTime = (9.87 / 98.7) * 60 = 6 minutes
+
+        SERVICE --> UI : travelTime = 6 minutes
+    deactivate SERVICE
+
+    UI -> UI : arrivalTime = 09:00 + 6 min = 09:06
+    UI -> UI : departureTime = 09:06 + 5 min = 09:11
+    UI -> UI : effectiveSpeed = 9.87 / (6/60) = 98.7 km/h
+
+    UI --> USER : "Display calculated stop details:\n- Distance: 9.87 km\n- Speed: 98.7 km/h\n- Travel time: 6 min\n- Arrival: 09:06\n- Departure: 09:11"
+    UI -> UI : routeStops.add(RouteStop(12, 09:06, 09:11, 5))
+deactivate UI
+
+USER -> UI : "0 (finish stops)"
+activate UI
+    UI --> USER : "Display route summary:\n- Total stops: 2\n- Total distance: 9.87 km\n- Total time: 6 minutes"
+
+
+== STEP 5: SERVICE SCHEDULE ==
+
+    UI --> USER : "Display automatically set schedule:\n- Departure: 2026-12-23 09:00\n- Arrival: 2026-12-23 09:06\n- Duration: 0 hours 6 minutes"
+
+== STEP 6: ASSIGN DRIVER (OPTIONAL) ==
+
+    UI --> USER : "Enter driver user ID (or press Enter to skip)"
+deactivate UI
+
+USER -> UI : "3"
+activate UI
+    UI -> UI : store driverId = 3
+
+== STEP 7: SET OPERATOR COMPANY ==
+
+    UI --> USER : "Enter operator company ID"
+deactivate UI
+
+USER -> UI : "3"
+activate UI
+    UI -> UI : store operatorId = 3
+
+== ASSEMBLY CONFIRMATION ==
+
+    UI --> USER : "Display assembly summary:\n- Locomotives: 1\n- Wagons: 1\n- Route Stops: 2\n- Departure: 2026-12-23 09:00\n- Arrival: 2026-12-23 09:06\n- Driver ID: 3\n- Operator ID: 3"
+    UI --> USER : "Proceed with assembly? (y/n)"
+deactivate UI
+
+USER -> UI : "y"
+activate UI
+    UI -> SERVICE : assembleCompleteTrainService(locomotiveIds, wagonIds, routeStops,\ndepartureDate, arrivalDate, driverId, operatorId)
+    activate SERVICE
+        SERVICE -> SERVICE : validateInputs(...)
+
+        note right of SERVICE
+            STEP 1: Create TRAIN record
+        end note
+
+        SERVICE -> SERVICE : createTrain(routeStops, operatorId)
+            SERVICE -> SERVICE : generate trainCode = "TRN-20260104-2138"
+            SERVICE -> TRAIN_DAO : create(train)
+            activate TRAIN_DAO
+                TRAIN_DAO -> DB : "INSERT INTO TRAINS\n(CODE, DEPARTURE, DESTINATION, OPERATOR_ID)\nVALUES ('TRN-20260104-2138', '19', '12', 3)"
+                activate DB
+                DB --> TRAIN_DAO : trainId = 5445
+                deactivate DB
+                TRAIN_DAO --> SERVICE : Train(5445)
+            deactivate TRAIN_DAO
+
+        note right of SERVICE
+            STEP 2: Create TRAIN_SERVICE record
+        end note
+
+        SERVICE -> SERVICE : createTrainService(train, departureDate, arrivalDate, driverId)
+            SERVICE -> TS_DAO : create(trainService)
+            activate TS_DAO
+                TS_DAO -> DB : "INSERT INTO TRAIN_SERVICES\n(TRAIN_ID, DEPARTURE_DATE, ARRIVAL_DATE,\nSTATUS, TRAIN_DRIVER_ID)\nVALUES (5445, '2026-12-23 09:00',\n'2026-12-23 09:06', 'SCHEDULED', 3)"
+                activate DB
+                DB --> TS_DAO : serviceId = 2059
+                deactivate DB
+                TS_DAO --> SERVICE : TrainService(2059)
+            deactivate TS_DAO
+
+        note right of SERVICE
+            STEP 3: Create TRAIN_STOP records
+        end note
+
+        SERVICE -> SERVICE : createTrainStops(trainService, routeStops)
+            loop for each routeStop
+                SERVICE -> STOP_DAO : create(trainStop)
+                activate STOP_DAO
+                    STOP_DAO -> DB : "INSERT INTO TRAIN_STOPS\n(SERVICE_ID, FACILITY_ID, POSITION,\nSCHED_ARR, SCHED_DEP,\nPLANNED_STOP_TIME, PARKING_TRACK_ID)\nVALUES (...)"
+                    activate DB
+                    DB --> STOP_DAO : stopId
+                    deactivate DB
+                    STOP_DAO --> SERVICE : TrainStop
+                deactivate STOP_DAO
+            end
+
+        note right of SERVICE
+            STEP 4: Assign locomotives (PL/SQL function)
+        end note
+
+        SERVICE -> SERVICE : assignLocomotives(2059, [5623])
+            SERVICE -> ASSEMBLY_DAO : assembleTrainComposition(2059, "5623")
+            activate ASSEMBLY_DAO
+                ASSEMBLY_DAO -> DB : "SELECT fn_assemble_train_composition(2059, '5623')\nFROM DUAL"
+                activate DB
+                note right of DB
+                    PL/SQL function creates:
+                    - SERVICE_LOCOMOTIVE records
+                    - Updates locomotive status
+                end note
+                DB --> ASSEMBLY_DAO : locomotivesAssigned = 1
+                deactivate DB
+                ASSEMBLY_DAO --> SERVICE : 1
+            deactivate ASSEMBLY_DAO
+
+        note right of SERVICE
+            STEP 5: Assign wagons to service
+        end note
+
+        SERVICE -> SERVICE : assignWagonsToService(2059, [3330008], routeStops, 3)
+            SERVICE -> DB : "SELECT MIN(ORDER_LINE_ID) FROM ORDER_LINE"
+            activate DB
+            DB --> SERVICE : defaultOrderLineId = 1
+            deactivate DB
+
+            SERVICE -> SERVICE : createFreight("FRG-2059-001", 19, 12, 3)
+                SERVICE -> DB : "INSERT INTO FREIGHT\n(CODE, ORIGIN_ID, DESTINATION_ID, OPERATOR_ID)\nVALUES ('FRG-2059-001', 19, 12, 3)"
+                activate DB
+                DB --> SERVICE : freightId = 1234
+                deactivate DB
+
+            loop for each wagonId
+                SERVICE -> SERVICE : createFreightComposition(1234, 3330008, 1, 1)
+                    SERVICE -> DB : "INSERT INTO FREIGHT_COMPOSITION\n(FREIGHT_ID, WAGON_ID, ORDER_LINE_ID,\nPOSITION_NO, WEIGHT_KG)\nVALUES (1234, 3330008, 1, 1, 50000)"
+                    activate DB
+                    DB --> SERVICE : success
+                    deactivate DB
+            end
+
+            SERVICE -> SERVICE : linkFreightToService(2059, 1234)
+                SERVICE -> DB : "INSERT INTO TRAIN_SERVICE_FREIGHT\n(SERVICE_ID, FREIGHT_ID, POSITION_NO)\nVALUES (2059, 1234, 1)"
+                activate DB
+                DB --> SERVICE : success
+                deactivate DB
+
+        note right of SERVICE
+            STEP 6: Validate composition (PL/SQL function)
+        end note
+
+        SERVICE -> ASSEMBLY_DAO : validateTrainComposition(2059)
+        activate ASSEMBLY_DAO
+            ASSEMBLY_DAO -> DB : "SELECT fn_validate_train_composition(2059)\nFROM DUAL"
+            activate DB
+            note right of DB
+                PL/SQL function validates:
+                - Power-to-weight ratio
+                - Gauge compatibility
+                - Max speed calculations
+                Returns validation message
+            end note
+            DB --> ASSEMBLY_DAO : validationMsg = " | Locomotives: 1 | Wagons: 1 |\nPower: 5600 kW | Weight: 137 t |\nP/W Ratio: 40.88 kW/t | Max Speed: 120 km/h"
+            deactivate DB
+            ASSEMBLY_DAO --> SERVICE : validationMsg
+        deactivate ASSEMBLY_DAO
+
+        SERVICE -> SERVICE : create AssemblyResult(train, trainService,\ntrainStops, 1, validationMsg)
+
+        SERVICE --> UI : AssemblyResult
+    deactivate SERVICE
+    UI --> USER : "Display assembly completed successfully:\n- Train ID: 5445\n- Train Code: TRN-20260104-2138\n- Service ID: 2059\n- Status: SCHEDULED\n- Locomotives: 1\n- Train Stops: 2\n- Validation: | Locomotives: 1 | Wagons: 1 |\n  Power: 5600 kW | Weight: 137 t |\n  P/W Ratio: 40.88 kW/t | Max Speed: 120 km/h"
+deactivate UI
+
+deactivate USER
+
+@enduml
+
