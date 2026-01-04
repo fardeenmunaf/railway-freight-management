@@ -31,15 +31,15 @@ public class MainMenu {
             System.out.println("| 15. Aware Shortest Paths        |");
             System.out.println("| 16. Rail Hub Centrality         |");
             System.out.println("| 17. Maximum Throughput (MaxFlow)|");
-            System.out.println("| 17. Train Assembly (USLP09)     |");
+            System.out.println("| 18. Train Assembly (USLP09)     |");
             System.out.println("| 0. Exit                         |");
             System.out.println("-----------------------------------");
-            System.out.print("Enter your choice (0-17): ");
+            System.out.print("Enter your choice (0-18): ");
 
             String input = scanner.nextLine();
             try {
                 choice = Integer.parseInt(input);
-                if (choice < 0 || choice > 17) {
+                if (choice < 0 || choice > 18) {
                     System.out.println("Invalid choice. Please enter a number between 0 and 17.");
                 } else if (choice == 0) {
                     System.out.println("Exiting the system. Goodbye!");
@@ -95,10 +95,10 @@ public class MainMenu {
                             RailHubCentralityView.display(scanner);
                             break;
                         case 17:
-                            TrainAssemblyView.display(scanner);
-                            break;
-                        case 17:
                             MaxFlowView.display(scanner);
+                            break;
+                        case 18:
+                            TrainAssemblyView.display(scanner);
                             break;
                         default:
                             System.out.println("Option not implemented yet.");

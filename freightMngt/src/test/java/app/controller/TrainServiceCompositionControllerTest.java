@@ -45,7 +45,7 @@ public class TrainServiceCompositionControllerTest {
         operator1 = new User(1, "operator1", "operator1@example.com", "password123", company1, true);
 
         // Create train
-        train1 = new Train(1, 101, "Porto", "Lisboa", company1);
+        train1 = new Train(1, "101", "Porto", "Lisboa", company1);
 
         // Create train services
         trainService1 = new TrainService(1, train1,

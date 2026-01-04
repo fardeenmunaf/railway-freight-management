@@ -89,8 +89,8 @@ public class InventoryRelocationTest {
             4,                                          // lotId
             22,                                         // sku
             19,                                         // qty
-            LocalDateTime.of(2025, 9, 6, 12, 45),      // receivedDate
-            LocalDateTime.of(2026, 1, 10, 0, 0)        // expDate
+            LocalDateTime.of(2026, 1, 10, 0, 0),       // expDate
+            LocalDateTime.of(2025, 9, 6, 12, 45)       // receivedDate
         );
 
         // CRITICAL: Create lot in repository (required for InventoryRelocation validation)
@@ -211,16 +211,16 @@ public class InventoryRelocationTest {
 
         // Create multiple lots with SKU 22 in FEFO order
         InventoryLot lot1 = new InventoryLot(1, 22, 20,
-            LocalDateTime.of(2025, 9, 1, 10, 0),
-            LocalDateTime.of(2026, 1, 1, 0, 0));  // Expires first
+            LocalDateTime.of(2026, 1, 1, 0, 0),      // expDate - Expires first
+            LocalDateTime.of(2025, 9, 1, 10, 0));    // receivedDate
 
         InventoryLot lot2 = new InventoryLot(2, 22, 30,
-            LocalDateTime.of(2025, 9, 2, 10, 0),
-            LocalDateTime.of(2026, 2, 1, 0, 0));  // Expires second - THIS ONE WILL BE MOVED
+            LocalDateTime.of(2026, 2, 1, 0, 0),      // expDate - Expires second - THIS ONE WILL BE MOVED
+            LocalDateTime.of(2025, 9, 2, 10, 0));    // receivedDate
 
         InventoryLot lot3 = new InventoryLot(3, 22, 25,
-            LocalDateTime.of(2025, 9, 3, 10, 0),
-            LocalDateTime.of(2026, 3, 1, 0, 0));  // Expires last
+            LocalDateTime.of(2026, 3, 1, 0, 0),      // expDate - Expires last
+            LocalDateTime.of(2025, 9, 3, 10, 0));    // receivedDate
 
         // CRITICAL: Create lots in repository (required for InventoryRelocation validation)
         lotController.createInventoryLot(lot1);
@@ -301,16 +301,16 @@ public class InventoryRelocationTest {
         // Using unique IDs: 301, 302, 300 to avoid conflicts with other tests
         // Constructor: InventoryLot(lotId, sku, qty, expDate, receivedDate)
         InventoryLot existingLot1 = new InventoryLot(301, 22, 20,
-            LocalDateTime.of(2026, 1, 1, 0, 0),     // expDate - Expires FIRST (Jan 2026)
+            LocalDateTime.of(2027, 1, 1, 0, 0),     // expDate - Expires FIRST (Jan 2027)
             LocalDateTime.of(2025, 9, 1, 10, 0));   // receivedDate - Received Sept 2025
 
         InventoryLot existingLot2 = new InventoryLot(302, 22, 30,
-            LocalDateTime.of(2026, 3, 1, 0, 0),     // expDate - Expires LAST (Mar 2026)
+            LocalDateTime.of(2027, 3, 1, 0, 0),     // expDate - Expires LAST (Mar 2027)
             LocalDateTime.of(2025, 9, 2, 10, 0));   // receivedDate - Received Sept 2025
 
         // Create lot to be moved - expires in the MIDDLE (between lot1 and lot2)
         InventoryLot lotToMove = new InventoryLot(300, 22, 15,
-            LocalDateTime.of(2026, 2, 15, 0, 0),    // expDate - Expires MIDDLE (Feb 2026)
+            LocalDateTime.of(2027, 2, 15, 0, 0),    // expDate - Expires MIDDLE (Feb 2027)
             LocalDateTime.of(2025, 9, 15, 10, 0));  // receivedDate - Received Sept 2025
 
         // Add all lots to repository
@@ -375,7 +375,7 @@ public class InventoryRelocationTest {
         WarehouseBay[] bays = createWarehouseStructure(1);
         WarehouseBay bay = bays[0];
 
-        InventoryLot lot = new InventoryLot(401, 22, 10, LocalDateTime.now(), LocalDateTime.now().plusDays(30));
+        InventoryLot lot = new InventoryLot(401, 22, 10, LocalDateTime.now().plusDays(30), LocalDateTime.now());
         lotController.createInventoryLot(lot);
         InventoryLot lotFromRepo = lotController.getInventoryLotById(401);
 
@@ -403,7 +403,7 @@ public class InventoryRelocationTest {
         WarehouseBay targetBay = bays[1];
 
         // Lot with SKU 22
-        InventoryLot lot1 = new InventoryLot(501, 22, 10, LocalDateTime.now(), LocalDateTime.now().plusDays(30));
+        InventoryLot lot1 = new InventoryLot(501, 22, 10, LocalDateTime.now().plusDays(30), LocalDateTime.now());
         lotController.createInventoryLot(lot1);
         InventoryLot lot1FromRepo = lotController.getInventoryLotById(501);
 
@@ -413,7 +413,7 @@ public class InventoryRelocationTest {
         balanceController.createInventoryBalance(sourceBalance);
 
         // Target bay has SKU 99 (different)
-        InventoryLot lot2 = new InventoryLot(502, 99, 15, LocalDateTime.now(), LocalDateTime.now().plusDays(30));
+        InventoryLot lot2 = new InventoryLot(502, 99, 15, LocalDateTime.now().plusDays(30), LocalDateTime.now());
         lotController.createInventoryLot(lot2);
         InventoryLot lot2FromRepo = lotController.getInventoryLotById(502);
 
@@ -447,7 +447,7 @@ public class InventoryRelocationTest {
         bayController.createWarehouseBay(targetBay);
 
         // Lot to move
-        InventoryLot lotToMove = new InventoryLot(601, 22, 10, LocalDateTime.now(), LocalDateTime.now().plusDays(30));
+        InventoryLot lotToMove = new InventoryLot(601, 22, 10, LocalDateTime.now().plusDays(30), LocalDateTime.now());
         lotController.createInventoryLot(lotToMove);
         InventoryLot lotToMoveFromRepo = lotController.getInventoryLotById(601);
 
@@ -457,7 +457,7 @@ public class InventoryRelocationTest {
         balanceController.createInventoryBalance(sourceBalance);
 
         // Target bay already full (1 lot in bay with capacity 1)
-        InventoryLot existingLot = new InventoryLot(602, 22, 15, LocalDateTime.now(), LocalDateTime.now().plusDays(30));
+        InventoryLot existingLot = new InventoryLot(602, 22, 15, LocalDateTime.now().plusDays(30), LocalDateTime.now());
         lotController.createInventoryLot(existingLot);
         InventoryLot existingLotFromRepo = lotController.getInventoryLotById(602);
 
@@ -494,7 +494,7 @@ public class InventoryRelocationTest {
     @Test
     public void testLotControllerSharing() {
         // Create a lot using our test controller
-        InventoryLot testLot = new InventoryLot(999, 1, 10, LocalDateTime.now(), LocalDateTime.now().plusDays(30));
+        InventoryLot testLot = new InventoryLot(999, 1, 10, LocalDateTime.now().plusDays(30), LocalDateTime.now());
         lotController.createInventoryLot(testLot);
 
         // Create a NEW controller instance (like InventoryRelocation does)
