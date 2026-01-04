@@ -4,15 +4,12 @@ import app.controller.TrainDispatchController;
 import app.model.*;
 import app.repositories.Repositories;
 import app.service.sprint3.TrainSchedulingService;
-import app.service.sprint3.TrainAssemblyService;
-import app.db.DatabaseConnection;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.sql.SQLException;
 
 /**
  * Interactive UI for the Train Dispatch Scheduler.
@@ -89,53 +86,20 @@ public class TrainSchedulingView {
     private static void createNewDispatch(Scanner scanner) {
         System.out.println("\n=== CREATE NEW DISPATCH ===");
 
-        List<TrainService> services = new ArrayList<>();
-        boolean loadedFromDb = false;
-        // Prefer DB-backed services from TrainAssemblyService; fall back to in-memory repositories
-        try {
-            try {
-                TrainAssemblyService assemblyService = new TrainAssemblyService();
-                services = assemblyService.getAllTrainServices();
-                loadedFromDb = true;
-            } catch (SQLException ex) {
-                System.out.println("⚠️  Could not load train services from DB: " + ex.getMessage());
-                services = controller.getAvailableTrainServices();
-            }
-        } catch (RuntimeException rex) {
-            System.out.println("⚠️  Error loading train services: " + rex.getMessage());
-            services = controller.getAvailableTrainServices();
-        }
-
-        if (services == null || services.isEmpty()) {
+        List<TrainService> services = controller.getAvailableTrainServices();
+        if (services.isEmpty()) {
             System.out.println("No train services available. Please create a train service first.");
-            // helpful diagnostic: tell where we tried to load from
-            if (loadedFromDb) {
-                System.out.println("Tried DB but returned 0 rows from TRAIN_SERVICE.");
-                System.out.println("Check your DB schema/data: SELECT COUNT(*) FROM TRAIN_SERVICE; and that DatabaseConnection credentials/URL are correct.");
-            } else {
-                System.out.println("Tried in-memory repository; it is empty. You can load sample data via AppInitializer or insert into DB.");
-            }
             return;
         }
 
-        System.out.println((loadedFromDb ? "(from DB) " : "(from in-memory) ") + "\nAvailable Train Services:");
+        System.out.println("\nAvailable Train Services:");
         for (TrainService ts : services) {
             System.out.printf("ID: %d | Train: %s | Status: %s%n",
                     ts.getServiceId(), ts.getTrain() != null ? ts.getTrain().getCode() : "N/A", ts.getStatus());
         }
 
         Integer trainServiceId = getIntInput(scanner, "\nEnter Train Service ID: ");
-        // Try to resolve selection from the loaded list first, then fallback to repository
-        TrainService selected = null;
-        for (TrainService ts : services) {
-            if (ts != null && ts.getServiceId() != null && ts.getServiceId().equals(trainServiceId)) {
-                selected = ts;
-                break;
-            }
-        }
-        if (selected == null) {
-            selected = repositories.getTrainServiceRepository().getTrainServiceById(trainServiceId);
-        }
+        TrainService selected = repositories.getTrainServiceRepository().getTrainServiceById(trainServiceId);
         if (selected == null) {
             System.out.println("TrainService not found.");
             return;
@@ -180,38 +144,13 @@ public class TrainSchedulingView {
                 FreightRoute matched = findMatchingFreightRoute(repositories, routeDef);
 
                 // Schedule using TrainSchedulingService
-                TrainSchedulingService scheduler = null;
-                boolean useDbScheduler = loadedFromDb;
-                if (useDbScheduler) System.out.println("\n[Scheduler] Using DB-backed TrainSchedulingService (will persist to DB).\n");
-                else System.out.println("\n[Scheduler] Using in-memory TrainSchedulingService for scheduling (no DB persistence in schedule).\n");
-                scheduler = useDbScheduler ? new TrainSchedulingService(true) : new TrainSchedulingService();
+                TrainSchedulingService scheduler = new TrainSchedulingService();
                 int dispatchId = new java.util.Random().nextInt(10000) + 1;
                 List<TrainDispatch> existing = repositories.getTrainDispatchRepository().getAllTrainDispatches();
-                TrainDispatch scheduled = null;
-                try {
-                    scheduled = scheduler.scheduleDispatch(dispatchId, selected, matched, departureTime, "MANUAL", manual, existing);
-                } catch (Exception e) {
-                    System.out.println("✗ Scheduling failed: " + e.getMessage());
-                    e.printStackTrace();
-                    return;
-                }
+                TrainDispatch scheduled = scheduler.scheduleDispatch(dispatchId, selected, matched, departureTime, "MANUAL", manual, existing);
 
                 // Persist scheduled dispatch
-                TrainDispatch saved = null;
-                try {
-                    if (useDbScheduler) {
-                        // Persist to DB via scheduler; this will create TRAIN_SERVICE and TRAIN_STOP records
-                        scheduler.saveDispatch(scheduled);
-                        // Also insert into in-memory repo so UI can access it
-                        saved = repositories.getTrainDispatchRepository().addTrainDispatch(scheduled);
-                    } else {
-                        saved = repositories.getTrainDispatchRepository().addTrainDispatch(scheduled);
-                    }
-                } catch (Exception e) {
-                    System.out.println("✗ Failed to save scheduled dispatch to repository: " + e.getMessage());
-                    e.printStackTrace();
-                    return;
-                }
+                TrainDispatch saved = repositories.getTrainDispatchRepository().addTrainDispatch(scheduled);
                 List<RoutePoint> persisted = new ArrayList<>();
                 if (saved.getRoute() != null) {
                     for (RoutePoint rp : saved.getRoute()) {
@@ -230,11 +169,7 @@ public class TrainSchedulingView {
             }
         } else if (mode == 1) {
             // Automatic using TrainSchedulingService then persist
-            TrainSchedulingService scheduler = null;
-            boolean useDbScheduler = loadedFromDb;
-            if (useDbScheduler) System.out.println("\n[Scheduler] Using DB-backed TrainSchedulingService (will persist to DB).\n");
-            else System.out.println("\n[Scheduler] Using in-memory TrainSchedulingService for scheduling (no DB persistence in schedule).\n");
-            scheduler = useDbScheduler ? new TrainSchedulingService(true) : new TrainSchedulingService();
+            TrainSchedulingService scheduler = new TrainSchedulingService();
             // Select a FreightRoute to use for automatic scheduling
             List<FreightRoute> allRoutes = repositories.getFreightRouteRepository().getAllFreightRoutes();
             if (allRoutes.isEmpty()) {
@@ -254,29 +189,10 @@ public class TrainSchedulingView {
 
             List<TrainDispatch> existing = repositories.getTrainDispatchRepository().getAllTrainDispatches();
             int dispatchId = new java.util.Random().nextInt(10000) + 1;
-            TrainDispatch dispatch = null;
-            try {
-                dispatch = scheduler.scheduleDispatch(dispatchId, selected, fr, departureTime, "AUTOMATIC", null, existing);
-            } catch (Exception e) {
-                System.out.println("✗ Scheduling failed: " + e.getMessage());
-                e.printStackTrace();
-                return;
-            }
+            TrainDispatch dispatch = scheduler.scheduleDispatch(dispatchId, selected, fr, departureTime, "AUTOMATIC", null, existing);
 
             // Persist dispatch and route points
-            TrainDispatch saved = null;
-            try {
-                if (useDbScheduler) {
-                    scheduler.saveDispatch(dispatch);
-                    saved = repositories.getTrainDispatchRepository().addTrainDispatch(dispatch);
-                } else {
-                    saved = repositories.getTrainDispatchRepository().addTrainDispatch(dispatch);
-                }
-            } catch (Exception e) {
-                System.out.println("✗ Failed to save scheduled dispatch to repository: " + e.getMessage());
-                e.printStackTrace();
-                return;
-            }
+            TrainDispatch saved = repositories.getTrainDispatchRepository().addTrainDispatch(dispatch);
             List<RoutePoint> rps = saved.getRoute();
             List<RoutePoint> persisted = new ArrayList<>();
             for (RoutePoint rp : rps) {
@@ -581,7 +497,7 @@ public class TrainSchedulingView {
             for (LineSegmentFacility lf1 : linksFrom) {
                 for (LineSegmentFacility lf2 : linksTo) {
                     if (lf1.getLineSegment() != null && lf2.getLineSegment() != null &&
-                        lf1.getLineSegment().getSegmentId().equals(lf2.getLineSegment().getSegmentId())) {
+                            lf1.getLineSegment().getSegmentId().equals(lf2.getLineSegment().getSegmentId())) {
                         matched = lf1.getLineSegment();
                         break;
                     }

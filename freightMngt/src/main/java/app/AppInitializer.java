@@ -1,5 +1,6 @@
 package app;
 
+import app.controller.FreightRouteController;
 import app.controller.InventoryBalanceController;
 import app.model.*;
 import app.repositories.CartRepository;
@@ -40,6 +41,7 @@ public class AppInitializer implements Runnable {
         loadTravelTimeData(repositories);
         loadMockedData();
         loadStations(repositories);
+        loadDefaultRoutes(repositories); // Load default freight routes
         loadSampleDispatches(repositories); // Carregar dispatches de exemplo
     }
 
@@ -344,6 +346,13 @@ public class AppInitializer implements Runnable {
         seg2.setSpeedLimitKmh(100.0);
         repositories.getLineSegmentRepository().addLineSegment(seg2);
 
+        // Segment 3: Lisboa to Coimbra
+        LineSegment seg3 = new LineSegment();
+        seg3.setSegmentId(3);
+        seg3.setLengthKm(200.0);  // Approximate distance Lisboa-Coimbra
+        seg3.setSpeedLimitKmh(110.0);
+        repositories.getLineSegmentRepository().addLineSegment(seg3);
+
         // 7-10. Criar ligações estação-segmento
         LineSegmentFacility lsf1 = new LineSegmentFacility();
         lsf1.setSegmentFacilityId(1);
@@ -369,6 +378,91 @@ public class AppInitializer implements Runnable {
         lsf4.setFacility(coimbra);
         repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf4);
 
+        // Ligações para seg3 (Lisboa-Coimbra)
+        LineSegmentFacility lsf5 = new LineSegmentFacility();
+        lsf5.setSegmentFacilityId(5);
+        lsf5.setLineSegment(seg3);
+        lsf5.setFacility(lisboa);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf5);
+
+        LineSegmentFacility lsf6 = new LineSegmentFacility();
+        lsf6.setSegmentFacilityId(6);
+        lsf6.setLineSegment(seg3);
+        lsf6.setFacility(coimbra);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf6);
+
+    }
+
+    /**
+     * Loads default freight routes between Lisboa, Porto, and Coimbra.
+     * Creates three routes:
+     * 1. Lisboa -> Porto (direct)
+     * 2. Porto -> Lisboa (direct)
+     * 3. Lisboa -> Porto via Coimbra (complex route with intermediate stop)
+     */
+    private void loadDefaultRoutes(Repositories repositories) {
+        System.out.println("\n🛤️  Loading default freight routes...");
+
+        FreightRouteController routeController = new FreightRouteController();
+
+        try {
+            // Route 1: Lisboa -> Porto (Direct)
+            FreightRoute route1 = routeController.createSimpleRoute(
+                1,
+                "Lisboa - Porto Direct",
+                1,  // Lisboa Santa Apolónia
+                2,  // Porto Campanhã
+                "Direct route from Lisboa to Porto"
+            );
+            System.out.println("✅ Created route: Lisboa -> Porto (Direct)");
+
+            // Route 2: Porto -> Lisboa (Direct)
+            FreightRoute route2 = routeController.createSimpleRoute(
+                2,
+                "Porto - Lisboa Direct",
+                2,  // Porto Campanhã
+                1,  // Lisboa Santa Apolónia
+                "Direct route from Porto to Lisboa"
+            );
+            System.out.println("✅ Created route: Porto -> Lisboa (Direct)");
+
+            // Route 3: Lisboa -> Porto via Coimbra (Complex Route)
+            List<FreightRouteController.SegmentDefinition> segments = new ArrayList<>();
+
+            // Segment 1: Lisboa -> Coimbra (using seg3)
+            segments.add(new FreightRouteController.SegmentDefinition(
+                1,
+                1,  // From Lisboa
+                3,  // To Coimbra
+                3,  // Using segment 3 (Lisboa-Coimbra)
+                "Lisboa to Coimbra segment"
+            ));
+
+            // Segment 2: Coimbra -> Porto (using seg2)
+            segments.add(new FreightRouteController.SegmentDefinition(
+                2,
+                3,  // From Coimbra
+                2,  // To Porto
+                2,  // Using segment 2 (Coimbra-Porto)
+                "Coimbra to Porto segment"
+            ));
+
+            FreightRoute route3 = routeController.createComplexRoute(
+                3,
+                "Lisboa - Porto via Coimbra",
+                1,  // Start: Lisboa Santa Apolónia
+                2,  // End: Porto Campanhã
+                segments,
+                "Route from Lisboa to Porto with stop at Coimbra"
+            );
+            System.out.println("✅ Created route: Lisboa -> Porto via Coimbra (Complex)");
+
+            System.out.println("✅ Default freight routes loaded successfully: 3 routes");
+
+        } catch (Exception e) {
+            System.out.println("⚠️  Error loading default routes: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void loadStations(Repositories repositories) {

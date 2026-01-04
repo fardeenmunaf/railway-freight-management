@@ -18,7 +18,6 @@ public class Main {
 
         WagonsUnloading wagonsUnloading = new WagonsUnloading();
         wagonsUnloading.unloadAllWagons();
-
         System.out.println("Dataset initialized successfully.\n\n");
 
         System.out.println("\n\n\n");
