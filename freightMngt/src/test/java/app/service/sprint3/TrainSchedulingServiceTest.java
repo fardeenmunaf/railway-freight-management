@@ -1,7 +1,6 @@
 package app.service.sprint3;
 
 import app.model.*;
-import app.repositories.Repositories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

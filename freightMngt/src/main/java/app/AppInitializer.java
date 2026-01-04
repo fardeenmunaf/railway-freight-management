@@ -494,7 +494,7 @@ public class AppInitializer implements Runnable {
 
             if (trainServices.isEmpty()) {
                 System.out.println("⚠️  No train services found. Creating sample train services first...");
-                //createSampleTrainServices(repositories);
+                createSampleTrainServices(repositories);
                 trainServices = repositories.getTrainServiceRepository().getAllTrainServices();
             }
 
@@ -652,15 +652,15 @@ public class AppInitializer implements Runnable {
         System.out.println("✅ Sample facilities created: 4");
     }
 
-    /*private void createSampleTrainServices(Repositories repositories) {
+    private void createSampleTrainServices(Repositories repositories) {
         // Criar company
         Company operator = new Company(1, "CP - Comboios de Portugal", "CP", "PT123456789");
         repositories.getCompanyRepository().addCompany(operator);
 
         // Criar trains
-        Train train1 = new Train(1, 101, "Lisboa Santa Apolónia", "Porto Campanhã", operator);
-        Train train2 = new Train(2, 202, "Porto Campanhã", "Braga", operator);
-        Train train3 = new Train(3, 303, "Coimbra-B", "Lisboa Santa Apolónia", operator);
+        Train train1 = new Train(1, "101", "Lisboa Santa Apolónia", "Porto Campanhã", operator);
+        Train train2 = new Train(2, "202", "Porto Campanhã", "Braga", operator);
+        Train train3 = new Train(3, "303", "Coimbra-B", "Lisboa Santa Apolónia", operator);
 
         repositories.getTrainRepository().addTrain(train1);
         repositories.getTrainRepository().addTrain(train2);
@@ -669,15 +669,15 @@ public class AppInitializer implements Runnable {
         // Criar train services
         LocalDateTime now = LocalDateTime.now();
 
-        TrainService service1 = new TrainService(1, train1, now, now.plusHours(3), null, "scheduled");
-        TrainService service2 = new TrainService(2, train2, now.plusHours(1), now.plusHours(2), null, "scheduled");
-        TrainService service3 = new TrainService(3, train3, now.minusHours(1), now.plusHours(2), null, "in_transit");
+        TrainService service1 = new TrainService(1, train1, now, now.plusHours(3), null, "SCHEDULED");
+        TrainService service2 = new TrainService(2, train2, now.plusHours(1), now.plusHours(2), null, "SCHEDULED");
+        TrainService service3 = new TrainService(3, train3, now.minusHours(1), now.plusHours(2), null, "IN_TRANSIT");
 
         repositories.getTrainServiceRepository().addTrainService(service1);
         repositories.getTrainServiceRepository().addTrainService(service2);
         repositories.getTrainServiceRepository().addTrainService(service3);
 
         System.out.println("✅ Sample train services created: 3");
-    }*/
+    }
 }
 
