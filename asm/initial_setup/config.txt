@@ -2,26 +2,26 @@
 
 USER,Diogo Remelgado,dremel,McDonalds,10
 USER,Eduardo Pacheco,chatix04,BurgerKing,15
-USER, Fardeen Munaf, matxicado,KFC,5
-USER, Guilherme Tavares, pirata,TacoBell,7
-USER, Mariana Gabriel, marianagabriel,SubWay,3
+USER,Fardeen Munaf,matxicado,KFC,5
+USER,Guilherme Tavares,pirata,TacoBell,7
+USER,Mariana Gabriel,marianagabriel,SubWay,3
 
 # --- SENSOR CONFIG (TYPE, BUFFERSIZE, WINDOWSIZE) ---
-SENSOR_CONFIG;TEMP;20;5
-SENSOR_CONFIG;HUM;20;5
+SENSOR_CONFIG,TEMP,20,5
+SENSOR_CONFIG,HUM,20,5
 
 # --- TRACK (TRACKID, STATE, TRAINID)
-TRACK;1;0
-TRACK;2;1;1
+TRACK,1,0
+TRACK,2,1,1
 
 # --- TRAIN (TRAINID)
-TRAIN;1
+TRAIN,1
 TRAIN,2
 TRAIN,3
 
 # --- LOG (ID, USERNAME, ACTION, TIMESTAMP) ---
 # ------ TIMESTAMP is using Unix Epoch -----
-LOG, 1, dremel, Create Config, 1764775885
+LOG,1,dremel,Create Config,1764775885
 
 
 
