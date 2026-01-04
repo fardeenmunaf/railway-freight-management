@@ -1,0 +1,185 @@
+// sensors_linux.c - Sensor simulation for USAC15
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <time.h>
+
+#include "board.h"
+
+// Define CRTSCTS if not available on this system
+#ifndef CRTSCTS
+#define CRTSCTS 0
+#endif
+
+// ----------------- Serial port management -----------------
+
+int serial_fd = -1;
+
+int open_serial_port(const char *device) {
+    int fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (fd < 0) {
+        // Serial port not available, will use simulation
+        return -1;
+    }
+    
+    struct termios tty;
+    if (tcgetattr(fd, &tty) != 0) {
+        close(fd);
+        return -1;
+    }
+    
+    cfsetospeed(&tty, B9600);
+    cfsetispeed(&tty, B9600);
+    
+    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;
+    tty.c_iflag &= ~IGNBRK;
+    tty.c_lflag = 0;
+    tty.c_oflag = 0;
+    tty.c_cc[VMIN] = 0;
+    tty.c_cc[VTIME] = 5;
+    
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
+    tty.c_cflag |= (CLOCAL | CREAD);
+    tty.c_cflag &= ~(PARENB | PARODD);
+    tty.c_cflag &= ~CSTOPB;
+    tty.c_cflag &= ~CRTSCTS;
+    
+    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+        close(fd);
+        return -1;
+    }
+    
+    return fd;
+}
+
+// ----------------- Sensor data simulation -----------------
+
+SensorData request_sensors(int fd) {
+    SensorData data;
+    
+    if (fd < 0) {
+        // Simulation mode - generate random but realistic data
+        srand(time(NULL));
+        
+        // Temperature between 15°C and 30°C
+        data.temperature = 15.0 + ((float)rand() / RAND_MAX) * 15.0;
+        
+        // Humidity between 30% and 80%
+        data.humidity = 30.0 + ((float)rand() / RAND_MAX) * 50.0;
+        
+        // Simulate occasional errors (5% chance)
+        data.error = (rand() % 100) < 5;
+        
+        // Small delay to simulate sensor reading time
+        sleep(100000); // 0.1 second
+        
+        return data;
+    }
+    
+    // Real hardware mode - read from serial port
+    char buffer[128];
+    memset(buffer, 0, sizeof(buffer));
+    
+    // Send request command
+    write(fd, "READ\n", 5);
+    sleep(200000); // Wait for response
+    
+    // Read response
+    int n = read(fd, buffer, sizeof(buffer) - 1);
+    
+    if (n <= 0) {
+        // No response or error
+        data.temperature = 0.0;
+        data.humidity = 0.0;
+        data.error = true;
+        return data;
+    }
+    
+    // Parse response: expected format "T:25.5,H:60.2"
+    float temp = 0.0, hum = 0.0;
+    if (sscanf(buffer, "T:%f,H:%f", &temp, &hum) == 2) {
+        data.temperature = temp;
+        data.humidity = hum;
+        data.error = false;
+    } else {
+        data.temperature = 0.0;
+        data.humidity = 0.0;
+        data.error = true;
+    }
+    
+    return data;
+}
+
+// ----------------- Moving median filter -----------------
+
+#define BUFFER_SIZE 5
+const int BUFFER_SIZE_CONST = BUFFER_SIZE;
+
+SensorData buffer[BUFFER_SIZE];
+int bufIndex = 0;
+int bufCount = 0;
+
+// Comparison function for qsort
+static int compare_float(const void *a, const void *b) {
+    float fa = *(const float *)a;
+    float fb = *(const float *)b;
+    return (fa > fb) - (fa < fb);
+}
+
+bool movingMedian(SensorData *out) {
+    if (bufCount == 0) {
+        out->error = true;
+        return false;
+    }
+    
+    // Check if any sensor has error
+    int errorCount = 0;
+    for (int i = 0; i < bufCount; i++) {
+        if (buffer[i].error) errorCount++;
+    }
+    
+    // If more than half have errors, return error
+    if (errorCount > bufCount / 2) {
+        out->error = true;
+        return false;
+    }
+    
+    // Calculate median for temperature and humidity
+    float temps[BUFFER_SIZE];
+    float hums[BUFFER_SIZE];
+    int validCount = 0;
+    
+    for (int i = 0; i < bufCount; i++) {
+        if (!buffer[i].error) {
+            temps[validCount] = buffer[i].temperature;
+            hums[validCount] = buffer[i].humidity;
+            validCount++;
+        }
+    }
+    
+    if (validCount == 0) {
+        out->error = true;
+        return false;
+    }
+    
+    // Sort and find median
+    qsort(temps, validCount, sizeof(float), compare_float);
+    qsort(hums, validCount, sizeof(float), compare_float);
+    
+    int mid = validCount / 2;
+    if (validCount % 2 == 0) {
+        out->temperature = (temps[mid - 1] + temps[mid]) / 2.0;
+        out->humidity = (hums[mid - 1] + hums[mid]) / 2.0;
+    } else {
+        out->temperature = temps[mid];
+        out->humidity = hums[mid];
+    }
+    
+    out->error = false;
+    return true;
+}
