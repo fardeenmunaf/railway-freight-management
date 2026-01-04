@@ -280,6 +280,27 @@ public class RailHubCentralityAnalysisTest {
     }
 
     @Test
+    public void testDataIntegrity_AllStationsHaveMetrics() {
+        List<RailHubCentralityAnalysis.HubAnalysisResult> results = analysis.getRankedResults();
+
+        // Verify we have results for all test stations (10)
+        assertEquals(10, results.size(),
+                "Should have metrics for all 10 test stations");
+    }
+
+    @Test
+    public void testDataIntegrity_TopHubIsStationA() {
+        List<RailHubCentralityAnalysis.HubAnalysisResult> results = analysis.getRankedResults();
+
+        assertFalse(results.isEmpty(), "Results should not be empty");
+
+        // Station A (s1) should be the top hub as it has the most connections (5 direct connections)
+        RailHubCentralityAnalysis.HubAnalysisResult topHub = results.get(0);
+        assertEquals("Station A", topHub.getStationName(),
+                "Station A should be the top hub");
+    }
+
+    @Test
     public void testMetrics_HubScoreIsNormalized() {
         List<RailHubCentralityAnalysis.HubAnalysisResult> results = analysis.getRankedResults();
 
@@ -345,27 +366,6 @@ public class RailHubCentralityAnalysisTest {
         List<RailHubCentralityAnalysis.HubAnalysisResult> allTop = analysis.getTopNHubs(10000);
         assertEquals(allResults.size(), allTop.size(),
                     "Large N should return all results");
-    }
-
-    @Test
-    public void testDataIntegrity_AllStationsHaveMetrics() {
-        List<RailHubCentralityAnalysis.HubAnalysisResult> results = analysis.getRankedResults();
-
-        // Verify we have results for all test stations (10)
-        assertEquals(10, results.size(),
-                    "Should have metrics for all 10 test stations");
-    }
-
-    @Test
-    public void testDataIntegrity_TopHubIsStationA() {
-        List<RailHubCentralityAnalysis.HubAnalysisResult> results = analysis.getRankedResults();
-
-        assertFalse(results.isEmpty(), "Results should not be empty");
-
-        // Station A (s1) should be the top hub as it has the most connections (5 direct connections)
-        RailHubCentralityAnalysis.HubAnalysisResult topHub = results.get(0);
-        assertEquals("Station A", topHub.getStationName(),
-                    "Station A should be the top hub");
     }
 }
 
