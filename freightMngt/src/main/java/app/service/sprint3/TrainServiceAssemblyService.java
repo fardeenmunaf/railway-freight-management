@@ -179,7 +179,8 @@ public class TrainServiceAssemblyService {
             int locomotivesAssigned = assignLocomotives(trainService.getServiceId(), locomotiveIds);
 
             // Step 5: Assign wagons if provided
-            // This creates FREIGHT → FREIGHT_COMPOSITION → TRAIN_SERVICE_FREIGHT records
+            // Creates FREIGHT → FREIGHT_COMPOSITION (with default ORDER_LINE_ID) → TRAIN_SERVICE_FREIGHT
+            // Note: Uses first available ORDER_LINE_ID as a workaround for NOT NULL constraint
             if (wagonIds != null && !wagonIds.isEmpty()) {
                 assignWagonsToService(trainService.getServiceId(), wagonIds, routeStops, operatorCompanyId);
             }
@@ -321,6 +322,10 @@ public class TrainServiceAssemblyService {
      * Assigns wagons to the train service by creating FREIGHT and linking via FREIGHT_COMPOSITION.
      * Creates the relationship: TRAIN_SERVICE → TRAIN_SERVICE_FREIGHT → FREIGHT → FREIGHT_COMPOSITION → WAGONS
      *
+     * IMPORTANT: This is a workaround implementation that uses a default ORDER_LINE_ID.
+     * In production, this should be replaced with proper order/cargo integration where each
+     * wagon is assigned to transport specific order line items.
+     *
      * @param serviceId the train service ID
      * @param wagonIds list of wagon IDs to assign
      * @param routeStops route stops (used to get origin and destination)
@@ -329,6 +334,20 @@ public class TrainServiceAssemblyService {
      */
     private void assignWagonsToService(Integer serviceId, List<Integer> wagonIds,
                                        List<RouteStop> routeStops, Integer operatorId) throws SQLException {
+        // WORKAROUND: Use default ORDER_LINE_ID since FREIGHT_COMPOSITION requires it (NOT NULL + FK)
+        // Check if a default order line exists, otherwise skip wagon assignment
+        Integer defaultOrderLineId = getDefaultOrderLineId();
+
+        if (defaultOrderLineId == null) {
+            System.out.println("[WARNING] No ORDER_LINE records found in database");
+            System.out.println("[INFO] Wagon assignment skipped - " + wagonIds.size() + " wagon(s) not assigned to service " + serviceId);
+            System.out.println("[INFO] To enable wagon assignment, ensure ORDER_LINE table has at least one record");
+            return;
+        }
+
+        System.out.println("[INFO] Assigning " + wagonIds.size() + " wagon(s) to service " + serviceId);
+        System.out.println("[NOTICE] Using default ORDER_LINE_ID=" + defaultOrderLineId + " (temporary workaround)");
+
         // Step 1: Create FREIGHT record
         String freightCode = "FRG-" + serviceId + "-001";
         Integer originFacilityId = routeStops.get(0).getFacilityId();
@@ -336,13 +355,35 @@ public class TrainServiceAssemblyService {
 
         Integer freightId = createFreight(freightCode, originFacilityId, destinationFacilityId, operatorId);
 
-        // Step 2: Create FREIGHT_COMPOSITION records (link wagons to freight)
+        // Step 2: Create FREIGHT_COMPOSITION records (link wagons to freight with default order line)
         for (int i = 0; i < wagonIds.size(); i++) {
-            createFreightComposition(freightId, wagonIds.get(i), i + 1);
+            createFreightComposition(freightId, wagonIds.get(i), i + 1, defaultOrderLineId);
         }
 
         // Step 3: Link FREIGHT to TRAIN_SERVICE via TRAIN_SERVICE_FREIGHT
         linkFreightToService(serviceId, freightId);
+
+        System.out.println("[SUCCESS] " + wagonIds.size() + " wagon(s) assigned to service " + serviceId);
+    }
+
+    /**
+     * Gets the first available ORDER_LINE_ID from the database as a default.
+     * This is a workaround to satisfy the NOT NULL constraint on FREIGHT_COMPOSITION.ORDER_LINE_ID.
+     *
+     * @return the first ORDER_LINE_ID found, or null if no order lines exist
+     * @throws SQLException if a database error occurs
+     */
+    private Integer getDefaultOrderLineId() throws SQLException {
+        String sql = "SELECT MIN(ORDER_LINE_ID) AS ID FROM ORDER_LINE";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                int id = rs.getInt("ID");
+                return rs.wasNull() ? null : id;
+            }
+        }
+        return null;
     }
 
     /**
@@ -386,16 +427,18 @@ public class TrainServiceAssemblyService {
      * @param freightId the freight ID
      * @param wagonId the wagon ID
      * @param position the position in the freight composition
+     * @param orderLineId the order line ID (required by NOT NULL constraint)
      * @throws SQLException if an error occurs during the operation
      */
-    private void createFreightComposition(Integer freightId, Integer wagonId, int position) throws SQLException {
-        String sql = "INSERT INTO FREIGHT_COMPOSITION (FREIGHT_ID, WAGON_ID, POSITION_NO, WEIGHT_KG) " +
-                     "VALUES (?, ?, ?, 50000)"; // Default weight of 50 tons
+    private void createFreightComposition(Integer freightId, Integer wagonId, int position, Integer orderLineId) throws SQLException {
+        String sql = "INSERT INTO FREIGHT_COMPOSITION (FREIGHT_ID, WAGON_ID, ORDER_LINE_ID, POSITION_NO, WEIGHT_KG) " +
+                     "VALUES (?, ?, ?, ?, 50000)"; // Default weight of 50 tons
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, freightId);
             pstmt.setInt(2, wagonId);
-            pstmt.setInt(3, position);
+            pstmt.setInt(3, orderLineId);
+            pstmt.setInt(4, position);
             pstmt.executeUpdate();
         }
     }
