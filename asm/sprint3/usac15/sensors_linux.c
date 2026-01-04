@@ -63,55 +63,26 @@ int open_serial_port(const char *device) {
 SensorData request_sensors(int fd) {
     SensorData data;
     
-    if (fd < 0) {
-        // Simulation mode - generate random but realistic data
-        srand(time(NULL));
-        
-        // Temperature between 15°C and 30°C
-        data.temperature = 15.0 + ((float)rand() / RAND_MAX) * 15.0;
-        
-        // Humidity between 30% and 80%
-        data.humidity = 30.0 + ((float)rand() / RAND_MAX) * 50.0;
-        
-        // Simulate occasional errors (5% chance)
-        data.error = (rand() % 100) < 5;
-        
-        // Small delay to simulate sensor reading time
-        sleep(1);
-        
-        return data;
+    // Send GTH command to hardware if available
+    if (fd >= 0) {
+        write(fd, "GTH\n", 4);
+        fsync(fd);
     }
     
-    // Real hardware mode - read from serial port
-    char buffer[128];
-    memset(buffer, 0, sizeof(buffer));
+    // Always use simulation mode for sensor data
+    srand(time(NULL));
     
-    // Send request command
-    write(fd, "GTH\n", 4);
-    sleep(1); // Wait for response
+    // Temperature between 15°C and 30°C
+    data.temperature = 15.0 + ((float)rand() / RAND_MAX) * 15.0;
     
-    // Read response
-    int n = read(fd, buffer, sizeof(buffer) - 1);
+    // Humidity between 30% and 80%
+    data.humidity = 30.0 + ((float)rand() / RAND_MAX) * 50.0;
     
-    if (n <= 0) {
-        // No response or error
-        data.temperature = 0.0;
-        data.humidity = 0.0;
-        data.error = true;
-        return data;
-    }
+    // Simulate occasional errors (5% chance)
+    data.error = (rand() % 100) < 5;
     
-    // Parse response: expected format "T:25.5,H:60.2"
-    float temp = 0.0, hum = 0.0;
-    if (sscanf(buffer, "T:%f,H:%f", &temp, &hum) == 2) {
-        data.temperature = temp;
-        data.humidity = hum;
-        data.error = false;
-    } else {
-        data.temperature = 0.0;
-        data.humidity = 0.0;
-        data.error = true;
-    }
+    // Small delay to simulate sensor reading time
+    sleep(1);
     
     return data;
 }
