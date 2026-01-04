@@ -38,14 +38,14 @@ public class TrainAssemblyView {
     private void showMenu() {
         boolean exit = false;
         while (!exit) {
-            System.out.println("\n╔════════════════════════════════════════════════════╗");
+            System.out.println("\n╔═══════════════════════════════════════════════════╗");
             System.out.println("║   USLP09: COMPLETE TRAIN SERVICE ASSEMBLY         ║");
-            System.out.println("╠════════════════════════════════════════════════════╣");
+            System.out.println("╠═══════════════════════════════════════════════════╣");
             System.out.println("║ 1. Assemble Complete Train Service                ║");
             System.out.println("║ 2. View All Train Services                        ║");
             System.out.println("║ 3. View Train Service Details                     ║");
             System.out.println("║ 0. Return to Main Menu                            ║");
-            System.out.println("╚════════════════════════════════════════════════════╝");
+            System.out.println("╚═══════════════════════════════════════════════════╝");
             System.out.print("Choose an option: ");
 
             try {
