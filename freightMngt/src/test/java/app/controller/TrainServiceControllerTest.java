@@ -33,8 +33,8 @@ public class TrainServiceControllerTest {
 
         company1 = new Company(1, "Rail Company", "RC", "123456789");
 
-        train1 = new Train(1, 101, "Porto", "Lisboa", company1);
-        train2 = new Train(2, 102, "Lisboa", "Faro", company1);
+        train1 = new Train(1, "101", "Porto", "Lisboa", company1);
+        train2 = new Train(2, "102", "Lisboa", "Faro", company1);
 
         driver1 = new User(1, "driver1", "driver1@example.com", "password123", company1, true);
         driver2 = new User(2, "driver2", "driver2@example.com", "password456", company1, true);

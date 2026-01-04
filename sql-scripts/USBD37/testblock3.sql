@@ -16,7 +16,8 @@ BEGIN
         120,
         2,
         2020,
-        1
+        1,
+        50
     );
 
     DBMS_OUTPUT.put_line('Wagon id = ' || v_id);

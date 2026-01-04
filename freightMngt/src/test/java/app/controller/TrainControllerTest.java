@@ -26,9 +26,9 @@ public class TrainControllerTest {
 
         company1 = new Company(1, "Rail Company", "RC", "123456789");
 
-        train1 = new Train(1, 101, "Porto", "Lisboa", company1);
-        train2 = new Train(2, 102, "Lisboa", "Faro", company1);
-        train3 = new Train(3, 103, "Braga", "Coimbra", company1);
+        train1 = new Train(1, "101", "Porto", "Lisboa", company1);
+        train2 = new Train(2, "102", "Lisboa", "Faro", company1);
+        train3 = new Train(3, "103", "Braga", "Coimbra", company1);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class TrainControllerTest {
     public void testUpdateTrainSuccess() {
         controller.createTrain(train1);
 
-        Train updatedTrain = new Train(1, 101, "Porto", "Aveiro", company1);
+        Train updatedTrain = new Train(1, "101", "Porto", "Aveiro", company1);
 
         boolean result = controller.updateTrain(1, updatedTrain);
 

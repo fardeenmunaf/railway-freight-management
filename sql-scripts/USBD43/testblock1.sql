@@ -35,7 +35,8 @@ BEGIN
         p_bogie_type        => 'Bo-Bo',
         p_traction_kn       => '300 kN',
         p_voltage           => 25,
-        p_frequency_hz      => 50
+        p_frequency_hz      => 50,
+        p_start_facility    => 50
     );
     
     DBMS_OUTPUT.PUT_LINE('   SUCCESS - Locomotive created!');
@@ -45,6 +46,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('   Model: Vectron-V1');
     DBMS_OUTPUT.PUT_LINE('   Voltage: 25 kV');
     DBMS_OUTPUT.PUT_LINE('   Frequency: 50 Hz');
+    DBMS_OUTPUT.PUT_LINE('   Start Facility ID: 50');
     DBMS_OUTPUT.PUT_LINE('========================================');
     
 EXCEPTION 
@@ -58,7 +60,7 @@ END;
 /
 
 -- Verify insertion
-SELECT locomotive_id, name, brand, model, created_at 
+SELECT locomotive_id, name, brand, model,start_facility, created_at
 FROM LOCOMOTIVE 
 WHERE name = 'E-Loco Valid' 
 ORDER BY locomotive_id DESC 

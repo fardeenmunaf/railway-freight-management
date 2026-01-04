@@ -5,6 +5,7 @@ import app.model.*;
 import app.repositories.CartRepository;
 import app.repositories.Repositories;
 import app.repositories.WarehouseAisleRepository;
+import app.service.sprint3.StationLoaderService;
 import app.utils.CsvReader;
 
 import java.time.LocalDateTime;
@@ -307,18 +308,27 @@ public class AppInitializer implements Runnable {
         lisboa.setFacilityId(1);
         lisboa.setName("Lisboa Santa Apolónia");
         lisboa.setFacilityType(stationType);
+        lisboa.setLat(38.7223);
+        lisboa.setLon(-9.1393);
+        lisboa.setIsIntermodal(false);
         repositories.getFacilityRepository().addFacility(lisboa);
 
         Facility porto = new Facility();
         porto.setFacilityId(2);
         porto.setName("Porto Campanhã");
         porto.setFacilityType(stationType);
+        porto.setLat(41.1496);
+        porto.setLon(-8.5850);
+        porto.setIsIntermodal(false);
         repositories.getFacilityRepository().addFacility(porto);
 
         Facility coimbra = new Facility();
         coimbra.setFacilityId(3);
         coimbra.setName("Coimbra-B");
         coimbra.setFacilityType(stationType);
+        coimbra.setLat(40.2085);
+        coimbra.setLon(-8.4295);
+        coimbra.setIsIntermodal(false);
         repositories.getFacilityRepository().addFacility(coimbra);
 
         // 5-6. Criar segmentos
@@ -359,20 +369,6 @@ public class AppInitializer implements Runnable {
         lsf4.setFacility(coimbra);
         repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf4);
 
-        // 11. Criar locomotivas
-        Locomotive loco1 = new Locomotive();
-        loco1.setLocomotiveId(1);
-        loco1.setModel("Class E10");
-        loco1.setBrand("DB");
-        loco1.setMaxSpeed(160.0);
-        repositories.getLocomotiveRepository().addLocomotive(loco1);
-
-        Locomotive loco2 = new Locomotive();
-        loco2.setLocomotiveId(2);
-        loco2.setModel("Euro Sprinter");
-        loco2.setBrand("Siemens");
-        loco2.setMaxSpeed(220.0);
-        repositories.getLocomotiveRepository().addLocomotive(loco2);
     }
 
     private void loadStations(Repositories repositories) {
@@ -405,8 +401,22 @@ public class AppInitializer implements Runnable {
                 continue;
             }
 
+            // Attempt to read an explicit station id from the CSV (common column names)
+            Integer parsedId = null;
+            String[] idCandidates = {"station_id", "Station id", "Station Id", "StationID", "stid", "id", "stationid"};
+            for (String key : idCandidates) {
+                if (row.containsKey(key) && row.get(key) != null && !row.get(key).trim().isEmpty()) {
+                    try {
+                        parsedId = Integer.valueOf((int) Double.parseDouble(row.get(key).trim()));
+                        break;
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            int facilityIdToUse = (parsedId != null) ? parsedId : stationIdCounter;
+
             Station station = new Station(
-                    stationIdCounter,
+                    facilityIdToUse,
                     name,
                     stationType,
                     latitude,
@@ -421,7 +431,8 @@ public class AppInitializer implements Runnable {
             );
 
             repositories.getFacilityRepository().addFacility(station);
-            stationIdCounter++;
+            if (parsedId == null) stationIdCounter++;
+            else System.out.printf("Loaded station with explicit id %d: %s%n", facilityIdToUse, name);
         }
 
         System.out.printf("✅ Stations loaded: %d | ❌ Rejected: %d%n",
@@ -483,7 +494,7 @@ public class AppInitializer implements Runnable {
 
             if (trainServices.isEmpty()) {
                 System.out.println("⚠️  No train services found. Creating sample train services first...");
-                createSampleTrainServices(repositories);
+                //createSampleTrainServices(repositories);
                 trainServices = repositories.getTrainServiceRepository().getAllTrainServices();
             }
 
@@ -641,7 +652,7 @@ public class AppInitializer implements Runnable {
         System.out.println("✅ Sample facilities created: 4");
     }
 
-    private void createSampleTrainServices(Repositories repositories) {
+    /*private void createSampleTrainServices(Repositories repositories) {
         // Criar company
         Company operator = new Company(1, "CP - Comboios de Portugal", "CP", "PT123456789");
         repositories.getCompanyRepository().addCompany(operator);
@@ -667,6 +678,6 @@ public class AppInitializer implements Runnable {
         repositories.getTrainServiceRepository().addTrainService(service3);
 
         System.out.println("✅ Sample train services created: 3");
-    }
+    }*/
 }
 
