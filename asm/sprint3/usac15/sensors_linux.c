@@ -21,39 +21,40 @@
 int serial_fd = -1;
 
 int open_serial_port(const char *device) {
-    int fd = open(device, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    printf("Trying to open serial port: %s\n", device);
+    int fd = open(device, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
     if (fd < 0) {
-        // Serial port not available, will use simulation
+        perror("  -> Failed to open");
         return -1;
     }
+    printf("  -> Opened successfully (fd=%d)\n", fd);
     
     struct termios tty;
-    if (tcgetattr(fd, &tty) != 0) {
+    if (tcgetattr(fd, &tty) < 0) {
+        perror("  -> Failed tcgetattr - not a valid serial port");
         close(fd);
-        return -1;
+        return -1;  // Reject this port - it's not working properly
     }
     
-    cfsetospeed(&tty, B9600);
-    cfsetispeed(&tty, B9600);
+    cfsetospeed(&tty, B115200);
+    cfsetispeed(&tty, B115200);
     
     tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;
-    tty.c_iflag &= ~IGNBRK;
-    tty.c_lflag = 0;
+    tty.c_cflag |= CLOCAL | CREAD;
+    tty.c_iflag = 0;
     tty.c_oflag = 0;
+    tty.c_lflag = 0;
     tty.c_cc[VMIN] = 0;
     tty.c_cc[VTIME] = 5;
     
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-    tty.c_cflag |= (CLOCAL | CREAD);
-    tty.c_cflag &= ~(PARENB | PARODD);
-    tty.c_cflag &= ~CSTOPB;
-    tty.c_cflag &= ~CRTSCTS;
-    
-    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+    if (tcsetattr(fd, TCSANOW, &tty) < 0) {
+        perror("  -> Failed tcsetattr");
         close(fd);
         return -1;
     }
     
+    printf("  -> Serial port configured OK\n");
+    serial_fd = fd;
     return fd;
 }
 
@@ -76,7 +77,7 @@ SensorData request_sensors(int fd) {
         data.error = (rand() % 100) < 5;
         
         // Small delay to simulate sensor reading time
-        sleep(100000); // 0.1 second
+        sleep(1);
         
         return data;
     }
@@ -86,8 +87,8 @@ SensorData request_sensors(int fd) {
     memset(buffer, 0, sizeof(buffer));
     
     // Send request command
-    write(fd, "READ\n", 5);
-    sleep(200000); // Wait for response
+    write(fd, "GTH\n", 4);
+    sleep(1); // Wait for response
     
     // Read response
     int n = read(fd, buffer, sizeof(buffer) - 1);

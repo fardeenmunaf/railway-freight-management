@@ -83,13 +83,17 @@ void lightsigns_send(const LightCmd *lc) {
     // Update statistics
     update_light_statistics(lc);
     
+    printf("\n[LightSigns] CMD=%s, track=%d, serial_fd=%d\n", lc->cmd, lc->track, serial_fd);
+    
     // Send to hardware if available
     if (serial_fd >= 0) {
-        write(serial_fd, lc->cmd, 2);
-        write(serial_fd, "\n", 1);
+        write(serial_fd, lc->cmd, 2);  // "RE", "YE", "GE" (2 bytes)
+        write(serial_fd, "\n", 1);      // newline
         fsync(serial_fd);
+        printf("[Hardware] Comando %s enviado ao Pico W\n", lc->cmd);
         board_show_system_status("Command sent to hardware", false);
     } else {
+        printf("[Simulação] Sem hardware conectado\n");
         board_show_system_status("Simulation mode - no hardware connected", false);
     }
     
@@ -101,11 +105,7 @@ int manager_get_filtered_sensors(SensorData *out) {
     extern SensorData request_sensors(int fd);
     extern bool movingMedian(SensorData *out);
     
-    if (serial_fd < 0) {
-        out->error = true;
-        return 0;
-    }
-    
+    // Get sensor data (real hardware or simulation)
     SensorData sd = request_sensors(serial_fd);
     
     extern SensorData buffer[];
@@ -154,24 +154,43 @@ int main(void) {
     // Initialize board display
     board_init();
     
+    // FIRST: Initialize serial port (BEFORE login, like usac14)
+    extern int open_serial_port(const char *);
+    const char *ports[] = {
+        "/dev/ttyACM0",
+        "/dev/ttyACM1", 
+        "/dev/ttyUSB0",
+        "/dev/ttyUSB1",
+        "/dev/ttyS0",
+        "/dev/serial0",
+        NULL
+    };
+    
+    printf("Procurando porta serial...\n");
+    for (int i = 0; ports[i] != NULL; i++) {
+        int fd = open_serial_port(ports[i]);
+        if (fd >= 0) {
+            serial_fd = fd;
+            printf("\n*** Porta serial %s ABERTA com sucesso (fd=%d)! ***\n", ports[i], serial_fd);
+            printf("*** LEDs físicos FUNCIONARÃO ***\n\n");
+            break;
+        }
+    }
+    
+    if (serial_fd < 0) {
+        printf("\n*** AVISO: Nenhuma porta serial disponível ***\n");
+        printf("*** Continuando em MODO SIMULAÇÃO ***\n\n");
+    }
+    
+    sleep(2);  // Give user time to read
+    
     // Login
     char username[64];
     if (!ui_login(username, sizeof(username))) {
         board_show_system_status("Login failed", true);
+        if (serial_fd >= 0) close(serial_fd);
         return 1;
     }
-    
-    // Initialize sensors (simulation)
-    extern int open_serial_port(const char *);
-    serial_fd = open_serial_port("/dev/ttyUSB0");
-    
-    if (serial_fd < 0) {
-        board_show_system_status("Running in SIMULATION mode (no hardware)", false);
-    } else {
-        board_show_system_status("Hardware connected successfully", false);
-    }
-    
-    sleep(2);  // Give user time to read the message
     
     // Main loop
     while (running) {
