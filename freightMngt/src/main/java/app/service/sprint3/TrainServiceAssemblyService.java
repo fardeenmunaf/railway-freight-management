@@ -15,7 +15,11 @@ import app.db.dao.trainstop.TrainStopDAOImpl;
 import app.db.dao.wagon.WagonDAO;
 import app.db.dao.wagon.WagonDAOImpl;
 import app.model.*;
+import app.db.DatabaseConnection;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Service for complete train service assembly operations (USLP09).
  * Provides comprehensive workflow to create Train, TrainService, TrainStops,
- * assign locomotives and wagons, and update their status to IN_TRANSIT.
+ * assign locomotives and wagons via FREIGHT relationship.
  *
  * @author G113 2DK
  * @version 1.0
@@ -39,6 +43,7 @@ public class TrainServiceAssemblyService {
     private final WagonDAO wagonDAO;
     private final FacilityDAO facilityDAO;
     private final TrainAssemblyDAO trainAssemblyDAO;
+    private final Connection connection;
 
     /**
      * Constructor that initializes the service with DAO implementations.
@@ -51,6 +56,7 @@ public class TrainServiceAssemblyService {
         this.wagonDAO = new WagonDAOImpl();
         this.facilityDAO = new FacilityDAOImpl();
         this.trainAssemblyDAO = new TrainAssemblyDAOImpl();
+        this.connection = DatabaseConnection.getInstance().getConnection();
     }
 
     /**
@@ -169,17 +175,16 @@ public class TrainServiceAssemblyService {
             List<TrainStop> trainStops = createTrainStops(trainService, routeStops);
 
             // Step 4: Assign locomotives using PL/SQL function
+            // This creates SERVICE_LOCOMOTIVE records linking locomotives to the service
             int locomotivesAssigned = assignLocomotives(trainService.getServiceId(), locomotiveIds);
 
-            // Step 5: Update locomotive start_facility to mark as IN_TRANSIT
-            updateLocomotivesStatus(locomotiveIds, routeStops.get(0).getFacilityId());
-
-            // Step 6: Update wagon start_facility if wagons are provided
+            // Step 5: Assign wagons if provided
+            // This creates FREIGHT → FREIGHT_COMPOSITION → TRAIN_SERVICE_FREIGHT records
             if (wagonIds != null && !wagonIds.isEmpty()) {
-                updateWagonsStatus(wagonIds, routeStops.get(0).getFacilityId());
+                assignWagonsToService(trainService.getServiceId(), wagonIds, routeStops, operatorCompanyId);
             }
 
-            // Step 7: Validate the composition
+            // Step 6: Validate the composition
             String validationMessage = trainAssemblyDAO.validateTrainComposition(trainService.getServiceId());
 
             return new AssemblyResult(train, trainService, trainStops, locomotivesAssigned, validationMessage);
@@ -313,28 +318,103 @@ public class TrainServiceAssemblyService {
     }
 
     /**
-     * Updates locomotive start_facility to mark them as IN_TRANSIT.
+     * Assigns wagons to the train service by creating FREIGHT and linking via FREIGHT_COMPOSITION.
+     * Creates the relationship: TRAIN_SERVICE → TRAIN_SERVICE_FREIGHT → FREIGHT → FREIGHT_COMPOSITION → WAGONS
+     *
+     * @param serviceId the train service ID
+     * @param wagonIds list of wagon IDs to assign
+     * @param routeStops route stops (used to get origin and destination)
+     * @param operatorId operator company ID
+     * @throws SQLException if an error occurs during the operation
      */
-    private void updateLocomotivesStatus(List<Integer> locomotiveIds, Integer departureFacilityId) throws SQLException {
-        for (Integer locomotiveId : locomotiveIds) {
-            Locomotive locomotive = locomotiveDAO.get(locomotiveId);
-            if (locomotive != null) {
-                locomotive.setStartFacility(departureFacilityId);
-                locomotiveDAO.update(locomotive);
+    private void assignWagonsToService(Integer serviceId, List<Integer> wagonIds,
+                                       List<RouteStop> routeStops, Integer operatorId) throws SQLException {
+        // Step 1: Create FREIGHT record
+        String freightCode = "FRG-" + serviceId + "-001";
+        Integer originFacilityId = routeStops.get(0).getFacilityId();
+        Integer destinationFacilityId = routeStops.get(routeStops.size() - 1).getFacilityId();
+
+        Integer freightId = createFreight(freightCode, originFacilityId, destinationFacilityId, operatorId);
+
+        // Step 2: Create FREIGHT_COMPOSITION records (link wagons to freight)
+        for (int i = 0; i < wagonIds.size(); i++) {
+            createFreightComposition(freightId, wagonIds.get(i), i + 1);
+        }
+
+        // Step 3: Link FREIGHT to TRAIN_SERVICE via TRAIN_SERVICE_FREIGHT
+        linkFreightToService(serviceId, freightId);
+    }
+
+    /**
+     * Creates a FREIGHT record and returns its generated ID.
+     *
+     * @param code freight code
+     * @param originId origin facility ID
+     * @param destinationId destination facility ID
+     * @param operatorId operator user ID
+     * @return the generated freight ID
+     * @throws SQLException if an error occurs during the operation
+     */
+    private Integer createFreight(String code, Integer originId, Integer destinationId, Integer operatorId) throws SQLException {
+        String sql = "INSERT INTO FREIGHT (FREIGHT_ID, CODE, ORIGIN_ID, DESTINATION_ID, OPERATOR_ID) " +
+                     "VALUES ((SELECT NVL(MAX(FREIGHT_ID), 0) + 1 FROM FREIGHT), ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, code);
+            pstmt.setInt(2, originId);
+            pstmt.setInt(3, destinationId);
+            pstmt.setInt(4, operatorId);
+            pstmt.executeUpdate();
+
+            // Get the generated freight_id
+            String selectSql = "SELECT MAX(FREIGHT_ID) AS ID FROM FREIGHT WHERE CODE = ?";
+            try (PreparedStatement selectStmt = connection.prepareStatement(selectSql)) {
+                selectStmt.setString(1, code);
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("ID");
+                    }
+                }
             }
+        }
+        throw new SQLException("Failed to create freight record");
+    }
+
+    /**
+     * Creates a FREIGHT_COMPOSITION record linking a wagon to freight.
+     *
+     * @param freightId the freight ID
+     * @param wagonId the wagon ID
+     * @param position the position in the freight composition
+     * @throws SQLException if an error occurs during the operation
+     */
+    private void createFreightComposition(Integer freightId, Integer wagonId, int position) throws SQLException {
+        String sql = "INSERT INTO FREIGHT_COMPOSITION (FREIGHT_ID, WAGON_ID, POSITION_NO, WEIGHT_KG) " +
+                     "VALUES (?, ?, ?, 50000)"; // Default weight of 50 tons
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, freightId);
+            pstmt.setInt(2, wagonId);
+            pstmt.setInt(3, position);
+            pstmt.executeUpdate();
         }
     }
 
     /**
-     * Updates wagon start_facility to mark them as IN_TRANSIT.
+     * Links FREIGHT to TRAIN_SERVICE via TRAIN_SERVICE_FREIGHT table.
+     *
+     * @param serviceId the train service ID
+     * @param freightId the freight ID
+     * @throws SQLException if an error occurs during the operation
      */
-    private void updateWagonsStatus(List<Integer> wagonIds, Integer departureFacilityId) throws SQLException {
-        for (Integer wagonId : wagonIds) {
-            Wagon wagon = wagonDAO.get(wagonId);
-            if (wagon != null) {
-                wagon.setStartFacility(departureFacilityId);
-                wagonDAO.update(wagon);
-            }
+    private void linkFreightToService(Integer serviceId, Integer freightId) throws SQLException {
+        String sql = "INSERT INTO TRAIN_SERVICE_FREIGHT (SERVICE_ID, FREIGHT_ID, POSITION_NO) " +
+                     "VALUES (?, ?, 1)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, serviceId);
+            pstmt.setInt(2, freightId);
+            pstmt.executeUpdate();
         }
     }
 
