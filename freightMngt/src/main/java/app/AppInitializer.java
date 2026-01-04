@@ -369,20 +369,6 @@ public class AppInitializer implements Runnable {
         lsf4.setFacility(coimbra);
         repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf4);
 
-        // 11. Criar locomotivas
-        Locomotive loco1 = new Locomotive();
-        loco1.setLocomotiveId(1);
-        loco1.setModel("Class E10");
-        loco1.setBrand("DB");
-        loco1.setMaxSpeed(160.0);
-        repositories.getLocomotiveRepository().addLocomotive(loco1);
-
-        Locomotive loco2 = new Locomotive();
-        loco2.setLocomotiveId(2);
-        loco2.setModel("Euro Sprinter");
-        loco2.setBrand("Siemens");
-        loco2.setMaxSpeed(220.0);
-        repositories.getLocomotiveRepository().addLocomotive(loco2);
     }
 
     private void loadStations(Repositories repositories) {
@@ -508,7 +494,7 @@ public class AppInitializer implements Runnable {
 
             if (trainServices.isEmpty()) {
                 System.out.println("⚠️  No train services found. Creating sample train services first...");
-                createSampleTrainServices(repositories);
+                //createSampleTrainServices(repositories);
                 trainServices = repositories.getTrainServiceRepository().getAllTrainServices();
             }
 
@@ -666,7 +652,7 @@ public class AppInitializer implements Runnable {
         System.out.println("✅ Sample facilities created: 4");
     }
 
-    private void createSampleTrainServices(Repositories repositories) {
+    /*private void createSampleTrainServices(Repositories repositories) {
         // Criar company
         Company operator = new Company(1, "CP - Comboios de Portugal", "CP", "PT123456789");
         repositories.getCompanyRepository().addCompany(operator);
@@ -692,6 +678,6 @@ public class AppInitializer implements Runnable {
         repositories.getTrainServiceRepository().addTrainService(service3);
 
         System.out.println("✅ Sample train services created: 3");
-    }
+    }*/
 }
 
