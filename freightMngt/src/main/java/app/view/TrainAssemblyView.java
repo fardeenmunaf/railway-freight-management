@@ -109,7 +109,8 @@ public class TrainAssemblyView {
 
             // Step 4: Define route stops
             System.out.println("\n[STEP 4/7] DEFINE ROUTE STOPS");
-            List<TrainServiceAssemblyService.RouteStop> routeStops = defineRouteStopsInteractive(departureFacilityId);
+            List<TrainServiceAssemblyService.RouteStop> routeStops = defineRouteStopsInteractive(
+                    departureFacilityId, locomotiveIds, wagonIds);
             if (routeStops == null || routeStops.size() < 2) {
                 System.out.println("[ERROR] At least 2 stops (departure and destination) required. Aborting.");
                 return;
@@ -313,16 +314,23 @@ public class TrainAssemblyView {
 
     /**
      * Interactive route stops definition with automatic time calculation.
+     * Uses dynamic speed calculation based on locomotive power, train weight, and track limits.
+     *
+     * @param departureFacilityId the departure facility ID
+     * @param locomotiveIds list of selected locomotive IDs
+     * @param wagonIds list of selected wagon IDs (can be empty)
+     * @return list of route stops with calculated arrival/departure times
      */
-    private List<TrainServiceAssemblyService.RouteStop> defineRouteStopsInteractive(Integer departureFacilityId) {
+    private List<TrainServiceAssemblyService.RouteStop> defineRouteStopsInteractive(
+            Integer departureFacilityId, List<Integer> locomotiveIds, List<Integer> wagonIds) {
         List<TrainServiceAssemblyService.RouteStop> stops = new ArrayList<>();
 
         try {
             System.out.println("\n═══════════════════════════════════════════════════════════");
             System.out.println("  ROUTE DEFINITION - Automatic Time Calculation");
             System.out.println("═══════════════════════════════════════════════════════════");
-            System.out.println("  • Travel times calculated automatically based on distance");
-            System.out.println("  • Average speed: 80 km/h");
+            System.out.println("  • Travel times calculated dynamically based on train composition");
+            System.out.println("  • Speed factors: locomotive power, train weight, track limits");
             System.out.println("  • Stop time: 5 minutes at each intermediate station");
             System.out.println("═══════════════════════════════════════════════════════════");
 
@@ -340,10 +348,9 @@ public class TrainAssemblyView {
                 return null;
             }
 
-            // Intermediate stops with automatic time calculation
+            // Intermediate stops with dynamic time calculation
             boolean addingStops = true;
             int stopNumber = 2;
-            final double AVERAGE_SPEED_KMH = 80.0; // Average train speed
             final int STOP_TIME_MINUTES = 5; // Fixed stop time
 
             while (addingStops) {
@@ -372,11 +379,19 @@ public class TrainAssemblyView {
                         currentFacility.getLat(), currentFacility.getLon()
                     );
 
-                    // Calculate travel time in minutes
-                    double travelTimeMinutes = (distanceKm / AVERAGE_SPEED_KMH) * 60.0;
+                    // Calculate travel time using dynamic speed calculation (replaces fixed 80 km/h)
+                    int travelTimeMinutes = service.calculateTravelTimeBetweenStops(
+                        previousFacility.getFacilityId(),
+                        currentFacility.getFacilityId(),
+                        locomotiveIds,
+                        wagonIds
+                    );
+
+                    // Calculate effective speed for display
+                    double effectiveSpeedKmh = distanceKm / (travelTimeMinutes / 60.0);
 
                     // Calculate arrival time (previous departure + travel time)
-                    LocalDateTime arrivalTime = currentTime.plusMinutes((long) Math.ceil(travelTimeMinutes));
+                    LocalDateTime arrivalTime = currentTime.plusMinutes(travelTimeMinutes);
 
                     // Calculate departure time (arrival + stop time)
                     LocalDateTime departureTime = arrivalTime.plusMinutes(STOP_TIME_MINUTES);
@@ -385,7 +400,8 @@ public class TrainAssemblyView {
                     System.out.println("  ┌─────────────────────────────────────────────────");
                     System.out.println("  │ Facility: " + currentFacility.getName());
                     System.out.println("  │ Distance from previous: " + String.format("%.2f km", distanceKm));
-                    System.out.println("  │ Travel time: " + String.format("%.0f minutes", travelTimeMinutes));
+                    System.out.println("  │ Effective speed: " + String.format("%.1f km/h", effectiveSpeedKmh));
+                    System.out.println("  │ Travel time: " + travelTimeMinutes + " minutes");
                     System.out.println("  │ ─────────────────────────────────────────────────");
                     System.out.println("  │ Calculated arrival:   " + arrivalTime.format(dateTimeFormatter));
                     System.out.println("  │ Stop time:            " + STOP_TIME_MINUTES + " minutes");

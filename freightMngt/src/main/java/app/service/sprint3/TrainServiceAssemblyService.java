@@ -99,7 +99,31 @@ public class TrainServiceAssemblyService {
         }
 
         public boolean isValid() {
-            return "VALID".equals(validationMessage);
+            if (validationMessage == null) {
+                return false;
+            }
+
+            // Check if validation message starts with "OK:" (successful validation)
+            // PL/SQL function returns "OK: Composition is valid | ..." when all checks pass
+            if (validationMessage.startsWith("OK:")) {
+                return true;
+            }
+
+            // Handle edge case: If message starts with " |" (space + pipe), it means
+            // v_warnings was empty/whitespace, so all validations passed
+            // Format: " | Locomotives: X | Wagons: Y | ..."
+            String trimmed = validationMessage.trim();
+            if (trimmed.startsWith("|")) {
+                return true; // No actual warnings, just statistics
+            }
+
+            // Check if message contains only statistics (no WARNING/INFO/ERROR keywords)
+            // This handles cases where whitespace might be present but no actual warnings
+            boolean hasWarnings = validationMessage.contains("WARNING:") ||
+                                 validationMessage.contains("INFO:") ||
+                                 validationMessage.contains("ERROR:");
+
+            return !hasWarnings;
         }
     }
 
@@ -510,6 +534,217 @@ public class TrainServiceAssemblyService {
      */
     public List<TrainStop> getTrainStopsByService(Integer serviceId) throws SQLException {
         return trainStopDAO.getByService(serviceId);
+    }
+
+    // ========================================================================
+    // DYNAMIC SPEED CALCULATION (replaces fixed 80 km/h)
+    // ========================================================================
+
+    /**
+     * Calculates travel time between two facilities based on locomotive power,
+     * train weight, track limits, and distance.
+     *
+     * @param originFacilityId origin facility ID
+     * @param destFacilityId destination facility ID
+     * @param locomotiveIds list of locomotive IDs
+     * @param wagonIds list of wagon IDs (can be empty)
+     * @return travel time in minutes
+     * @throws SQLException if database error occurs
+     */
+    public int calculateTravelTimeBetweenStops(Integer originFacilityId, Integer destFacilityId,
+                                                List<Integer> locomotiveIds, List<Integer> wagonIds) throws SQLException {
+        // 1. Get facilities to calculate distance
+        Facility origin = getFacilityById(originFacilityId);
+        Facility dest = getFacilityById(destFacilityId);
+
+        if (origin == null || dest == null) {
+            throw new SQLException("Origin or destination facility not found");
+        }
+
+        // 2. Calculate distance using Haversine formula
+        double distanceKm = calculateDistance(origin.getLat(), origin.getLon(),
+                                              dest.getLat(), dest.getLon());
+
+        // 3. Get locomotive specifications
+        LocomotiveSpecs locoSpecs = getLocomotiveSpecs(locomotiveIds);
+
+        // 4. Get wagon weights
+        double wagonWeightT = getWagonTotalWeight(wagonIds);
+
+        // 5. Calculate total train weight (locomotives + wagons)
+        double totalWeightT = locoSpecs.totalWeightT + wagonWeightT;
+
+        // 6. Get track speed limit between facilities
+        double trackSpeedLimit = getTrackSpeedLimit(originFacilityId, destFacilityId);
+
+        // 7. Calculate effective speed
+        double effectiveSpeed = calculateEffectiveSpeed(locoSpecs.totalPowerKw, totalWeightT, trackSpeedLimit);
+
+        // 8. Calculate travel time in minutes
+        double travelTimeHours = distanceKm / effectiveSpeed;
+        return (int) Math.ceil(travelTimeHours * 60);
+    }
+
+    /**
+     * Calculates effective speed based on locomotive power, train weight, and track limits.
+     * Uses heuristic formula: min(trackLimit, powerLimit, weightLimit) with floor of 30 km/h.
+     *
+     * @param locomotiveTotalPowerKw total locomotive power in kW
+     * @param totalTrainWeightT total train weight in tonnes
+     * @param trackSpeedLimitKmh track speed limit in km/h
+     * @return effective speed in km/h (minimum 30 km/h)
+     */
+    private double calculateEffectiveSpeed(double locomotiveTotalPowerKw, double totalTrainWeightT,
+                                           double trackSpeedLimitKmh) {
+        // Power limit: total power / 10 (heuristic formula)
+        double powerLimitSpeed = locomotiveTotalPowerKw / 10.0;
+
+        // Weight limit: inverse relationship (200000 / weight)
+        double weightLimitSpeed = totalTrainWeightT > 0 ? 200000.0 / totalTrainWeightT : 9999.0;
+
+        // Track limit (use default if not available)
+        double trackLimit = trackSpeedLimitKmh > 0 ? trackSpeedLimitKmh : 100.0;
+
+        // Effective speed = minimum of all constraints, with floor at 30 km/h
+        double effectiveSpeed = Math.min(trackLimit, Math.min(powerLimitSpeed, weightLimitSpeed));
+        return Math.max(effectiveSpeed, 30.0);
+    }
+
+    /**
+     * Helper class to hold locomotive specifications.
+     */
+    private static class LocomotiveSpecs {
+        double totalPowerKw;
+        double totalWeightT;
+        double minMaxSpeedKmh;
+
+        LocomotiveSpecs(double totalPowerKw, double totalWeightT, double minMaxSpeedKmh) {
+            this.totalPowerKw = totalPowerKw;
+            this.totalWeightT = totalWeightT;
+            this.minMaxSpeedKmh = minMaxSpeedKmh;
+        }
+    }
+
+    /**
+     * Gets locomotive specifications (power, weight, speed) for given locomotive IDs.
+     *
+     * @param locomotiveIds list of locomotive IDs
+     * @return LocomotiveSpecs with aggregated values
+     * @throws SQLException if database error occurs
+     */
+    private LocomotiveSpecs getLocomotiveSpecs(List<Integer> locomotiveIds) throws SQLException {
+        if (locomotiveIds == null || locomotiveIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one locomotive must be provided");
+        }
+
+        String sql = "SELECT " +
+                     "  NVL(SUM(power_kw), 0) AS total_power_kw, " +
+                     "  NVL(SUM(total_weight_t), 0) AS total_weight_t, " +
+                     "  NVL(MIN(max_speed_kmh), 9999) AS min_max_speed_kmh " +
+                     "FROM LOCOMOTIVE " +
+                     "WHERE locomotive_id IN (" +
+                     locomotiveIds.stream().map(String::valueOf).collect(Collectors.joining(",")) +
+                     ")";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return new LocomotiveSpecs(
+                    rs.getDouble("total_power_kw"),
+                    rs.getDouble("total_weight_t"),
+                    rs.getDouble("min_max_speed_kmh")
+                );
+            }
+        }
+
+        throw new SQLException("Failed to retrieve locomotive specifications");
+    }
+
+    /**
+     * Gets total weight of wagons including tare weight and full payload.
+     *
+     * @param wagonIds list of wagon IDs
+     * @return total weight in tonnes
+     * @throws SQLException if database error occurs
+     */
+    private double getWagonTotalWeight(List<Integer> wagonIds) throws SQLException {
+        if (wagonIds == null || wagonIds.isEmpty()) {
+            return 0.0;
+        }
+
+        String sql = "SELECT " +
+                     "  NVL(SUM(wm.tare_t + wm.payload_t), 0) AS total_weight_t " +
+                     "FROM WAGON w " +
+                     "INNER JOIN WAGON_MODEL wm ON w.wagon_model = wm.wagon_model_id " +
+                     "WHERE w.wagon_id IN (" +
+                     wagonIds.stream().map(String::valueOf).collect(Collectors.joining(",")) +
+                     ")";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getDouble("total_weight_t");
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Gets track speed limit between two facilities.
+     * Queries LINE_SEGMENT table for segments connecting the facilities.
+     *
+     * @param facilityId1 first facility ID
+     * @param facilityId2 second facility ID
+     * @return speed limit in km/h (defaults to 100 km/h if not found)
+     * @throws SQLException if database error occurs
+     */
+    private double getTrackSpeedLimit(Integer facilityId1, Integer facilityId2) throws SQLException {
+        // Query LINE_SEGMENT_FACILITY to find segments connecting these facilities
+        String sql = "SELECT ls.speed_limit_kmh " +
+                     "FROM LINE_SEGMENT ls " +
+                     "INNER JOIN LINE_SEGMENT_FACILITY lsf1 ON ls.segment_id = lsf1.line_segment_id " +
+                     "INNER JOIN LINE_SEGMENT_FACILITY lsf2 ON ls.segment_id = lsf2.line_segment_id " +
+                     "WHERE lsf1.facility_id = ? AND lsf2.facility_id = ? " +
+                     "AND ROWNUM = 1";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, facilityId1);
+            pstmt.setInt(2, facilityId2);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("speed_limit_kmh");
+                }
+            }
+        }
+
+        // Default to 100 km/h for mainline if no segment found
+        return 100.0;
+    }
+
+    /**
+     * Calculates distance between two geographic points using Haversine formula.
+     *
+     * @param lat1 latitude of point 1 in degrees
+     * @param lon1 longitude of point 1 in degrees
+     * @param lat2 latitude of point 2 in degrees
+     * @param lon2 longitude of point 2 in degrees
+     * @return distance in kilometers
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final double EARTH_RADIUS_KM = 6371.0;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return EARTH_RADIUS_KM * c;
     }
 }
 
