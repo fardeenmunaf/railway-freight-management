@@ -2,9 +2,9 @@
 
 USER,Diogo Remelgado,dremel,McDonalds,10
 USER,Eduardo Pacheco,chatix04,BurgerKing,15
-USER, Fardeen Munaf, matxicado, KFC, 5
-USER, Guilherme Tavares, pirata, TacoBell, 7
-USER, Mariana Gabriel, marianagabriel, SubWay, 3
+USER, Fardeen Munaf, matxicado,KFC,5
+USER, Guilherme Tavares, pirata,TacoBell,7
+USER, Mariana Gabriel, marianagabriel,SubWay,3
 
 # --- SENSOR CONFIG (TYPE, BUFFERSIZE, WINDOWSIZE) ---
 SENSOR_CONFIG;TEMP;20;5

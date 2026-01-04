@@ -13,7 +13,7 @@ package app.model;
 public class Train {
 
     private Integer trainId;
-    private Integer code;
+    private String code;
     private String departure;
     private String destination;
     private Company operator;
@@ -41,7 +41,7 @@ public class Train {
      * @param operator    the company operating this train
      */
 
-    public Train(Integer trainId, Integer code, String departure, String destination, Company operator) {
+    public Train(Integer trainId, String code, String departure, String destination, Company operator) {
         this.trainId = trainId;
         this.code = code;
         this.departure = departure;
@@ -72,10 +72,10 @@ public class Train {
     /**
      * Gets the operational code of this train.
      *
-     * @return the train code as an Integer
+     * @return the train code as a String
      */
 
-    public Integer getCode() {
+    public String getCode() {
         return code;
     }
 
@@ -85,7 +85,7 @@ public class Train {
      * @param code the train code to set
      */
 
-    public void setCode(Integer code) {
+    public void setCode(String code) {
         this.code = code;
     }
 

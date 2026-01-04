@@ -1,0 +1,750 @@
+package app.service.sprint3;
+
+import app.db.dao.facility.FacilityDAO;
+import app.db.dao.facility.FacilityDAOImpl;
+import app.db.dao.locomotive.LocomotiveDAO;
+import app.db.dao.locomotive.LocomotiveDAOImpl;
+import app.db.dao.train.TrainDAO;
+import app.db.dao.train.TrainDAOImpl;
+import app.db.dao.trainassembly.TrainAssemblyDAO;
+import app.db.dao.trainassembly.TrainAssemblyDAOImpl;
+import app.db.dao.trainservice.TrainServiceDAO;
+import app.db.dao.trainservice.TrainServiceDAOImpl;
+import app.db.dao.trainstop.TrainStopDAO;
+import app.db.dao.trainstop.TrainStopDAOImpl;
+import app.db.dao.wagon.WagonDAO;
+import app.db.dao.wagon.WagonDAOImpl;
+import app.model.*;
+import app.db.DatabaseConnection;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Service for complete train service assembly operations (USLP09).
+ * Provides comprehensive workflow to create Train, TrainService, TrainStops,
+ * assign locomotives and wagons via FREIGHT relationship.
+ *
+ * @author G113 2DK
+ * @version 1.0
+ */
+public class TrainAssemblyService {
+
+    private final TrainDAO trainDAO;
+    private final TrainServiceDAO trainServiceDAO;
+    private final TrainStopDAO trainStopDAO;
+    private final LocomotiveDAO locomotiveDAO;
+    private final WagonDAO wagonDAO;
+    private final FacilityDAO facilityDAO;
+    private final TrainAssemblyDAO trainAssemblyDAO;
+    private final Connection connection;
+
+    /**
+     * Constructor that initializes the service with DAO implementations.
+     */
+    public TrainAssemblyService() {
+        this.trainDAO = new TrainDAOImpl();
+        this.trainServiceDAO = new TrainServiceDAOImpl();
+        this.trainStopDAO = new TrainStopDAOImpl();
+        this.locomotiveDAO = new LocomotiveDAOImpl();
+        this.wagonDAO = new WagonDAOImpl();
+        this.facilityDAO = new FacilityDAOImpl();
+        this.trainAssemblyDAO = new TrainAssemblyDAOImpl();
+        this.connection = DatabaseConnection.getInstance().getConnection();
+    }
+
+    /**
+     * Result object containing all created entities after assembly.
+     */
+    public static class AssemblyResult {
+        private final Train train;
+        private final TrainService trainService;
+        private final List<TrainStop> trainStops;
+        private final int locomotivesAssigned;
+        private final String validationMessage;
+
+        public AssemblyResult(Train train, TrainService trainService, List<TrainStop> trainStops,
+                              int locomotivesAssigned, String validationMessage) {
+            this.train = train;
+            this.trainService = trainService;
+            this.trainStops = trainStops;
+            this.locomotivesAssigned = locomotivesAssigned;
+            this.validationMessage = validationMessage;
+        }
+
+        public Train getTrain() {
+            return train;
+        }
+
+        public TrainService getTrainService() {
+            return trainService;
+        }
+
+        public List<TrainStop> getTrainStops() {
+            return trainStops;
+        }
+
+        public int getLocomotivesAssigned() {
+            return locomotivesAssigned;
+        }
+
+        public String getValidationMessage() {
+            return validationMessage;
+        }
+
+        public boolean isValid() {
+            if (validationMessage == null) {
+                return false;
+            }
+
+            // Check if validation message starts with "OK:" (successful validation)
+            // PL/SQL function returns "OK: Composition is valid | ..." when all checks pass
+            if (validationMessage.startsWith("OK:")) {
+                return true;
+            }
+
+            // Handle edge case: If message starts with " |" (space + pipe), it means
+            // v_warnings was empty/whitespace, so all validations passed
+            // Format: " | Locomotives: X | Wagons: Y | ..."
+            String trimmed = validationMessage.trim();
+            if (trimmed.startsWith("|")) {
+                return true; // No actual warnings, just statistics
+            }
+
+            // Check if message contains only statistics (no WARNING/INFO/ERROR keywords)
+            // This handles cases where whitespace might be present but no actual warnings
+            boolean hasWarnings = validationMessage.contains("WARNING:") ||
+                                 validationMessage.contains("INFO:") ||
+                                 validationMessage.contains("ERROR:");
+
+            return !hasWarnings;
+        }
+    }
+
+    /**
+     * Route stop definition with facility and timing information.
+     */
+    public static class RouteStop {
+        private final Integer facilityId;
+        private final LocalDateTime schedArrival;
+        private final LocalDateTime scheduledDeparture;
+        private final Integer plannedStopTimeMinutes;
+
+        public RouteStop(Integer facilityId, LocalDateTime schedArrival,
+                        LocalDateTime scheduledDeparture, Integer plannedStopTimeMinutes) {
+            this.facilityId = facilityId;
+            this.schedArrival = schedArrival;
+            this.scheduledDeparture = scheduledDeparture;
+            this.plannedStopTimeMinutes = plannedStopTimeMinutes;
+        }
+
+        public Integer getFacilityId() {
+            return facilityId;
+        }
+
+        public LocalDateTime getSchedArrival() {
+            return schedArrival;
+        }
+
+        public LocalDateTime getScheduledDeparture() {
+            return scheduledDeparture;
+        }
+
+        public Integer getPlannedStopTimeMinutes() {
+            return plannedStopTimeMinutes;
+        }
+    }
+
+    /**
+     * Assembles a complete train service with all required database records.
+     * This is the main workflow that orchestrates the entire assembly process.
+     *
+     * @param locomotiveIds list of locomotive IDs to assign to the service
+     * @param wagonIds list of wagon IDs to assign to the service (optional, can be empty)
+     * @param routeStops list of route stops in sequence (first is departure, last is destination)
+     * @param departureDate overall departure date/time
+     * @param arrivalDate overall arrival date/time
+     * @param driverId train driver user ID (can be null)
+     * @param operatorCompanyId company operating this train
+     * @return AssemblyResult with all created entities and validation status
+     * @throws SQLException if an error occurs during the operation
+     * @throws IllegalArgumentException if validation fails
+     */
+    public AssemblyResult assembleCompleteTrainService(
+            List<Integer> locomotiveIds,
+            List<Integer> wagonIds,
+            List<RouteStop> routeStops,
+            LocalDateTime departureDate,
+            LocalDateTime arrivalDate,
+            Integer driverId,
+            Integer operatorCompanyId) throws SQLException {
+
+        // Validate inputs
+        validateInputs(locomotiveIds, routeStops, departureDate, arrivalDate);
+
+        try {
+            // Step 1: Create TRAIN record
+            Train train = createTrain(routeStops, operatorCompanyId);
+
+            // Step 2: Create TRAIN_SERVICE record
+            TrainService trainService = createTrainService(train, departureDate, arrivalDate, driverId);
+
+            // Step 3: Create TRAIN_STOP records
+            List<TrainStop> trainStops = createTrainStops(trainService, routeStops);
+
+            // Step 4: Assign locomotives using PL/SQL function
+            // This creates SERVICE_LOCOMOTIVE records linking locomotives to the service
+            int locomotivesAssigned = assignLocomotives(trainService.getServiceId(), locomotiveIds);
+
+            // Step 5: Assign wagons if provided
+            // Creates FREIGHT → FREIGHT_COMPOSITION (with default ORDER_LINE_ID) → TRAIN_SERVICE_FREIGHT
+            // Note: Uses first available ORDER_LINE_ID as a workaround for NOT NULL constraint
+            if (wagonIds != null && !wagonIds.isEmpty()) {
+                assignWagonsToService(trainService.getServiceId(), wagonIds, routeStops, operatorCompanyId);
+            }
+
+            // Step 6: Validate the composition
+            String validationMessage = trainAssemblyDAO.validateTrainComposition(trainService.getServiceId());
+
+            return new AssemblyResult(train, trainService, trainStops, locomotivesAssigned, validationMessage);
+
+        } catch (SQLException e) {
+            // Roll back will be handled by database transaction
+            throw new SQLException("Failed to assemble train service: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Validates the input parameters before assembly.
+     */
+    private void validateInputs(List<Integer> locomotiveIds, List<RouteStop> routeStops,
+                                LocalDateTime departureDate, LocalDateTime arrivalDate) {
+        if (locomotiveIds == null || locomotiveIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one locomotive must be provided");
+        }
+
+        if (routeStops == null || routeStops.size() < 2) {
+            throw new IllegalArgumentException("At least 2 route stops (departure and destination) must be provided");
+        }
+
+        if (departureDate == null || arrivalDate == null) {
+            throw new IllegalArgumentException("Departure and arrival dates must be provided");
+        }
+
+        if (arrivalDate.isBefore(departureDate)) {
+            throw new IllegalArgumentException("Arrival date must be after departure date");
+        }
+    }
+
+    /**
+     * Creates a TRAIN record with departure and destination.
+     */
+    private Train createTrain(List<RouteStop> routeStops, Integer operatorCompanyId) throws SQLException {
+        Train train = new Train();
+
+        // Generate train code (format: TRN-YYYYMMDD-HHmm)
+        train.setCode(generateTrainCode());
+
+        // Set departure (first stop) and destination (last stop) as facility IDs
+        train.setDeparture(String.valueOf(routeStops.get(0).getFacilityId()));
+        train.setDestination(String.valueOf(routeStops.get(routeStops.size() - 1).getFacilityId()));
+
+        // Set operator
+        if (operatorCompanyId != null) {
+            Company operator = new Company();
+            operator.setCompanyId(operatorCompanyId);
+            train.setOperatorId(operator);
+        }
+
+        trainDAO.create(train);
+        return train;
+    }
+
+    /**
+     * Creates a TRAIN_SERVICE record.
+     */
+    private TrainService createTrainService(Train train, LocalDateTime departureDate,
+                                           LocalDateTime arrivalDate, Integer driverId) throws SQLException {
+        TrainService trainService = new TrainService();
+        trainService.setTrain(train);
+        trainService.setDepartureDate(departureDate);
+        trainService.setArrivalDate(arrivalDate);
+        trainService.setStatus("SCHEDULED");
+
+        if (driverId != null) {
+            User driver = new User();
+            driver.setUserId(driverId);
+            trainService.setTrainDriver(driver);
+        }
+
+        trainServiceDAO.create(trainService);
+        return trainService;
+    }
+
+    /**
+     * Creates TRAIN_STOP records for all intermediate stops.
+     */
+    private List<TrainStop> createTrainStops(TrainService trainService, List<RouteStop> routeStops) throws SQLException {
+        List<TrainStop> trainStops = new java.util.ArrayList<>();
+
+        for (int i = 0; i < routeStops.size(); i++) {
+            RouteStop routeStop = routeStops.get(i);
+
+            TrainStop trainStop = new TrainStop();
+            trainStop.setService(trainService);
+
+            Facility facility = new Facility();
+            facility.setFacilityId(routeStop.getFacilityId());
+            trainStop.setFacility(facility);
+
+            // Get first available parking track for this facility (simplified - could be enhanced)
+            ParkingTrack parkingTrack = getFirstAvailableParkingTrack(routeStop.getFacilityId());
+            trainStop.setParkingTrack(parkingTrack);
+
+            trainStop.setPosition(i + 1);
+            trainStop.setSchedArr(routeStop.getSchedArrival());
+            trainStop.setSchedDep(routeStop.getScheduledDeparture());
+            trainStop.setPlannedStopTime(routeStop.getPlannedStopTimeMinutes());
+
+            trainStopDAO.create(trainStop);
+            trainStops.add(trainStop);
+        }
+
+        return trainStops;
+    }
+
+    /**
+     * Gets the first available parking track for a facility.
+     * Simplified implementation - returns a default parking track.
+     */
+    private ParkingTrack getFirstAvailableParkingTrack(Integer facilityId) {
+        // For now, create a minimal parking track object
+        // In a full implementation, this would query available tracks
+        ParkingTrack parkingTrack = new ParkingTrack();
+        parkingTrack.setParkingTrackId(1); // Default to track 1
+        return parkingTrack;
+    }
+
+    /**
+     * Assigns locomotives to the train service using PL/SQL function.
+     */
+    private int assignLocomotives(Integer serviceId, List<Integer> locomotiveIds) throws SQLException {
+        String locomotiveIdsStr = locomotiveIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+
+        return trainAssemblyDAO.assembleTrainComposition(serviceId, locomotiveIdsStr);
+    }
+
+    /**
+     * Assigns wagons to the train service by creating FREIGHT and linking via FREIGHT_COMPOSITION.
+     * Creates the relationship: TRAIN_SERVICE → TRAIN_SERVICE_FREIGHT → FREIGHT → FREIGHT_COMPOSITION → WAGONS
+     *
+     * IMPORTANT: This is a workaround implementation that uses a default ORDER_LINE_ID.
+     * In production, this should be replaced with proper order/cargo integration where each
+     * wagon is assigned to transport specific order line items.
+     *
+     * @param serviceId the train service ID
+     * @param wagonIds list of wagon IDs to assign
+     * @param routeStops route stops (used to get origin and destination)
+     * @param operatorId operator company ID
+     * @throws SQLException if an error occurs during the operation
+     */
+    private void assignWagonsToService(Integer serviceId, List<Integer> wagonIds,
+                                       List<RouteStop> routeStops, Integer operatorId) throws SQLException {
+        // WORKAROUND: Use default ORDER_LINE_ID since FREIGHT_COMPOSITION requires it (NOT NULL + FK)
+        // Check if a default order line exists, otherwise skip wagon assignment
+        Integer defaultOrderLineId = getDefaultOrderLineId();
+
+        if (defaultOrderLineId == null) {
+            System.out.println("[WARNING] No ORDER_LINE records found in database");
+            System.out.println("[INFO] Wagon assignment skipped - " + wagonIds.size() + " wagon(s) not assigned to service " + serviceId);
+            System.out.println("[INFO] To enable wagon assignment, ensure ORDER_LINE table has at least one record");
+            return;
+        }
+
+        System.out.println("[INFO] Assigning " + wagonIds.size() + " wagon(s) to service " + serviceId);
+        System.out.println("[NOTICE] Using default ORDER_LINE_ID=" + defaultOrderLineId + " (temporary workaround)");
+
+        // Step 1: Create FREIGHT record
+        String freightCode = "FRG-" + serviceId + "-001";
+        Integer originFacilityId = routeStops.get(0).getFacilityId();
+        Integer destinationFacilityId = routeStops.get(routeStops.size() - 1).getFacilityId();
+
+        Integer freightId = createFreight(freightCode, originFacilityId, destinationFacilityId, operatorId);
+
+        // Step 2: Create FREIGHT_COMPOSITION records (link wagons to freight with default order line)
+        for (int i = 0; i < wagonIds.size(); i++) {
+            createFreightComposition(freightId, wagonIds.get(i), i + 1, defaultOrderLineId);
+        }
+
+        // Step 3: Link FREIGHT to TRAIN_SERVICE via TRAIN_SERVICE_FREIGHT
+        linkFreightToService(serviceId, freightId);
+
+        System.out.println("[SUCCESS] " + wagonIds.size() + " wagon(s) assigned to service " + serviceId);
+    }
+
+    /**
+     * Gets the first available ORDER_LINE_ID from the database as a default.
+     * This is a workaround to satisfy the NOT NULL constraint on FREIGHT_COMPOSITION.ORDER_LINE_ID.
+     *
+     * @return the first ORDER_LINE_ID found, or null if no order lines exist
+     * @throws SQLException if a database error occurs
+     */
+    private Integer getDefaultOrderLineId() throws SQLException {
+        String sql = "SELECT MIN(ORDER_LINE_ID) AS ID FROM ORDER_LINE";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                int id = rs.getInt("ID");
+                return rs.wasNull() ? null : id;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Creates a FREIGHT record and returns its generated ID.
+     *
+     * @param code freight code
+     * @param originId origin facility ID
+     * @param destinationId destination facility ID
+     * @param operatorId operator user ID
+     * @return the generated freight ID
+     * @throws SQLException if an error occurs during the operation
+     */
+    private Integer createFreight(String code, Integer originId, Integer destinationId, Integer operatorId) throws SQLException {
+        String sql = "INSERT INTO FREIGHT (FREIGHT_ID, CODE, ORIGIN_ID, DESTINATION_ID, OPERATOR_ID) " +
+                     "VALUES ((SELECT NVL(MAX(FREIGHT_ID), 0) + 1 FROM FREIGHT), ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, code);
+            pstmt.setInt(2, originId);
+            pstmt.setInt(3, destinationId);
+            pstmt.setInt(4, operatorId);
+            pstmt.executeUpdate();
+
+            // Get the generated freight_id
+            String selectSql = "SELECT MAX(FREIGHT_ID) AS ID FROM FREIGHT WHERE CODE = ?";
+            try (PreparedStatement selectStmt = connection.prepareStatement(selectSql)) {
+                selectStmt.setString(1, code);
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("ID");
+                    }
+                }
+            }
+        }
+        throw new SQLException("Failed to create freight record");
+    }
+
+    /**
+     * Creates a FREIGHT_COMPOSITION record linking a wagon to freight.
+     *
+     * @param freightId the freight ID
+     * @param wagonId the wagon ID
+     * @param position the position in the freight composition
+     * @param orderLineId the order line ID (required by NOT NULL constraint)
+     * @throws SQLException if an error occurs during the operation
+     */
+    private void createFreightComposition(Integer freightId, Integer wagonId, int position, Integer orderLineId) throws SQLException {
+        String sql = "INSERT INTO FREIGHT_COMPOSITION (FREIGHT_ID, WAGON_ID, ORDER_LINE_ID, POSITION_NO, WEIGHT_KG) " +
+                     "VALUES (?, ?, ?, ?, 50000)"; // Default weight of 50 tons
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, freightId);
+            pstmt.setInt(2, wagonId);
+            pstmt.setInt(3, orderLineId);
+            pstmt.setInt(4, position);
+            pstmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Links FREIGHT to TRAIN_SERVICE via TRAIN_SERVICE_FREIGHT table.
+     *
+     * @param serviceId the train service ID
+     * @param freightId the freight ID
+     * @throws SQLException if an error occurs during the operation
+     */
+    private void linkFreightToService(Integer serviceId, Integer freightId) throws SQLException {
+        String sql = "INSERT INTO TRAIN_SERVICE_FREIGHT (SERVICE_ID, FREIGHT_ID, POSITION_NO) " +
+                     "VALUES (?, ?, 1)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, serviceId);
+            pstmt.setInt(2, freightId);
+            pstmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Generates a unique train code.
+     * Format: TRN-YYYYMMDD-HHmm (e.g., TRN-20260104-1530)
+     */
+    private String generateTrainCode() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm");
+        return "TRN-" + LocalDateTime.now().format(formatter);
+    }
+
+    /**
+     * Gets available locomotives for a departure facility.
+     */
+    public List<Locomotive> getAvailableLocomotives(Integer departureFacilityId) throws SQLException {
+        return locomotiveDAO.getAvailableForRoute(departureFacilityId);
+    }
+
+    /**
+     * Gets available wagons for a departure facility.
+     */
+    public List<Wagon> getAvailableWagons(Integer departureFacilityId) throws SQLException {
+        return wagonDAO.getAvailableForRoute(departureFacilityId);
+    }
+
+    /**
+     * Gets all facilities (for route selection).
+     */
+    public List<Facility> getAllFacilities() throws SQLException {
+        return facilityDAO.getAll();
+    }
+
+    /**
+     * Gets a facility by ID.
+     */
+    public Facility getFacilityById(Integer facilityId) throws SQLException {
+        return facilityDAO.get(facilityId);
+    }
+
+    /**
+     * Gets all train services.
+     */
+    public List<TrainService> getAllTrainServices() throws SQLException {
+        return trainServiceDAO.getAll();
+    }
+
+    /**
+     * Gets train stops for a specific service.
+     */
+    public List<TrainStop> getTrainStopsByService(Integer serviceId) throws SQLException {
+        return trainStopDAO.getByService(serviceId);
+    }
+
+    // ========================================================================
+    // DYNAMIC SPEED CALCULATION (replaces fixed 80 km/h)
+    // ========================================================================
+
+    /**
+     * Calculates travel time between two facilities based on locomotive power,
+     * train weight, track limits, and distance.
+     *
+     * @param originFacilityId origin facility ID
+     * @param destFacilityId destination facility ID
+     * @param locomotiveIds list of locomotive IDs
+     * @param wagonIds list of wagon IDs (can be empty)
+     * @return travel time in minutes
+     * @throws SQLException if database error occurs
+     */
+    public int calculateTravelTimeBetweenStops(Integer originFacilityId, Integer destFacilityId,
+                                                List<Integer> locomotiveIds, List<Integer> wagonIds) throws SQLException {
+        // 1. Get facilities to calculate distance
+        Facility origin = getFacilityById(originFacilityId);
+        Facility dest = getFacilityById(destFacilityId);
+
+        if (origin == null || dest == null) {
+            throw new SQLException("Origin or destination facility not found");
+        }
+
+        // 2. Calculate distance using Haversine formula
+        double distanceKm = calculateDistance(origin.getLat(), origin.getLon(),
+                                              dest.getLat(), dest.getLon());
+
+        // 3. Get locomotive specifications
+        LocomotiveSpecs locoSpecs = getLocomotiveSpecs(locomotiveIds);
+
+        // 4. Get wagon weights
+        double wagonWeightT = getWagonTotalWeight(wagonIds);
+
+        // 5. Calculate total train weight (locomotives + wagons)
+        double totalWeightT = locoSpecs.totalWeightT + wagonWeightT;
+
+        // 6. Get track speed limit between facilities
+        double trackSpeedLimit = getTrackSpeedLimit(originFacilityId, destFacilityId);
+
+        // 7. Calculate effective speed
+        double effectiveSpeed = calculateEffectiveSpeed(locoSpecs.totalPowerKw, totalWeightT, trackSpeedLimit);
+
+        // 8. Calculate travel time in minutes
+        double travelTimeHours = distanceKm / effectiveSpeed;
+        return (int) Math.ceil(travelTimeHours * 60);
+    }
+
+    /**
+     * Calculates effective speed based on locomotive power, train weight, and track limits.
+     * Uses heuristic formula: min(trackLimit, powerLimit, weightLimit) with floor of 30 km/h.
+     *
+     * @param locomotiveTotalPowerKw total locomotive power in kW
+     * @param totalTrainWeightT total train weight in tonnes
+     * @param trackSpeedLimitKmh track speed limit in km/h
+     * @return effective speed in km/h (minimum 30 km/h)
+     */
+    private double calculateEffectiveSpeed(double locomotiveTotalPowerKw, double totalTrainWeightT,
+                                           double trackSpeedLimitKmh) {
+        // Power limit: total power / 10 (heuristic formula)
+        double powerLimitSpeed = locomotiveTotalPowerKw / 10.0;
+
+        // Weight limit: inverse relationship (200000 / weight)
+        double weightLimitSpeed = totalTrainWeightT > 0 ? 200000.0 / totalTrainWeightT : 9999.0;
+
+        // Track limit (use default if not available)
+        double trackLimit = trackSpeedLimitKmh > 0 ? trackSpeedLimitKmh : 100.0;
+
+        // Effective speed = minimum of all constraints, with floor at 30 km/h
+        double effectiveSpeed = Math.min(trackLimit, Math.min(powerLimitSpeed, weightLimitSpeed));
+        return Math.max(effectiveSpeed, 30.0);
+    }
+
+    /**
+     * Helper class to hold locomotive specifications.
+     */
+    private static class LocomotiveSpecs {
+        double totalPowerKw;
+        double totalWeightT;
+        double minMaxSpeedKmh;
+
+        LocomotiveSpecs(double totalPowerKw, double totalWeightT, double minMaxSpeedKmh) {
+            this.totalPowerKw = totalPowerKw;
+            this.totalWeightT = totalWeightT;
+            this.minMaxSpeedKmh = minMaxSpeedKmh;
+        }
+    }
+
+    /**
+     * Gets locomotive specifications (power, weight, speed) for given locomotive IDs.
+     *
+     * @param locomotiveIds list of locomotive IDs
+     * @return LocomotiveSpecs with aggregated values
+     * @throws SQLException if database error occurs
+     */
+    private LocomotiveSpecs getLocomotiveSpecs(List<Integer> locomotiveIds) throws SQLException {
+        if (locomotiveIds == null || locomotiveIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one locomotive must be provided");
+        }
+
+        String sql = "SELECT " +
+                     "  NVL(SUM(power_kw), 0) AS total_power_kw, " +
+                     "  NVL(SUM(total_weight_t), 0) AS total_weight_t, " +
+                     "  NVL(MIN(max_speed_kmh), 9999) AS min_max_speed_kmh " +
+                     "FROM LOCOMOTIVE " +
+                     "WHERE locomotive_id IN (" +
+                     locomotiveIds.stream().map(String::valueOf).collect(Collectors.joining(",")) +
+                     ")";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return new LocomotiveSpecs(
+                    rs.getDouble("total_power_kw"),
+                    rs.getDouble("total_weight_t"),
+                    rs.getDouble("min_max_speed_kmh")
+                );
+            }
+        }
+
+        throw new SQLException("Failed to retrieve locomotive specifications");
+    }
+
+    /**
+     * Gets total weight of wagons including tare weight and full payload.
+     *
+     * @param wagonIds list of wagon IDs
+     * @return total weight in tonnes
+     * @throws SQLException if database error occurs
+     */
+    private double getWagonTotalWeight(List<Integer> wagonIds) throws SQLException {
+        if (wagonIds == null || wagonIds.isEmpty()) {
+            return 0.0;
+        }
+
+        String sql = "SELECT " +
+                     "  NVL(SUM(wm.tare_t + wm.payload_t), 0) AS total_weight_t " +
+                     "FROM WAGON w " +
+                     "INNER JOIN WAGON_MODEL wm ON w.wagon_model = wm.wagon_model_id " +
+                     "WHERE w.wagon_id IN (" +
+                     wagonIds.stream().map(String::valueOf).collect(Collectors.joining(",")) +
+                     ")";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getDouble("total_weight_t");
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Gets track speed limit between two facilities.
+     * Queries LINE_SEGMENT table for segments connecting the facilities.
+     *
+     * @param facilityId1 first facility ID
+     * @param facilityId2 second facility ID
+     * @return speed limit in km/h (defaults to 100 km/h if not found)
+     * @throws SQLException if database error occurs
+     */
+    private double getTrackSpeedLimit(Integer facilityId1, Integer facilityId2) throws SQLException {
+        // Query LINE_SEGMENT_FACILITY to find segments connecting these facilities
+        String sql = "SELECT ls.speed_limit_kmh " +
+                     "FROM LINE_SEGMENT ls " +
+                     "INNER JOIN LINE_SEGMENT_FACILITY lsf1 ON ls.segment_id = lsf1.line_segment_id " +
+                     "INNER JOIN LINE_SEGMENT_FACILITY lsf2 ON ls.segment_id = lsf2.line_segment_id " +
+                     "WHERE lsf1.facility_id = ? AND lsf2.facility_id = ? " +
+                     "AND ROWNUM = 1";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setInt(1, facilityId1);
+            pstmt.setInt(2, facilityId2);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("speed_limit_kmh");
+                }
+            }
+        }
+
+        // Default to 100 km/h for mainline if no segment found
+        return 100.0;
+    }
+
+    /**
+     * Calculates distance between two geographic points using Haversine formula.
+     *
+     * @param lat1 latitude of point 1 in degrees
+     * @param lon1 longitude of point 1 in degrees
+     * @param lat2 latitude of point 2 in degrees
+     * @param lon2 longitude of point 2 in degrees
+     * @return distance in kilometers
+     */
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final double EARTH_RADIUS_KM = 6371.0;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                   Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return EARTH_RADIUS_KM * c;
+    }
+}
+

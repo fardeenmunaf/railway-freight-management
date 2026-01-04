@@ -345,64 +345,11 @@ public void testBellmanFord() {
 }
 ```
 
----
 
-### Testes à Ordenação Topológica com Deteção de Ciclos
-
-Os testes à ordenação topológica validam:
-
-* Grafos dirigidos acíclicos (DAG)
-* Deteção correta de ciclos
-* Identificação dos vértices pertencentes a ciclos
-* Lançamento de exceções em grafos não dirigidos
-
-```java
-@Test
-public void testTopologicalSortWithCycles() {
-    Graph<String, Integer> dag = new MapGraph<>(true);
-    dag.addVertex("A");
-    dag.addVertex("B");
-    dag.addVertex("C");
-    dag.addVertex("D");
-    dag.addVertex("E");
-    dag.addEdge("A", "B", 1);
-    dag.addEdge("A", "C", 1);
-    dag.addEdge("B", "D", 1);
-    dag.addEdge("C", "D", 1);
-    dag.addEdge("D", "E", 1);
-
-    Algorithms.TopologicalSortResult<String, Integer> result =
-            Algorithms.topologicalSortWithCycles(dag);
-
-    assertFalse(result.hasCycles());
-    assertEquals("A", result.getTopoOrder().getFirst());
-    assertEquals("E", result.getTopoOrder().getLast());
-
-    // Grafo com ciclo
-    Graph<String, Integer> cyclicGraph = new MapGraph<>(true);
-    cyclicGraph.addVertex("A");
-    cyclicGraph.addVertex("B");
-    cyclicGraph.addVertex("C");
-    cyclicGraph.addVertex("D");
-    cyclicGraph.addEdge("A", "B", 1);
-    cyclicGraph.addEdge("B", "C", 1);
-    cyclicGraph.addEdge("C", "D", 1);
-    cyclicGraph.addEdge("D", "B", 1);
-
-    result = Algorithms.topologicalSortWithCycles(cyclicGraph);
-    assertTrue(result.hasCycles());
-    assertTrue(result.getTopoOrder().isEmpty());
-    assertTrue(result.getCycleStations().contains("B"));
-    assertTrue(result.getCycleStations().contains("C"));
-    assertTrue(result.getCycleStations().contains("D"));
-}
-```
-
----
 
 ## Javadocs
 
-Todos os métodos estão documentados em **português**, incluindo:
+Todos os métodos estão documentados em **inglês**, incluindo:
 
 * `@param` — descrição dos parâmetros
 * `@return` — valores de retorno

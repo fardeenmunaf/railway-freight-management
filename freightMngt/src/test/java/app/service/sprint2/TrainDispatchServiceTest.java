@@ -85,7 +85,7 @@ class TrainDispatchServiceTest {
 
         // Create train and train service
         Company operator = new Company(1, "Test Railway", "Test Railway", "VAT123456");
-        Train train = new Train(1, 101, "Station A", "Station C", operator);
+        Train train = new Train(1, "101", "Station A", "Station C", operator);
         TrainService trainService = new TrainService(1, train,
             LocalDateTime.now(), LocalDateTime.now().plusHours(3), null, "scheduled");
 

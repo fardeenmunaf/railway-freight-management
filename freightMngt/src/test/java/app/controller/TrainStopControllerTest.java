@@ -36,7 +36,7 @@ public class TrainStopControllerTest {
         Company company1 = new Company(1, "Rail Company", "RC", "123456789");
         User owner1 = new User(1, "user1", "user1@rail.com", "pass123", company1, true);
 
-        app.model.Train train1 = new app.model.Train(1, 101, "Porto", "Lisboa", company1);
+        app.model.Train train1 = new app.model.Train(1, "101", "Porto", "Lisboa", company1);
         trainService1 = new TrainService(1, train1,
             LocalDateTime.of(2025, 2, 1, 8, 0),
             LocalDateTime.of(2025, 2, 1, 16, 0),
