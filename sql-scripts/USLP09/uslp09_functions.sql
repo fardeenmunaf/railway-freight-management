@@ -233,17 +233,34 @@ BEGIN
                     RAISE_APPLICATION_ERROR(-20003, 'Locomotive ' || loco_rec.loco_id || ' does not exist');
                 END IF;
 
-                -- Check if locomotive is already assigned to another active service
-                SELECT COUNT(*) INTO v_count
-                FROM SERVICE_LOCOMOTIVE sl
-                         INNER JOIN TRAIN_SERVICE ts ON sl.service_id = ts.service_id
-                WHERE sl.locomotive_id = loco_rec.loco_id
-                  AND ts.status IN ('SCHEDULED', 'DEPARTED')
-                  AND sl.service_id != p_service_id;
+                -- Check if locomotive has a schedule conflict (temporal overlap)
+                -- A locomotive can be in multiple services as long as schedules don't overlap
+                DECLARE
+                    v_new_departure TIMESTAMP;
+                    v_new_arrival TIMESTAMP;
+                BEGIN
+                    -- Get the schedule of the new service
+                    SELECT departure_date, arrival_date
+                    INTO v_new_departure, v_new_arrival
+                    FROM TRAIN_SERVICE
+                    WHERE service_id = p_service_id;
 
-                IF v_count > 0 THEN
-                    RAISE_APPLICATION_ERROR(-20004, 'Locomotive ' || loco_rec.loco_id || ' is already assigned to another service');
-                END IF;
+                    -- Check for temporal overlap with other active services
+                    -- Two services overlap if: new_start < existing_end AND new_end > existing_start
+                    SELECT COUNT(*) INTO v_count
+                    FROM SERVICE_LOCOMOTIVE sl
+                    INNER JOIN TRAIN_SERVICE ts ON sl.service_id = ts.service_id
+                    WHERE sl.locomotive_id = loco_rec.loco_id
+                      AND ts.status IN ('SCHEDULED', 'DEPARTED')
+                      AND sl.service_id != p_service_id
+                      AND v_new_departure < ts.arrival_date
+                      AND v_new_arrival > ts.departure_date;
+
+                    IF v_count > 0 THEN
+                        RAISE_APPLICATION_ERROR(-20004, 'Locomotive ' || loco_rec.loco_id ||
+                            ' has a schedule conflict with another service (overlapping times)');
+                    END IF;
+                END;
 
                 -- Insert locomotive
                 INSERT INTO SERVICE_LOCOMOTIVE (service_id, locomotive_id, position_no)

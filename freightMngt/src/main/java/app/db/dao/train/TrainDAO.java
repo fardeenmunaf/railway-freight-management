@@ -61,7 +61,7 @@ public interface TrainDAO {
      * @return the Train found or null if it does not exist
      * @throws SQLException if an error occurs during the operation
      */
-    Train getByCode(int code) throws SQLException;
+    Train getByCode(String code) throws SQLException;
 
     /**
      * Retrieves all Trains operated by a specific company.

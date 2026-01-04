@@ -478,7 +478,7 @@ public class AppInitializer implements Runnable {
 
             if (trainServices.isEmpty()) {
                 System.out.println("⚠️  No train services found. Creating sample train services first...");
-                createSampleTrainServices(repositories);
+                //createSampleTrainServices(repositories);
                 trainServices = repositories.getTrainServiceRepository().getAllTrainServices();
             }
 
@@ -636,7 +636,7 @@ public class AppInitializer implements Runnable {
         System.out.println("✅ Sample facilities created: 4");
     }
 
-    private void createSampleTrainServices(Repositories repositories) {
+    /*private void createSampleTrainServices(Repositories repositories) {
         // Criar company
         Company operator = new Company(1, "CP - Comboios de Portugal", "CP", "PT123456789");
         repositories.getCompanyRepository().addCompany(operator);
@@ -662,6 +662,6 @@ public class AppInitializer implements Runnable {
         repositories.getTrainServiceRepository().addTrainService(service3);
 
         System.out.println("✅ Sample train services created: 3");
-    }
+    }*/
 }
 

@@ -37,9 +37,9 @@ public class TrainDAOImpl extends BaseDAOImpl implements TrainDAO {
             pstmt.setInt(1, train.getTrainId());
 
             if (train.getCode() != null) {
-                pstmt.setInt(2, train.getCode());
+                pstmt.setString(2, train.getCode());
             } else {
-                pstmt.setNull(2, Types.INTEGER);
+                pstmt.setNull(2, Types.VARCHAR);
             }
 
             pstmt.setString(3, train.getDeparture());
@@ -103,9 +103,9 @@ public class TrainDAOImpl extends BaseDAOImpl implements TrainDAO {
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             if (train.getCode() != null) {
-                pstmt.setInt(1, train.getCode());
+                pstmt.setString(1, train.getCode());
             } else {
-                pstmt.setNull(1, Types.INTEGER);
+                pstmt.setNull(1, Types.VARCHAR);
             }
 
             pstmt.setString(2, train.getDeparture());
@@ -134,7 +134,7 @@ public class TrainDAOImpl extends BaseDAOImpl implements TrainDAO {
     }
 
     @Override
-    public Train getByCode(int code) throws SQLException {
+    public Train getByCode(String code) throws SQLException {
         String sql = "SELECT t.TRAIN_ID, t.CODE, t.DEPARTURE, t.DESTINATION, t.OPERATOR_ID, " +
                      "c.NAME AS OPERATOR_NAME, c.SHORT_NAME, c.VAT " +
                      "FROM " + getTableName("TRAIN") + " t " +
@@ -142,7 +142,7 @@ public class TrainDAOImpl extends BaseDAOImpl implements TrainDAO {
                      "WHERE t.CODE = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setInt(1, code);
+            pstmt.setString(1, code);
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
@@ -267,7 +267,7 @@ public class TrainDAOImpl extends BaseDAOImpl implements TrainDAO {
         train.setTrainId(rs.getInt("TRAIN_ID"));
 
         if (rs.getObject("CODE") != null) {
-            train.setCode(rs.getInt("CODE"));
+            train.setCode(rs.getString("CODE"));
         }
 
         train.setDeparture(rs.getString("DEPARTURE"));

@@ -41,6 +41,7 @@ public class TrainAssemblyDAOImpl extends BaseDAOImpl implements TrainAssemblyDA
 
     @Override
     public String validateTrainComposition(Integer serviceId) throws SQLException {
+
         String sql = "{? = call APPUSER.fn_validate_train_composition(?)}";
 
         try (CallableStatement cstmt = connection.prepareCall(sql)) {

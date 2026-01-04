@@ -29,7 +29,7 @@ public class TrainStopDAOImpl extends BaseDAOImpl implements TrainStopDAO {
 
     @Override
     public void create(TrainStop stop) throws SQLException {
-        String sql = "INSERT INTO TRAIN_STOP (TRAIN_STOP_ID, SERVICE_ID, FACILITY_ID, PARKING_TRACK_ID, " +
+        String sql = "INSERT INTO TRAIN_STOP (TRAIN_STOP_ID, SERVICE_ID, FACILITY_ID, PARKING_TRACK, " +
                      "POSITION, SCHED_ARR, SCHED_DEP, PLANNED_STOP_TIME, ACT_ARR, ACT_DEP, ACT_STOP_TIME) " +
                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -139,7 +139,7 @@ public class TrainStopDAOImpl extends BaseDAOImpl implements TrainStopDAO {
 
     @Override
     public void update(TrainStop stop) throws SQLException {
-        String sql = "UPDATE TRAIN_STOP SET SERVICE_ID = ?, FACILITY_ID = ?, PARKING_TRACK_ID = ?, " +
+        String sql = "UPDATE TRAIN_STOP SET SERVICE_ID = ?, FACILITY_ID = ?, PARKING_TRACK = ?, " +
                      "POSITION = ?, SCHED_ARR = ?, SCHED_DEP = ?, PLANNED_STOP_TIME = ?, " +
                      "ACT_ARR = ?, ACT_DEP = ?, ACT_STOP_TIME = ? WHERE TRAIN_STOP_ID = ?";
 
@@ -259,7 +259,7 @@ public class TrainStopDAOImpl extends BaseDAOImpl implements TrainStopDAO {
     @Override
     public List<TrainStop> getByParkingTrack(int parkingTrackId) throws SQLException {
         List<TrainStop> stops = new ArrayList<>();
-        String sql = "SELECT * FROM TRAIN_STOP WHERE PARKING_TRACK_ID = ? ORDER BY SCHED_ARR";
+        String sql = "SELECT * FROM TRAIN_STOP WHERE PARKING_TRACK = ? ORDER BY SCHED_ARR";
 
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, parkingTrackId);
@@ -308,7 +308,7 @@ public class TrainStopDAOImpl extends BaseDAOImpl implements TrainStopDAO {
      * @throws SQLException if an error occurs during the operation
      */
     private int getNextId() throws SQLException {
-        String sql = "SELECT NVL(MAX(STOP_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("TRAIN_STOP");
+        String sql = "SELECT NVL(MAX(TRAIN_STOP_ID), 0) + 1 AS NEXT_ID FROM " + getTableName("TRAIN_STOP");
 
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -348,9 +348,9 @@ public class TrainStopDAOImpl extends BaseDAOImpl implements TrainStopDAO {
         }
 
         // Set ParkingTrack if available
-        if (rs.getObject("PARKING_TRACK_ID") != null) {
+        if (rs.getObject("PARKING_TRACK") != null) {
             ParkingTrack parkingTrack = new ParkingTrack();
-            parkingTrack.setParkingTrackId(rs.getInt("PARKING_TRACK_ID"));
+            parkingTrack.setParkingTrackId(rs.getInt("PARKING_TRACK"));
             stop.setParkingTrack(parkingTrack);
         }
 

@@ -347,14 +347,40 @@ public class WagonDAOImpl extends BaseDAOImpl implements WagonDAO {
         wagon.setStatus(rs.getString("status"));
         wagon.setParkingTrackName(rs.getString("parking_track_name"));
 
-        Integer parkingTrackId = (Integer) rs.getObject("parking_track_id");
-        wagon.setParkingTrackId(parkingTrackId);
+        // Handle Oracle NUMBER to Integer conversion (returns BigDecimal)
+        Object parkingTrackObj = rs.getObject("parking_track_id");
+        if (parkingTrackObj != null) {
+            if (parkingTrackObj instanceof java.math.BigDecimal) {
+                wagon.setParkingTrackId(((java.math.BigDecimal) parkingTrackObj).intValue());
+            } else if (parkingTrackObj instanceof Number) {
+                wagon.setParkingTrackId(((Number) parkingTrackObj).intValue());
+            }
+        }
 
-        Integer parkingPosition = (Integer) rs.getObject("parking_position");
-        wagon.setParkingPosition(parkingPosition);
+        Object parkingPosObj = rs.getObject("parking_position");
+        if (parkingPosObj != null) {
+            if (parkingPosObj instanceof java.math.BigDecimal) {
+                wagon.setParkingPosition(((java.math.BigDecimal) parkingPosObj).intValue());
+            } else if (parkingPosObj instanceof Number) {
+                wagon.setParkingPosition(((Number) parkingPosObj).intValue());
+            }
+        }
 
         wagon.setOperatorCompanyName(rs.getString("operator_company"));
-        wagon.setInActiveFreight(rs.getInt("in_active_freight"));
+
+        // Handle in_active_freight conversion
+        Object inActiveFreightObj = rs.getObject("in_active_freight");
+        if (inActiveFreightObj != null) {
+            if (inActiveFreightObj instanceof java.math.BigDecimal) {
+                wagon.setInActiveFreight(((java.math.BigDecimal) inActiveFreightObj).intValue());
+            } else if (inActiveFreightObj instanceof Number) {
+                wagon.setInActiveFreight(((Number) inActiveFreightObj).intValue());
+            } else {
+                wagon.setInActiveFreight(0);
+            }
+        } else {
+            wagon.setInActiveFreight(0);
+        }
 
         return wagon;
     }
