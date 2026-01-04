@@ -1,37 +1,111 @@
 #include "ui.h"
 #include "board.h"
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <termios.h>
+
+// Global config
+static Config globalConfig;
+static int configLoaded = 0;
+
+// Function to read password without echo
+static void read_password(char *password, size_t maxlen) {
+    struct termios old, new;
+    
+    // Get current terminal settings
+    tcgetattr(0, &old);
+    new = old;
+    
+    // Disable echo
+    new.c_lflag &= ~ECHO;
+    tcsetattr(0, TCSANOW, &new);
+    
+    // Read password
+    if (fgets(password, maxlen, stdin)) {
+        size_t len = strlen(password);
+        if (len > 0 && password[len-1] == '\n') {
+            password[len-1] = '\0';
+        }
+    }
+    
+    // Restore terminal settings
+    tcsetattr(0, TCSANOW, &old);
+    printf("\n");
+}
 
 int ui_login(char *username, size_t usize) {
+    // Load config if not already loaded
+    if (!configLoaded) {
+        printf("Loading configuration...\n");
+        if (!config_load("config.txt", &globalConfig)) {
+            printf(COLOR_RED "ERROR: Failed to load config.txt\n" COLOR_RESET);
+            return 0;
+        }
+        configLoaded = 1;
+    }
+    
     printf(COLOR_CYAN "\n╔════════════════════════════════════════════════════════════════════╗\n" COLOR_RESET);
     printf(COLOR_CYAN "║" COLOR_YELLOW "                           USER LOGIN                              " COLOR_CYAN "║\n" COLOR_RESET);
     printf(COLOR_CYAN "╚════════════════════════════════════════════════════════════════════╝\n" COLOR_RESET);
     printf("\n");
-    printf(COLOR_WHITE "Enter username: " COLOR_RESET);
-    fflush(stdout);  // Force output to display immediately
     
-    if (!fgets(username, usize, stdin)) {
-        return 0;
+    int attempts = 0;
+    const int MAX_ATTEMPTS = 3;
+    
+    while (attempts < MAX_ATTEMPTS) {
+        char inputUsername[64];
+        char inputPassword[64];
+        char fullName[64];
+        
+        printf(COLOR_WHITE "Enter username: " COLOR_RESET);
+        fflush(stdout);
+        
+        if (!fgets(inputUsername, sizeof(inputUsername), stdin)) {
+            return 0;
+        }
+        
+        // Remove newline
+        size_t len = strlen(inputUsername);
+        if (len > 0 && inputUsername[len-1] == '\n') {
+            inputUsername[len-1] = '\0';
+        }
+        
+        if (strlen(inputUsername) == 0) {
+            return 0;
+        }
+        
+        printf(COLOR_WHITE "Enter password: " COLOR_RESET);
+        fflush(stdout);
+        read_password(inputPassword, sizeof(inputPassword));
+        
+        // Verify credentials
+        if (config_verify_user(&globalConfig, inputUsername, inputPassword, fullName)) {
+            printf(COLOR_GREEN "\nLogin successful!\n" COLOR_RESET);
+            printf(COLOR_GREEN "Welcome, %s!\n" COLOR_RESET, fullName);
+            printf(COLOR_YELLOW "Loading system...\n" COLOR_RESET);
+            fflush(stdout);
+            
+            // Store full name in username
+            strncpy(username, fullName, usize - 1);
+            username[usize - 1] = '\0';
+            
+            sleep(2);
+            return 1;
+        } else {
+            attempts++;
+            printf(COLOR_RED "\nInvalid username or password.\n" COLOR_RESET);
+            if (attempts < MAX_ATTEMPTS) {
+                printf(COLOR_YELLOW "Attempts remaining: %d\n\n" COLOR_RESET, MAX_ATTEMPTS - attempts);
+            }
+        }
     }
     
-    // Remove newline
-    size_t len = strlen(username);
-    if (len > 0 && username[len-1] == '\n') {
-        username[len-1] = '\0';
-    }
-    
-    if (strlen(username) == 0) {
-        return 0;
-    }
-    
-    printf(COLOR_GREEN "\nWelcome, %s!\n" COLOR_RESET, username);
-    printf(COLOR_YELLOW "Loading system...\n" COLOR_RESET);
-    fflush(stdout);
-    return 1;
+    printf(COLOR_RED "\nMaximum login attempts exceeded. Access denied.\n" COLOR_RESET);
+    return 0;
 }
 
 Instruction ui_get_instruction(void) {
