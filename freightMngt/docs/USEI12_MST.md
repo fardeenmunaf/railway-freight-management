@@ -302,6 +302,60 @@ A complexidade é:
 
 ---
 
+### Melhor e Pior Caso
+
+#### Melhor Caso: O(E log V)
+
+O melhor caso ocorre quando:
+* **Grafo conectado**: Uma única componente
+* **Early termination efetiva**: MST completa com V-1 arestas logo no início da lista ordenada
+* **Arestas já ordenadas**: Menor overhead na ordenação se já estiverem parcialmente ordenadas
+
+Mesmo assim, a ordenação inicial das arestas **O(E log V)** é inevitável, pois Kruskal requer arestas ordenadas por peso.
+
+**Exemplo de melhor caso**:
+```
+Grafo: Árvore (V vértices, E = V-1 arestas)
+- Ordenação: O((V-1) log V) = O(V log V)
+- Union-Find: O(V-1) ≈ O(V)
+- Total: O(V log V)
+```
+
+Para grafos extremamente esparsos onde **E ≈ V**, a complexidade aproxima-se de **O(V log V)**.
+
+---
+
+#### Pior Caso: O(E log V)
+
+O pior caso ocorre quando:
+* **Grafo denso**: E ≈ V² arestas
+* **Todas as arestas processadas**: Nenhuma aresta forma ciclo até o final
+* **Múltiplas componentes**: Várias árvores disjuntas
+
+**Exemplo de pior caso**:
+```
+Grafo completo: V vértices, E = V(V-1)/2 arestas
+- Ordenação: O(V² log V²) = O(V² log V)
+- Union-Find: O(V²) operações (todas as arestas verificadas)
+- Total: O(V² log V)
+```
+
+Como **E = V²** no pior caso:
+**O(E log V) = O(V² log V)**
+
+---
+
+#### Caso Médio: O(E log V)
+
+Na prática, para grafos típicos de redes ferroviárias:
+* **Grafos esparsos**: E ≈ 2V a 4V (cada estação conecta a 2-4 estações)
+* **Ordenação domina**: O(E log V) é o gargalo
+* **Union-Find quase constante**: α(V) < 5 sempre
+
+**Complexidade caso médio: O(E log V)**
+
+---
+
 ### Garantias do Algoritmo
 
 1. **Corretude**: Kruskal sempre produz uma MST válida (provado por indução)

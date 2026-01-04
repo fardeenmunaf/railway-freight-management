@@ -1,92 +1,121 @@
-# USEI14 - Fluxo Máximo (Max Flow)
+# USEI14 — Maximum Throughput (Max Flow)
 
-## O que foi implementado
+## Objetivo
 
-Foi implementado o algoritmo de **Edmonds-Karp** para calcular o fluxo máximo entre duas estações numa rede de transporte. Basicamente, o algoritmo descobre qual é a capacidade máxima que conseguimos enviar de um ponto A para um ponto B, considerando as capacidades de cada ligação.
+Calcular o fluxo máximo entre duas estações usando as capacidades das arestas do grafo do projeto para estimar a vazão máxima do corredor.
 
-## Como funciona o algoritmo
+## Requisitos Implementados
 
-O Edmonds-Karp é uma variação do Ford-Fulkerson que usa BFS para encontrar caminhos:
+### Entrada
+- Grafo dirigido com capacidades nas arestas (numéricas ou `EdgeData`).
+- Identificadores de origem e destino (facilityId ou chave interna do grafo).
 
-1. Começa com uma rede residual igual ao grafo original
-2. Procura um caminho da origem ao destino usando BFS
-3. Descobre qual é a capacidade mínima nesse caminho (bottleneck)
-4. Atualiza a rede residual:
-   - Diminui a capacidade no sentido do fluxo
-   - Adiciona capacidade no sentido contrário (para poder "desfazer" se necessário)
-5. Repete até não haver mais caminhos possíveis
-6. Retorna o fluxo total acumulado
+### Computação
+- Algoritmo: **Edmonds–Karp** (variante de Ford–Fulkerson com BFS).
+- Integração com o grafo do projeto via `app.service.sprint3.MaxFlowService`.
+- Suporta capacidades em tipos numéricos comuns e em `app.model.EdgeData` (mapeado para Integer).
+- Validações: vértices inválidos, source == target, capacidades negativas.
 
-## Análise de Complexidade
+### Saída
+- `MaxFlow.Result` contendo: source, sink, sourceKey, sinkKey, maxFlow (valor), message, complexity.
 
-### Complexidade Temporal
+## Estrutura de ficheiros (principais)
 
-A complexidade principal do algoritmo é **O(V·E²)**, onde:
+```
+src/main/java/app/
+├─ service/sprint3/MaxFlowService.java      # Serviço que resolve vértices e chama a implementação
+├─ utils/graph/MaxFlow.java                 # Implementação Edmonds–Karp genérica
+├─ view/MaxFlowView.java                    # Visualização/console
+```
+
+## Cenários de Teste (implementados)
+
+1. Source == Sink → retorna fluxo 0.
+2. Sem caminho entre source e sink → retorna 0 + mensagem informativa.
+3. Caso exemplo pequeno (fluxo conhecido) → valida fluxo esperado.
+4. Capacidades negativas → lança `IllegalArgumentException`.
+
+## Critérios de Aceitação (mapeamento)
+
+- Input: grafo + source + target — implementado.
+- Algoritmo: Edmonds–Karp — implementado (`app.utils.graph.MaxFlow`).
+- Respeita capacidades das arestas — implementado (rede residual).
+- Output: resultado com maxFlow e mensagem — implementado (`MaxFlow.Result`).
+- Validações e testes — implementados (4 cenários).
+
+## Análise de Complexidade (detalhada)
+
+### Notação e pressupostos
 - V = número de vértices
-- E = número de arestas
+- E = número de arestas (para grafos dirigidos)
+- Assume-se uma representação da rede residual por listas/Mapas de adjacência como em `app.utils.graph.MaxFlow`.
 
-**Porquê?**
-- Cada BFS demora O(V+E) ≈ O(E) em grafos densos
-- Podem existir no máximo O(V·E) caminhos de aumento
-- Logo: O(E) × O(V·E) = O(V·E²)
+---
 
-**Casos especiais:**
-- Source = Sink: **O(1)** (deteção imediata)
-- Aresta direta entre source e sink: **O(1)**
-- Vértices inválidos: **O(1)**
-- BFS individual: **O(V+E)**
-- Construção da rede residual: **O(E)**
+### Operações principais do Edmonds–Karp (implementação do projeto)
 
-### Complexidade Espacial
+1. Construção da rede residual a partir das arestas do grafo:
+   - Percorre `g.edges()` e inicializa capacidades residuais (soma capacidades de arestas paralelas) → custo O(E).
 
-- **O(V²)** para a rede residual (HashMaps)
-- **O(V)** para estruturas auxiliares (queue do BFS, array de parents)
+2. BFS para encontrar caminho aumentante (por iteração):
+   - Cada BFS faz uma travessia tipo nível na rede residual, examinando arestas com capacidade > 0.
+   - Custo de um BFS: O(V + E) (varredura de vértices mais arestas acessíveis).
 
-## Implementação
+3. Determinar o bottleneck num caminho encontrado:
+   - Recorre o caminho via o array `parent` do sink até ao source: O(L) onde L ≤ V (comprimento do caminho).
 
-### Classes principais
+4. Actualizar capacidades residuais ao longo do caminho:
+   - Para cada aresta do caminho faz subtract/add nas estruturas residuais → O(L) por atualização.
 
-**MaxFlow.java** (`app.utils.graph`)
-- Método `edmondsKarp()` - implementação do algoritmo
-- Método `compute()` - wrapper que retorna um objeto Result
-- Suporta tipos genéricos para vértices e capacidades
-- Funciona com Integer, Double, Long, Float, BigInteger, BigDecimal
+5. Repetir enquanto houver caminho aumentante.
 
-**MaxFlowService.java** (`app.service.sprint3`)
-- Integra o algoritmo com o resto do projeto
-- Resolve vértices por facilityId das estações
-- Suporta EdgeData com capacidades
-- Validações de grafo e capacidades
+---
 
-**MaxFlow.Result**
-- Objeto que encapsula o resultado
-- Contém: source, sink, maxFlow, message, complexity
+### Limite do número de iterações (nº de caminhos aumentantes)
 
-## Testes realizados
+- Em Edmonds–Karp provado que cada aresta residual pode trocar de sentido O(V) vezes no pior caso. Isso resulta num limite teórico de O(V·E) caminhos aumentantes no pior caso.
 
-Foram desenvolvidos 4 testes principais:
+---
 
-1. **Source = Sink**: Retorna fluxo 0 corretamente 
-2. **Sem caminho**: Deteta quando não há ligação entre origem e destino 
-3. **Exemplo clássico**: Grafo com fluxo máximo = 5
-   ```
-   s --3--> a --2--> t
-   |        |
-   2        1
-   ↓        ↓
-   b ------3------> t
-   ```
-   Resultado esperado: 5 
+### Complexidade temporal total (composição)
 
-4. **Capacidades negativas**: Lança IllegalArgumentException como esperado 
+- Cada iteração (um caminho aumentante) executa um BFS: O(V + E).
+- Número máximo de iterações: O(V · E).
 
-## Resumo das Complexidades
+Portanto, tempo total no pior caso: O(V·E · (V + E)). Em grafos onde E = O(V^2) (grafo denso) isso reduz para O(V·E^2) na notação usual dada a dominância de E em muitas representações. A forma simplificada mais comum para Edmonds–Karp é:
 
-| Operação | Temporal | Espacial |
-|----------|----------|----------|
-| Edmonds-Karp (caso geral) | O(V·E²) | O(V²) |
-| Source = Sink | O(1) | O(1) |
-| Aresta direta | O(1) | O(1) |
-| Sem caminho válido | O(V·E²) | O(V²) |
-| BFS individual | O(V+E) | O(V) |
+- Tempo (Edmonds–Karp, pior caso): O(V · E^2)
 
+Observações:
+- Em grafos esparsos (E = O(V)) podemos expressar como O(V^2 · E).
+- A implementação prática frequentemente observa desempenho melhor do que o pior caso teórico em grafos reais de transporte.
+
+---
+
+### Complexidade espacial
+
+- Rede residual (Map<Integer, Map<Integer, E>>): O(E) entradas de capacidade (ou até O(V^2) em grafos densos).
+- Estruturas auxiliares (fila BFS, parent array): O(V).
+- Espaço total: O(V + E) (ou O(V^2) no pior caso de grafo denso).
+
+---
+
+### Casos especiais e custos associados
+
+- `source == sink`: custo O(1) — retorno imediato com fluxo 0.
+- Grafo sem arestas/capacidades: custo O(1) para detectar e retornar mensagem (verificações iniciais).
+- Aresta directa entre source e sink: serviço tenta optimizar retornando a capacidade directa em O(1) quando disponível.
+
+---
+
+### Exemplo numérico (ordem de grandeza)
+
+Suponha uma rede com V = 500 vértices e E = 1500 arestas (ex.: rede ferroviária regional):
+- Complexidade teórica (pior caso): O(V·E^2) ≈ O(500 · 1500^2) = O(500 · 2_250_000) ≈ O(1.125×10^9) operações.
+- Na prática, Edmonds–Karp em grafos de transporte costuma terminar bem antes do pior caso teórico.
+
+---
+
+## Observações
+
+- Quando existir uma aresta directa entre source e sink com capacidade conhecida, o serviço tenta otimizar e devolve essa capacidade em O(1).
