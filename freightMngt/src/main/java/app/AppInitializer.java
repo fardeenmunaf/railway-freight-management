@@ -1,5 +1,6 @@
 package app;
 
+import app.controller.FreightRouteController;
 import app.controller.InventoryBalanceController;
 import app.model.*;
 import app.repositories.CartRepository;
@@ -40,6 +41,7 @@ public class AppInitializer implements Runnable {
         loadTravelTimeData(repositories);
         loadMockedData();
         loadStations(repositories);
+        loadDefaultRoutes(repositories); // Load default freight routes
         loadSampleDispatches(repositories); // Carregar dispatches de exemplo
     }
 
@@ -344,6 +346,13 @@ public class AppInitializer implements Runnable {
         seg2.setSpeedLimitKmh(100.0);
         repositories.getLineSegmentRepository().addLineSegment(seg2);
 
+        // Segment 3: Lisboa to Coimbra
+        LineSegment seg3 = new LineSegment();
+        seg3.setSegmentId(3);
+        seg3.setLengthKm(200.0);  // Approximate distance Lisboa-Coimbra
+        seg3.setSpeedLimitKmh(110.0);
+        repositories.getLineSegmentRepository().addLineSegment(seg3);
+
         // 7-10. Criar ligações estação-segmento
         LineSegmentFacility lsf1 = new LineSegmentFacility();
         lsf1.setSegmentFacilityId(1);
@@ -369,6 +378,91 @@ public class AppInitializer implements Runnable {
         lsf4.setFacility(coimbra);
         repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf4);
 
+        // Ligações para seg3 (Lisboa-Coimbra)
+        LineSegmentFacility lsf5 = new LineSegmentFacility();
+        lsf5.setSegmentFacilityId(5);
+        lsf5.setLineSegment(seg3);
+        lsf5.setFacility(lisboa);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf5);
+
+        LineSegmentFacility lsf6 = new LineSegmentFacility();
+        lsf6.setSegmentFacilityId(6);
+        lsf6.setLineSegment(seg3);
+        lsf6.setFacility(coimbra);
+        repositories.getLineSegmentFacilityRepository().addLineSegmentFacility(lsf6);
+
+    }
+
+    /**
+     * Loads default freight routes between Lisboa, Porto, and Coimbra.
+     * Creates three routes:
+     * 1. Lisboa -> Porto (direct)
+     * 2. Porto -> Lisboa (direct)
+     * 3. Lisboa -> Porto via Coimbra (complex route with intermediate stop)
+     */
+    private void loadDefaultRoutes(Repositories repositories) {
+        System.out.println("\n🛤️  Loading default freight routes...");
+
+        FreightRouteController routeController = new FreightRouteController();
+
+        try {
+            // Route 1: Lisboa -> Porto (Direct)
+            FreightRoute route1 = routeController.createSimpleRoute(
+                1,
+                "Lisboa - Porto Direct",
+                1,  // Lisboa Santa Apolónia
+                2,  // Porto Campanhã
+                "Direct route from Lisboa to Porto"
+            );
+            System.out.println("✅ Created route: Lisboa -> Porto (Direct)");
+
+            // Route 2: Porto -> Lisboa (Direct)
+            FreightRoute route2 = routeController.createSimpleRoute(
+                2,
+                "Porto - Lisboa Direct",
+                2,  // Porto Campanhã
+                1,  // Lisboa Santa Apolónia
+                "Direct route from Porto to Lisboa"
+            );
+            System.out.println("✅ Created route: Porto -> Lisboa (Direct)");
+
+            // Route 3: Lisboa -> Porto via Coimbra (Complex Route)
+            List<FreightRouteController.SegmentDefinition> segments = new ArrayList<>();
+
+            // Segment 1: Lisboa -> Coimbra (using seg3)
+            segments.add(new FreightRouteController.SegmentDefinition(
+                1,
+                1,  // From Lisboa
+                3,  // To Coimbra
+                3,  // Using segment 3 (Lisboa-Coimbra)
+                "Lisboa to Coimbra segment"
+            ));
+
+            // Segment 2: Coimbra -> Porto (using seg2)
+            segments.add(new FreightRouteController.SegmentDefinition(
+                2,
+                3,  // From Coimbra
+                2,  // To Porto
+                2,  // Using segment 2 (Coimbra-Porto)
+                "Coimbra to Porto segment"
+            ));
+
+            FreightRoute route3 = routeController.createComplexRoute(
+                3,
+                "Lisboa - Porto via Coimbra",
+                1,  // Start: Lisboa Santa Apolónia
+                2,  // End: Porto Campanhã
+                segments,
+                "Route from Lisboa to Porto with stop at Coimbra"
+            );
+            System.out.println("✅ Created route: Lisboa -> Porto via Coimbra (Complex)");
+
+            System.out.println("✅ Default freight routes loaded successfully: 3 routes");
+
+        } catch (Exception e) {
+            System.out.println("⚠️  Error loading default routes: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void loadStations(Repositories repositories) {
@@ -494,7 +588,7 @@ public class AppInitializer implements Runnable {
 
             if (trainServices.isEmpty()) {
                 System.out.println("⚠️  No train services found. Creating sample train services first...");
-                //createSampleTrainServices(repositories);
+                createSampleTrainServices(repositories);
                 trainServices = repositories.getTrainServiceRepository().getAllTrainServices();
             }
 
@@ -652,15 +746,15 @@ public class AppInitializer implements Runnable {
         System.out.println("✅ Sample facilities created: 4");
     }
 
-    /*private void createSampleTrainServices(Repositories repositories) {
+    private void createSampleTrainServices(Repositories repositories) {
         // Criar company
         Company operator = new Company(1, "CP - Comboios de Portugal", "CP", "PT123456789");
         repositories.getCompanyRepository().addCompany(operator);
 
         // Criar trains
-        Train train1 = new Train(1, 101, "Lisboa Santa Apolónia", "Porto Campanhã", operator);
-        Train train2 = new Train(2, 202, "Porto Campanhã", "Braga", operator);
-        Train train3 = new Train(3, 303, "Coimbra-B", "Lisboa Santa Apolónia", operator);
+        Train train1 = new Train(1, "101", "Lisboa Santa Apolónia", "Porto Campanhã", operator);
+        Train train2 = new Train(2, "202", "Porto Campanhã", "Braga", operator);
+        Train train3 = new Train(3, "303", "Coimbra-B", "Lisboa Santa Apolónia", operator);
 
         repositories.getTrainRepository().addTrain(train1);
         repositories.getTrainRepository().addTrain(train2);
@@ -669,15 +763,15 @@ public class AppInitializer implements Runnable {
         // Criar train services
         LocalDateTime now = LocalDateTime.now();
 
-        TrainService service1 = new TrainService(1, train1, now, now.plusHours(3), null, "scheduled");
-        TrainService service2 = new TrainService(2, train2, now.plusHours(1), now.plusHours(2), null, "scheduled");
-        TrainService service3 = new TrainService(3, train3, now.minusHours(1), now.plusHours(2), null, "in_transit");
+        TrainService service1 = new TrainService(1, train1, now, now.plusHours(3), null, "SCHEDULED");
+        TrainService service2 = new TrainService(2, train2, now.plusHours(1), now.plusHours(2), null, "SCHEDULED");
+        TrainService service3 = new TrainService(3, train3, now.minusHours(1), now.plusHours(2), null, "IN_TRANSIT");
 
         repositories.getTrainServiceRepository().addTrainService(service1);
         repositories.getTrainServiceRepository().addTrainService(service2);
         repositories.getTrainServiceRepository().addTrainService(service3);
 
         System.out.println("✅ Sample train services created: 3");
-    }*/
+    }
 }
 
