@@ -32,10 +32,10 @@ public class TrainTest {
     @Test
     public void testParameterizedConstructor() {
         Company operator = new Company();
-        Train paramTrain = new Train(1, 101, "Porto", "Lisboa", operator);
+        Train paramTrain = new Train(1, "TRN-101", "Porto", "Lisboa", operator);
 
         assertEquals("Train ID should be 1", Integer.valueOf(1), paramTrain.getTrainId());
-        assertEquals("Code should be 101", Integer.valueOf(101), paramTrain.getCode());
+        assertEquals("Code should be 'TRN-101'", "TRN-101", paramTrain.getCode());
         assertEquals("Departure should be 'Porto'", "Porto", paramTrain.getDeparture());
         assertEquals("Destination should be 'Lisboa'", "Lisboa", paramTrain.getDestination());
         assertEquals("Operator should match", operator, paramTrain.getOperator());
@@ -50,9 +50,9 @@ public class TrainTest {
 
     @Test
     public void testSetAndGetCode() {
-        train.setCode(202);
+        train.setCode("TRN-202");
 
-        assertEquals("Code should be 202", Integer.valueOf(202), train.getCode());
+        assertEquals("Code should be 'TRN-202'", "TRN-202", train.getCode());
     }
 
     @Test
@@ -87,7 +87,7 @@ public class TrainTest {
 
     @Test
     public void testSetCodeToNull() {
-        train.setCode(303);
+        train.setCode("TRN-303");
         train.setCode(null);
 
         assertNull("Code should be null", train.getCode());

@@ -38,11 +38,9 @@ build/
 ### Mac OS ###
 .DS_Store
 
+### Application Logs ###
+# Ignora a pasta especifica AuditLogs
+AuditLogs/
 
-### ARQCP FILES ###
-/src/main/java/app/utils/**/*.o
-/src/main/java/app/utils/**/program.elf
-/src/main/java/app/utils/**/**/*.o
-/src/main/java/app/utils/**/**/program.elf
-/src/main/java/app/utils/**/**/**/*.o
-/src/main/java/app/utils/**/**/**/program.elf
+# Ignora ficheiros de log soltos (boa pratica)
+*.log

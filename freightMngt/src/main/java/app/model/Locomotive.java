@@ -30,6 +30,18 @@ public class Locomotive {
     private Integer maxBogies;
     private String bogieType;
     private String traction; //in kN
+    private Integer startFacility; // FK to FACILITY - current location
+
+    // USLP09 - Transient fields for train assembly (populated by PL/SQL functions)
+    private String status; // PARKED or IN_TRANSIT
+    private String currentLocationName; // Facility name
+    private Integer locationId; // Facility ID
+    private Double locationLat; // Latitude
+    private Double locationLon; // Longitude
+    private Double distanceFromDeparture; // Distance in km from departure facility
+    private String transitDestination; // Destination facility name if in transit
+    private java.sql.Timestamp transitArrivalDate; // Arrival date if in transit
+    private String operatorCompanyName; // Company name of operator
 
 
     /**
@@ -54,6 +66,17 @@ public class Locomotive {
         this.maxBogies = null;
         this.bogieType = null;
         this.traction = null;
+        this.startFacility = null;
+        // USLP09 transient fields
+        this.status = null;
+        this.currentLocationName = null;
+        this.locationId = null;
+        this.locationLat = null;
+        this.locationLon = null;
+        this.distanceFromDeparture = null;
+        this.transitDestination = null;
+        this.transitArrivalDate = null;
+        this.operatorCompanyName = null;
     }
 
     /**
@@ -414,6 +437,197 @@ public class Locomotive {
 
     public void setTraction(String traction) {
         this.traction = traction;
+    }
+
+    /**
+     * Gets the start facility ID where this locomotive is currently located.
+     *
+     * @return the start facility ID as an Integer
+     */
+    public Integer getStartFacility() {
+        return startFacility;
+    }
+
+    /**
+     * Sets the start facility ID where this locomotive is currently located.
+     *
+     * @param startFacility the facility ID to set
+     */
+    public void setStartFacility(Integer startFacility) {
+        this.startFacility = startFacility;
+    }
+
+    // USLP09 - Getters and Setters for transient fields
+
+    /**
+     * Gets the status of this locomotive (PARKED or IN_TRANSIT).
+     * USLP09 transient field.
+     *
+     * @return the status as a String
+     */
+    public String getStatus() {
+        return status;
+    }
+
+    /**
+     * Sets the status of this locomotive.
+     *
+     * @param status the status to set
+     */
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    /**
+     * Gets the current location name (facility name).
+     * USLP09 transient field.
+     *
+     * @return the location name as a String
+     */
+    public String getCurrentLocationName() {
+        return currentLocationName;
+    }
+
+    /**
+     * Sets the current location name.
+     *
+     * @param currentLocationName the location name to set
+     */
+    public void setCurrentLocationName(String currentLocationName) {
+        this.currentLocationName = currentLocationName;
+    }
+
+    /**
+     * Gets the location facility ID.
+     * USLP09 transient field.
+     *
+     * @return the location ID as an Integer
+     */
+    public Integer getLocationId() {
+        return locationId;
+    }
+
+    /**
+     * Sets the location facility ID.
+     *
+     * @param locationId the location ID to set
+     */
+    public void setLocationId(Integer locationId) {
+        this.locationId = locationId;
+    }
+
+    /**
+     * Gets the location latitude.
+     * USLP09 transient field.
+     *
+     * @return the latitude as a Double
+     */
+    public Double getLocationLat() {
+        return locationLat;
+    }
+
+    /**
+     * Sets the location latitude.
+     *
+     * @param locationLat the latitude to set
+     */
+    public void setLocationLat(Double locationLat) {
+        this.locationLat = locationLat;
+    }
+
+    /**
+     * Gets the location longitude.
+     * USLP09 transient field.
+     *
+     * @return the longitude as a Double
+     */
+    public Double getLocationLon() {
+        return locationLon;
+    }
+
+    /**
+     * Sets the location longitude.
+     *
+     * @param locationLon the longitude to set
+     */
+    public void setLocationLon(Double locationLon) {
+        this.locationLon = locationLon;
+    }
+
+    /**
+     * Gets the distance from the departure facility in kilometers.
+     * USLP09 transient field.
+     *
+     * @return the distance as a Double
+     */
+    public Double getDistanceFromDeparture() {
+        return distanceFromDeparture;
+    }
+
+    /**
+     * Sets the distance from the departure facility.
+     *
+     * @param distanceFromDeparture the distance to set
+     */
+    public void setDistanceFromDeparture(Double distanceFromDeparture) {
+        this.distanceFromDeparture = distanceFromDeparture;
+    }
+
+    /**
+     * Gets the transit destination facility name if locomotive is in transit.
+     * USLP09 transient field.
+     *
+     * @return the destination name as a String
+     */
+    public String getTransitDestination() {
+        return transitDestination;
+    }
+
+    /**
+     * Sets the transit destination.
+     *
+     * @param transitDestination the destination to set
+     */
+    public void setTransitDestination(String transitDestination) {
+        this.transitDestination = transitDestination;
+    }
+
+    /**
+     * Gets the arrival date if locomotive is in transit.
+     * USLP09 transient field.
+     *
+     * @return the arrival date as a Timestamp
+     */
+    public java.sql.Timestamp getTransitArrivalDate() {
+        return transitArrivalDate;
+    }
+
+    /**
+     * Sets the transit arrival date.
+     *
+     * @param transitArrivalDate the arrival date to set
+     */
+    public void setTransitArrivalDate(java.sql.Timestamp transitArrivalDate) {
+        this.transitArrivalDate = transitArrivalDate;
+    }
+
+    /**
+     * Gets the operator company name.
+     * USLP09 transient field.
+     *
+     * @return the company name as a String
+     */
+    public String getOperatorCompanyName() {
+        return operatorCompanyName;
+    }
+
+    /**
+     * Sets the operator company name.
+     *
+     * @param operatorCompanyName the company name to set
+     */
+    public void setOperatorCompanyName(String operatorCompanyName) {
+        this.operatorCompanyName = operatorCompanyName;
     }
 
     public String getName() {

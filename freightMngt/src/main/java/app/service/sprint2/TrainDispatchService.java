@@ -119,13 +119,13 @@ public class TrainDispatchService {
         boolean useTravelTimeCalculator = (locomotiveId != null);
 
         for (int i = 0; i < facilityIds.size(); i++) {
-            Facility facility = facilityRepository.getFacilityById(facilityIds.get(i));
-            if (facility == null) continue;
+             Facility facility = facilityRepository.getFacilityById(facilityIds.get(i));
+             if (facility == null) continue;
 
-            RoutePoint point = new RoutePoint();
-            point.setTrainDispatch(dispatch);
-            point.setSequenceOrder(i + 1);
-            point.setFacility(facility);
+             RoutePoint point = new RoutePoint();
+             point.setTrainDispatch(dispatch);
+             point.setSequenceOrder(i + 1);
+             point.setFacility(facility);
 
             if (i == 0) {
                 // First point - departure
@@ -185,9 +185,27 @@ public class TrainDispatchService {
 
                         point.setEstimatedArrivalTime(currentTime);
                     } else {
-                        // No segment found - use default
-                        point.setEstimatedArrivalTime(currentTime);
-                        point.setNotes("No segment connection found");
+                        // No segment found - attempt to estimate distance/time using facility coordinates
+                        Double lat1 = previousFacility.getLat();
+                        Double lon1 = previousFacility.getLon();
+                        Double lat2 = facility.getLat();
+                        Double lon2 = facility.getLon();
+                        if (lat1 != null && lon1 != null && lat2 != null && lon2 != null) {
+                            double segmentDistance = haversineDistanceKm(lat1, lon1, lat2, lon2);
+                            double defaultSpeedKmh = 80.0; // reasonable default if no segment data
+                            double segmentTime = (segmentDistance / defaultSpeedKmh) * 60.0; // minutes
+
+                            cumulativeDistance += segmentDistance;
+                            cumulativeTime += segmentTime;
+                            currentTime = currentTime.plusMinutes((long) segmentTime);
+
+                            point.setEstimatedArrivalTime(currentTime);
+                            point.setNotes("Estimated distance/time (no segment): haversine fallback");
+                        } else {
+                            // No coords available - keep current time and log note
+                            point.setEstimatedArrivalTime(currentTime);
+                            point.setNotes("No segment connection found and no coordinates to estimate");
+                        }
                     }
                 }
 
@@ -225,7 +243,57 @@ public class TrainDispatchService {
             routePoints.add(routePointRepository.addRoutePoint(point));
         }
 
-        return routePoints;
+        // If everything ended up with zero total distance (e.g., no segments found),
+        // recompute using haversine distances between facility coordinates so manual dispatches get estimates.
+        if (!routePoints.isEmpty()) {
+            RoutePoint last = routePoints.get(routePoints.size() - 1);
+            if (last.getDistanceFromStartKm() == 0.0 && routePoints.size() > 1) {
+                // recompute from scratch using haversine, reuse existing local vars
+                cumulativeDistance = 0.0;
+                cumulativeTime = 0.0;
+                currentTime = startTime;
+                for (int i = 0; i < routePoints.size(); i++) {
+                    RoutePoint rp = routePoints.get(i);
+                    if (i == 0) {
+                        rp.setDistanceFromStartKm(0.0);
+                        rp.setCumulativeTravelTimeMinutes(0.0);
+                        rp.setEstimatedArrivalTime(startTime);
+                        rp.setEstimatedDepartureTime(startTime);
+                        rp.setCrossingOperation("NONE");
+                        rp.setNotes("Estimated (recomputed)");
+                    } else {
+                        Facility prevF = routePoints.get(i - 1).getFacility();
+                        Facility curF = rp.getFacility();
+                        double dist = 0.0;
+                        if (prevF != null && curF != null && prevF.getLat() != null && prevF.getLon() != null && curF.getLat() != null && curF.getLon() != null) {
+                            dist = haversineDistanceKm(prevF.getLat(), prevF.getLon(), curF.getLat(), curF.getLon());
+                        }
+                        double defaultSpeedKmh = 80.0;
+                        double travelMins = (dist / defaultSpeedKmh) * 60.0;
+                        cumulativeDistance += dist;
+                        cumulativeTime += travelMins;
+                        currentTime = currentTime.plusMinutes((long) Math.max(1, Math.round(travelMins)));
+                        rp.setEstimatedArrivalTime(currentTime);
+                        rp.setDistanceFromStartKm(cumulativeDistance);
+                        rp.setCumulativeTravelTimeMinutes(cumulativeTime);
+                        // crossing default
+                        rp.setCrossingOperation("NONE");
+                        // stop time
+                        int stopTime = (i < routePoints.size() - 1) ? 5 : 0;
+                        if (stopTime > 0) {
+                            currentTime = currentTime.plusMinutes(stopTime);
+                            cumulativeTime += stopTime;
+                        }
+                        rp.setEstimatedDepartureTime(currentTime);
+                        rp.setNotes("Estimated (recomputed)");
+                    }
+                    // persist updates
+                    routePointRepository.updateRoutePoint(rp.getRoutePointId(), rp);
+                }
+            }
+        }
+
+         return routePoints;
     }
 
     /**
@@ -441,5 +509,18 @@ public class TrainDispatchService {
         }
         return null;
     }
-}
 
+    /**
+     * Haversine distance between two lat/lon points in kilometers.
+     */
+    private double haversineDistanceKm(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371; // Earth radius km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                   Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                   Math.sin(dLon/2) * Math.sin(dLon/2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+}

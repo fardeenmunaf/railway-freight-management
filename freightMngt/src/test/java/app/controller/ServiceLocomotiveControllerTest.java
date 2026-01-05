@@ -34,7 +34,7 @@ public class ServiceLocomotiveControllerTest {
         Company company1 = new Company(1, "Rail Company", "RC", "123456789");
         User operator1 = new User(1, "user1", "user1@rail.com", "pass123", company1, true);
 
-        app.model.Train train1 = new app.model.Train(1, 101, "Porto", "Lisboa", company1);
+        app.model.Train train1 = new app.model.Train(1, "101", "Porto", "Lisboa", company1);
         trainService1 = new TrainService(1, train1,
             java.time.LocalDateTime.of(2025, 10, 23, 8, 0),
             java.time.LocalDateTime.of(2025, 10, 23, 12, 0),
