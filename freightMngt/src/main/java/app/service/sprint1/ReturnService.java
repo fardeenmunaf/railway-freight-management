@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class ReturnService {
 
-    private static final String AUDIT_LOG_FILE = "src/main/java/app/service/AuditLogs/return_inspection_audit.log";
+    private static final String AUDIT_LOG_FILE = "logs/return_inspection_audit.log";
     private final Repositories repositories;
     private final InventoryBalanceController inventoryController;
     private final AuditLogger auditLogger;
@@ -333,6 +333,7 @@ public class ReturnService {
         }
 
         public void flush() {
+            new java.io.File(AUDIT_LOG_FILE).getAbsoluteFile().getParentFile().mkdirs();
             try (FileWriter writer = new FileWriter(AUDIT_LOG_FILE, true)) {
                 while (!eventQueue.isEmpty()) {
                     InspectionEvent event = eventQueue.poll();

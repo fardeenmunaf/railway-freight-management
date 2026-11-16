@@ -31,6 +31,14 @@ public class TrainAssemblyView {
     }
 
     public static void display(Scanner scanner) {
+        if (!app.db.DatabaseConnection.isAvailable()) {
+            System.out.println("\nTrain Assembly needs the Oracle database, which is not running.");
+            System.out.println("Start it from the repository root with:  docker compose up -d");
+            System.out.println("(see README.md for details), then choose this option again.");
+            System.out.println("\nPress Enter to return to main menu...");
+            scanner.nextLine();
+            return;
+        }
         TrainAssemblyView view = new TrainAssemblyView(scanner);
         view.showMenu();
     }

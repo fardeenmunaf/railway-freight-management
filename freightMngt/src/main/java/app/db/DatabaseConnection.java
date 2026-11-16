@@ -22,11 +22,17 @@ public class DatabaseConnection {
     private static DatabaseConnection instance;
     private Connection connection;
     
-    // Oracle XEPDB1 Configuration
-    private static final String DB_URL = "jdbc:oracle:thin:@localhost:1521/XEPDB1";
+    // Oracle configuration. Defaults match the docker-compose.yml at the repository root;
+    // override with the FREIGHT_DB_URL, FREIGHT_DB_USER and FREIGHT_DB_PASSWORD environment variables.
+    private static final String DB_URL = envOrDefault("FREIGHT_DB_URL", "jdbc:oracle:thin:@localhost:1521/FREEPDB1");
 
-    private static final String DB_USER = "APPUSER"; // Using APPUSER user
-    private static final String DB_PASSWORD = "admin"; // APPUSER password
+    private static final String DB_USER = envOrDefault("FREIGHT_DB_USER", "APPUSER");
+    private static final String DB_PASSWORD = envOrDefault("FREIGHT_DB_PASSWORD", "admin");
+
+    private static String envOrDefault(String name, String defaultValue) {
+        String value = System.getenv(name);
+        return (value == null || value.isBlank()) ? defaultValue : value;
+    }
 
     public static final String SCHEMA_OWNER = "APPUSER"; // Tables are owned by APPUSER schema
 
@@ -40,15 +46,29 @@ public class DatabaseConnection {
             connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
             connection.setAutoCommit(true);
             
-            System.out.println("✓ Connection to Oracle XEPDB1 established successfully!");
+            System.out.println("✓ Connection to Oracle (" + DB_URL + ") established successfully!");
 
 
         } catch (ClassNotFoundException e) {
             System.err.println("✗ Oracle JDBC Driver not found: " + e.getMessage());
-            e.printStackTrace();
         } catch (SQLException e) {
-            System.err.println("✗ Failed to connect to Oracle database: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("✗ Failed to connect to Oracle database at " + DB_URL + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * Checks whether the Oracle database can be reached.
+     *
+     * @return true if a valid connection is available, false otherwise
+     */
+    public static boolean isAvailable() {
+        try {
+            boolean firstAttempt = (instance == null);
+            DatabaseConnection db = getInstance();          // first call already tries to connect
+            Connection c = firstAttempt ? db.connection : db.getConnection(); // later calls retry
+            return c != null && c.isValid(2);
+        } catch (SQLException e) {
+            return false;
         }
     }
 
@@ -78,6 +98,7 @@ public class DatabaseConnection {
             // Check if connection is still valid, reconnect if needed
             if (connection == null || connection.isClosed()) {
                 instance = new DatabaseConnection();
+                return instance.connection; // return the new connection, not the stale one
             }
         } catch (SQLException e) {
             System.err.println("Error checking connection state: " + e.getMessage());

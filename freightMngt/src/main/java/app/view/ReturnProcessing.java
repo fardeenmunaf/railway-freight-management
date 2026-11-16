@@ -209,7 +209,7 @@ public class ReturnProcessing {
         System.out.printf("Items restocked: %d%n", restocked);
         System.out.printf("Items discarded: %d%n", discarded);
         System.out.println("Audit log updated with all actions.");
-        System.out.println("Check: src/main/java/app/service/AuditLogs/return_inspection_audit.log");
+        System.out.println("Check: logs/return_inspection_audit.log");
     }
 
     /**

@@ -37,7 +37,15 @@ public class InventoryDispatch {
             String qtyInput = scanner.nextLine().trim();
             if ("b".equalsIgnoreCase(qtyInput)) return;
 
-            Integer skuNum = Integer.parseInt(skuInput.substring(3)); // SKU00001 -> 1
+            // Accept "SKU00001" or just "1"
+            String skuDigits = skuInput.toUpperCase().startsWith("SKU") ? skuInput.substring(3) : skuInput;
+            if (!skuDigits.matches("\\d+")) {
+                System.out.println("Error: SKU must look like SKU00001 (or just the number).");
+                System.out.println("\nPress Enter to return to main menu...");
+                scanner.nextLine();
+                return;
+            }
+            Integer skuNum = Integer.parseInt(skuDigits); // SKU00001 -> 1
             Integer quantity = Integer.parseInt(qtyInput);
 
             boolean hasStock = showAllocationPreview(dispatchService, skuNum, quantity, skuInput);

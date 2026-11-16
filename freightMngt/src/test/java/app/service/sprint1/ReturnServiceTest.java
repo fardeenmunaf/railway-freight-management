@@ -29,7 +29,7 @@ public class ReturnServiceTest {
     private ReturnLineController returnLineController;
     private Repositories repositories;
 
-    private static final String AUDIT_LOG_FILE = "src/main/java/app/service/AuditLogs/return_inspection_audit.log";
+    private static final String AUDIT_LOG_FILE = "logs/return_inspection_audit.log";
 
     @Before
     public void setUp() {

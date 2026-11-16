@@ -75,7 +75,7 @@ public class InventoryDispatchTest {
 
         // Create a single lot with SKU 10, quantity 50
         InventoryLot lot1 = new InventoryLot(101, 10, 50,
-            LocalDateTime.of(2026, 6, 1, 0, 0),      // expDate
+            LocalDateTime.of(2099, 6, 1, 0, 0),      // expDate
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lot1);
@@ -109,7 +109,7 @@ public class InventoryDispatchTest {
 
         // Create a lot with SKU 10, quantity 50
         InventoryLot lot1 = new InventoryLot(102, 10, 50,
-            LocalDateTime.of(2026, 6, 1, 0, 0),      // expDate
+            LocalDateTime.of(2099, 6, 1, 0, 0),      // expDate
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lot1);
@@ -148,7 +148,7 @@ public class InventoryDispatchTest {
 
         // Create a lot with SKU 10, quantity 30
         InventoryLot lot1 = new InventoryLot(103, 10, 30,
-            LocalDateTime.of(2026, 6, 1, 0, 0),      // expDate
+            LocalDateTime.of(2099, 6, 1, 0, 0),      // expDate
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lot1);
@@ -183,7 +183,7 @@ public class InventoryDispatchTest {
 
         // Create a lot with SKU 10
         InventoryLot lot1 = new InventoryLot(104, 10, 30,
-            LocalDateTime.of(2026, 6, 1, 0, 0),      // expDate
+            LocalDateTime.of(2099, 6, 1, 0, 0),      // expDate
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lot1);
@@ -220,12 +220,12 @@ public class InventoryDispatchTest {
 
         // Create lot with EARLY expiry (Feb 2026)
         InventoryLot lotEarly = new InventoryLot(201, 20, 30,
-            LocalDateTime.of(2026, 2, 1, 0, 0),      // expDate (Feb 2026)
+            LocalDateTime.of(2099, 2, 1, 0, 0),      // expDate (Feb 2026)
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         // Create lot with LATE expiry (Jun 2026)
         InventoryLot lotLate = new InventoryLot(202, 20, 40,
-            LocalDateTime.of(2026, 6, 1, 0, 0),      // expDate (Jun 2026)
+            LocalDateTime.of(2099, 6, 1, 0, 0),      // expDate (Jun 2026)
             LocalDateTime.of(2025, 10, 2, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lotEarly);
@@ -277,17 +277,17 @@ public class InventoryDispatchTest {
         // Create lots with different expiry dates (SKU 30)
         // Lot 301: Expires Jan 2026, qty 20
         InventoryLot lot301 = new InventoryLot(301, 30, 20,
-            LocalDateTime.of(2026, 1, 1, 0, 0),      // expDate (Jan 2026) - EARLIEST
+            LocalDateTime.of(2099, 1, 1, 0, 0),      // expDate (Jan 2026) - EARLIEST
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         // Lot 302: Expires Mar 2026, qty 25
         InventoryLot lot302 = new InventoryLot(302, 30, 25,
-            LocalDateTime.of(2026, 3, 1, 0, 0),      // expDate (Mar 2026) - MIDDLE
+            LocalDateTime.of(2099, 3, 1, 0, 0),      // expDate (Mar 2026) - MIDDLE
             LocalDateTime.of(2025, 10, 2, 10, 0));   // receivedDate
 
         // Lot 303: Expires May 2026, qty 30
         InventoryLot lot303 = new InventoryLot(303, 30, 30,
-            LocalDateTime.of(2026, 5, 1, 0, 0),      // expDate (May 2026) - LATEST
+            LocalDateTime.of(2099, 5, 1, 0, 0),      // expDate (May 2026) - LATEST
             LocalDateTime.of(2025, 10, 3, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lot301);
@@ -414,7 +414,7 @@ public class InventoryDispatchTest {
 
         // Create lot WITH expiry date (expires later but should be consumed first)
         InventoryLot lotWithExpiry = new InventoryLot(501, 50, 25,
-            LocalDateTime.of(2026, 12, 31, 0, 0),      // expDate (Dec 2026)
+            LocalDateTime.of(2099, 12, 31, 0, 0),      // expDate (Dec 2026)
             LocalDateTime.of(2025, 10, 15, 10, 0));    // receivedDate (Oct 15)
 
         // Create lot WITHOUT expiry date (received earlier)
@@ -468,15 +468,15 @@ public class InventoryDispatchTest {
         // Create multiple lots with same SKU in one balance
         // Constructor: InventoryLot(lotId, sku, qty, expDate, receivedDate)
         InventoryLot lot601 = new InventoryLot(601, 60, 10,
-            LocalDateTime.of(2026, 1, 1, 0, 0),      // expDate (Jan) - EARLIEST
+            LocalDateTime.of(2099, 1, 1, 0, 0),      // expDate (Jan) - EARLIEST
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         InventoryLot lot602 = new InventoryLot(602, 60, 15,
-            LocalDateTime.of(2026, 3, 1, 0, 0),      // expDate (Mar) - MIDDLE
+            LocalDateTime.of(2099, 3, 1, 0, 0),      // expDate (Mar) - MIDDLE
             LocalDateTime.of(2025, 10, 2, 10, 0));   // receivedDate
 
         InventoryLot lot603 = new InventoryLot(603, 60, 20,
-            LocalDateTime.of(2026, 5, 1, 0, 0),      // expDate (May) - LATEST
+            LocalDateTime.of(2099, 5, 1, 0, 0),      // expDate (May) - LATEST
             LocalDateTime.of(2025, 10, 3, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lot601);
@@ -529,11 +529,11 @@ public class InventoryDispatchTest {
 
         // Create two lots with total qty = 50
         InventoryLot lot701 = new InventoryLot(701, 70, 30,
-            LocalDateTime.of(2026, 1, 1, 0, 0),      // expDate
+            LocalDateTime.of(2099, 1, 1, 0, 0),      // expDate
             LocalDateTime.of(2025, 10, 1, 10, 0));   // receivedDate
 
         InventoryLot lot702 = new InventoryLot(702, 70, 20,
-            LocalDateTime.of(2026, 2, 1, 0, 0),      // expDate
+            LocalDateTime.of(2099, 2, 1, 0, 0),      // expDate
             LocalDateTime.of(2025, 10, 2, 10, 0));   // receivedDate
 
         lotController.createInventoryLot(lot701);

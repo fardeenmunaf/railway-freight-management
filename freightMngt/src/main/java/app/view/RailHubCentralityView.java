@@ -24,8 +24,10 @@ public class RailHubCentralityView {
     }
 
     public static void display(Scanner scanner) throws IOException {
-        RailHubCentralityView view = new RailHubCentralityView(scanner);
         System.out.println("=== RAIL HUB CENTRALITY ANALYSIS ===");
+        System.out.println("Computing betweenness, closeness and hub scores for the whole network...");
+        System.out.println("This can take up to a minute, please wait.");
+        RailHubCentralityView view = new RailHubCentralityView(scanner);
         System.out.println("Data loaded and metrics calculated successfully!");
         System.out.println();
         view.showMenu();

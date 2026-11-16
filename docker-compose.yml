@@ -1,0 +1,26 @@
+# Local Oracle database for the freightMngt app (needed only for menu option 18, Train Assembly).
+#
+#   docker compose up -d        # first start takes ~1-2 minutes (creates schema + sample data)
+#   docker compose logs -f      # wait for "DATABASE IS READY TO USE!"
+#   docker compose down -v      # stop and delete the data
+#
+# The app connects with the defaults in freightMngt/src/main/java/app/db/DatabaseConnection.java
+# (jdbc:oracle:thin:@localhost:1521/FREEPDB1, user APPUSER / admin).
+services:
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    container_name: freightmngt-oracle
+    ports:
+      - "1521:1521"
+    environment:
+      ORACLE_PASSWORD: admin
+      APP_USER: APPUSER
+      APP_USER_PASSWORD: admin
+    volumes:
+      - ./sql-scripts:/sql-scripts:ro
+      - ./docker/oracle-init:/container-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30

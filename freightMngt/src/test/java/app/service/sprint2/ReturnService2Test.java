@@ -145,7 +145,7 @@ class ReturnService2Test {
 
         service.processAllReturns();
 
-        Path logPath = Path.of("src/main/java/app/service/AuditLogs/return_inspection_audit.log");
+        Path logPath = Path.of("logs/return_inspection_audit.log");
         assertTrue(Files.exists(logPath));
 
         String content = Files.readString(logPath);
