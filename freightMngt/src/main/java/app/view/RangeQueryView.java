@@ -114,7 +114,9 @@ public class RangeQueryView {
                 "Name", "Latitude", "Longitude", "City", "Main Station", "Country");
         System.out.println("─".repeat(100));
 
-        for (Station station : results) {
+        int limit = 50; // keep long result lists readable in the console
+        for (int i = 0; i < results.size() && i < limit; i++) {
+            Station station = results.get(i);
             System.out.printf("%-40s %-12.6f %-12.6f %-10s %-15s %-10s%n",
                     truncate(station.getName(), 39),
                     station.getLat(),
@@ -125,6 +127,9 @@ public class RangeQueryView {
             );
         }
         System.out.println("─".repeat(100));
+        if (results.size() > limit) {
+            System.out.println("... and " + (results.size() - limit) + " more (showing the first " + limit + ")");
+        }
     }
 
     private static Boolean readOptionalBoolean(Scanner scanner, String prompt) {

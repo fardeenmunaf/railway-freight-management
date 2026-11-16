@@ -192,29 +192,34 @@ public class RailHubCentralityView {
         }
     }
 
+    private static final int BOX_WIDTH = 64;
+
+    /** Prints one row of the details box, padded so the right border lines up. */
+    private static void boxRow(String text) {
+        if (text.length() > BOX_WIDTH) text = text.substring(0, BOX_WIDTH);
+        System.out.println("║" + String.format("%-" + BOX_WIDTH + "s", text) + "║");
+    }
+
     private void printStationDetails(RailHubCentralityAnalysis.HubAnalysisResult result, int rank, int total) {
-        System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
-        System.out.println("║          STATION DETAILS                                       ║");
-        System.out.println("╠════════════════════════════════════════════════════════════════╣");
-        System.out.printf("║  ID:             %-45d ║%n", result.getStationId());
-        System.out.printf("║  Name:           %-45s ║%n", truncateString(result.getStationName(), 45));
-        System.out.printf("║  Ranking:        %-3d of %-39d ║%n", rank, total);
-        System.out.println("╠════════════════════════════════════════════════════════════════╣");
-        System.out.printf("║  HubScore:       %-10.4f %-34s ║%n", result.getHubScore(), getHubScoreLabel(result.getHubScore()));
-        System.out.println("╠════════════════════════════════════════════════════════════════╣");
-        System.out.println("║  DETAILED METRICS:                                             ║");
-        System.out.printf("║    • Betweenness:        %10.4f %-27s ║%n", result.getBetweenness(),
-            "(Bridge importance)");
-        System.out.printf("║    • Harmonic Closeness: %10.4f %-27s ║%n", result.getHarmonicCloseness(),
-            "(Global accessibility)");
-        System.out.printf("║    • Strength:           %10.2f %-27s ║%n", result.getStrength(),
-            "(Total capacity)");
-        System.out.printf("║    • Degree:             %10d %-27s ║%n", result.getDegree(),
-            "(Direct connections)");
-        System.out.println("╠════════════════════════════════════════════════════════════════╣");
-        System.out.println("║  ANALYSIS:                                                     ║");
-        System.out.println("║  " + getAnalysisText(result) + " ║");
-        System.out.println("╚════════════════════════════════════════════════════════════════╝");
+        String line = "═".repeat(BOX_WIDTH);
+        System.out.println("\n╔" + line + "╗");
+        boxRow("          STATION DETAILS");
+        System.out.println("╠" + line + "╣");
+        boxRow(String.format("  ID:             %d", result.getStationId()));
+        boxRow(String.format("  Name:           %s", truncateString(result.getStationName(), 45)));
+        boxRow(String.format("  Ranking:        %d of %d", rank, total));
+        System.out.println("╠" + line + "╣");
+        boxRow(String.format("  HubScore:       %.4f     %s", result.getHubScore(), getHubScoreLabel(result.getHubScore())));
+        System.out.println("╠" + line + "╣");
+        boxRow("  DETAILED METRICS:");
+        boxRow(String.format("    • Betweenness:        %10.4f  (Bridge importance)", result.getBetweenness()));
+        boxRow(String.format("    • Harmonic Closeness: %10.4f  (Global accessibility)", result.getHarmonicCloseness()));
+        boxRow(String.format("    • Strength:           %10.2f  (Total capacity)", result.getStrength()));
+        boxRow(String.format("    • Degree:             %10d  (Direct connections)", result.getDegree()));
+        System.out.println("╠" + line + "╣");
+        boxRow("  ANALYSIS:");
+        boxRow("  " + getAnalysisText(result).trim());
+        System.out.println("╚" + line + "╝");
     }
 
     private String getHubScoreLabel(double hubScore) {

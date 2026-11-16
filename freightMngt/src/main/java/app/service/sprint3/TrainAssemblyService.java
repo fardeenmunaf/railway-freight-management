@@ -188,6 +188,9 @@ public class TrainAssemblyService {
         // Validate inputs
         validateInputs(locomotiveIds, routeStops, departureDate, arrivalDate);
 
+        // Run the whole assembly as one transaction: either every record is saved, or none is.
+        boolean previousAutoCommit = connection.getAutoCommit();
+        connection.setAutoCommit(false);
         try {
             // Step 1: Create TRAIN record
             Train train = createTrain(routeStops, operatorCompanyId);
@@ -212,12 +215,25 @@ public class TrainAssemblyService {
             // Step 6: Validate the composition
             String validationMessage = trainAssemblyDAO.validateTrainComposition(trainService.getServiceId());
 
+            connection.commit();
             return new AssemblyResult(train, trainService, trainStops, locomotivesAssigned, validationMessage);
 
-        } catch (SQLException e) {
-            // Roll back will be handled by database transaction
-            throw new SQLException("Failed to assemble train service: " + e.getMessage(), e);
+        } catch (SQLException | RuntimeException e) {
+            connection.rollback(); // nothing from this assembly is kept
+            if (e instanceof SQLException) {
+                throw new SQLException("Failed to assemble train service: " + firstLine(e.getMessage()), e);
+            }
+            throw (RuntimeException) e;
+        } finally {
+            connection.setAutoCommit(previousAutoCommit);
         }
+    }
+
+    /** Keeps only the first line of an Oracle error (drops the ORA-06512 stack lines). */
+    private static String firstLine(String message) {
+        if (message == null) return "";
+        int nl = message.indexOf('\n');
+        return nl >= 0 ? message.substring(0, nl) : message;
     }
 
     /**

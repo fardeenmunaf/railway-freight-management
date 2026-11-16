@@ -336,10 +336,10 @@ public class PickingPlanView {
             System.out.println("-".repeat(40));
 
             AllocationSummary summary = calculateAllocationSummary(eligibilities);
-            System.out.println("Fully Eligible Orders: " + summary.eligibleCount);
-            System.out.println("Partially Eligible Orders: " + summary.partialCount);
-            System.out.println("Ineligible Orders: " + summary.ineligibleCount);
-            System.out.println("Total Orders Processed: " + eligibilities.size());
+            System.out.println("Fully allocated order lines: " + summary.eligibleCount);
+            System.out.println("Partially allocated order lines: " + summary.partialCount);
+            System.out.println("Undispatchable order lines: " + summary.ineligibleCount);
+            System.out.println("Total order lines processed: " + eligibilities.size());
         } else {
             System.out.println("   (no eligibility information available)");
         }
@@ -356,7 +356,7 @@ public class PickingPlanView {
                 .filter(e -> "PARTIAL".equals(e.getStatus()))
                 .count();
         long ineligibleCount = eligibilities.stream()
-                .filter(e -> "INELIGIBLE".equals(e.getStatus()))
+                .filter(e -> "UNDISPATCHABLE".equals(e.getStatus()))
                 .count();
 
         return new AllocationSummary(eligibleCount, partialCount, ineligibleCount);

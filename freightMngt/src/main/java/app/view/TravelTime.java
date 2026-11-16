@@ -50,13 +50,20 @@ public class TravelTime {
         FacilityRepository facilityRepo = repositories.getFacilityRepository();
         LocomotiveRepository locomotiveRepo = repositories.getLocomotiveRepository();
 
-        System.out.println("AVAILABLE STATIONS:");
+        System.out.println("AVAILABLE STATIONS (connected by line segments):");
         System.out.println("-".repeat(30));
+        // Only stations linked to a line segment can be used to calculate a travel time
+        java.util.Set<Integer> connectedIds = repositories.getLineSegmentFacilityRepository()
+                .getAllLineSegmentFacilities().stream()
+                .filter(l -> l != null && l.getFacility() != null)
+                .map(l -> l.getFacility().getFacilityId())
+                .collect(java.util.stream.Collectors.toSet());
         List<Facility> facilities = facilityRepo.getAllFacilities();
         if (facilities != null && !facilities.isEmpty()) {
             facilities.stream()
                     .filter(f -> f != null && f.getFacilityType() != null
-                            && Integer.valueOf(2).equals(f.getFacilityType().getFacilityTypeId()))
+                            && Integer.valueOf(2).equals(f.getFacilityType().getFacilityTypeId())
+                            && connectedIds.contains(f.getFacilityId()))
                     .sorted(Comparator.comparing(f -> f.getFacilityId() == null ? Integer.MAX_VALUE : f.getFacilityId()))
                     .forEach(f -> System.out.printf("   %d - %s%n",
                             f.getFacilityId(),

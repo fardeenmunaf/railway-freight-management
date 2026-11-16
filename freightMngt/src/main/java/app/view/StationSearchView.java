@@ -76,7 +76,7 @@ public class StationSearchView {
     }
 
     private static void searchByName(Scanner scanner, StationService stationService) {
-        System.out.print("Station name: ");
+        System.out.print("Station name (exact, e.g. Porto Campanha): ");
         String name = scanner.nextLine().trim();
         if ("b".equalsIgnoreCase(name)) return;
 
@@ -175,8 +175,12 @@ public class StationSearchView {
 
         System.out.println("Found " + stations.size() + " station(s):\n");
 
-        for (Station station : stations) {
-            displayStation(station);
+        int limit = 25; // keep long result lists readable in the console
+        for (int i = 0; i < stations.size() && i < limit; i++) {
+            displayStation(stations.get(i));
+        }
+        if (stations.size() > limit) {
+            System.out.println("... and " + (stations.size() - limit) + " more (showing the first " + limit + ")");
         }
     }
 

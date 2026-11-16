@@ -280,14 +280,10 @@ BEGIN
     -- This function focuses on locomotive assignment
     -- Wagon assignment happens when freight is assigned to the service
 
-    COMMIT;
-
+    -- No COMMIT here: the caller owns the transaction, so the whole train assembly
+    -- (train, service, stops, locomotives, wagons) is saved or discarded together.
+    -- If this function raises an error, Oracle undoes the work it did.
     RETURN v_locomotive_count; -- Return number of locomotives added
-
-EXCEPTION
-    WHEN OTHERS THEN
-        ROLLBACK;
-        RAISE;
 END fn_assemble_train_composition;
 /
 

@@ -329,19 +329,29 @@ public class TrainSchedulingView {
     }
 
     private static void displayDispatchSummary(TrainDispatch dispatch) {
-        System.out.println("\n╔═══════════════════════════════════════════════════════════════╗");
-        System.out.println("║ DISPATCH SUMMARY                                                ║");
-        System.out.println("╠═════════════════════════════════════════════════════════════════╣");
-        System.out.printf("║ Dispatch ID: %-37d║%n", dispatch.getDispatchId());
-        System.out.printf("║ Train Service ID: %-37d║%n", dispatch.getTrainService() != null ? dispatch.getTrainService().getServiceId() : 0);
-        System.out.printf("║ Route Type: %-37s║%n", dispatch.getRouteType());
-        System.out.printf("║ Status: %-37s║%n", dispatch.getStatus());
-        System.out.printf("║ Planned Departure: %-37s║%n", dispatch.getPlannedDepartureTime() != null ? dispatch.getPlannedDepartureTime().format(dateTimeFormatter) : "N/A");
-        System.out.printf("║ Estimated Arrival: %-37s║%n", dispatch.getEstimatedArrivalTime() != null ? dispatch.getEstimatedArrivalTime().format(dateTimeFormatter) : "N/A");
-        System.out.printf("║ Total Distance: %-33.2f km ║%n", dispatch.getTotalDistanceKm());
-        System.out.printf("║ Est. Travel Time: %-33.0f min║%n", dispatch.getEstimatedTravelTimeMinutes());
-        System.out.printf("║ Route Points: %-37d║%n", dispatch.getRoute() != null ? dispatch.getRoute().size() : 0);
-        System.out.println("╚═════════════════════════════════════════════════════════════╝");
+        String line = "═".repeat(SUMMARY_WIDTH + 2);
+        System.out.println("\n╔" + line + "╗");
+        summaryRow("DISPATCH SUMMARY", "");
+        System.out.println("╠" + line + "╣");
+        summaryRow("Dispatch ID", String.valueOf(dispatch.getDispatchId()));
+        summaryRow("Train Service ID", String.valueOf(dispatch.getTrainService() != null ? dispatch.getTrainService().getServiceId() : 0));
+        summaryRow("Route Type", String.valueOf(dispatch.getRouteType()));
+        summaryRow("Status", String.valueOf(dispatch.getStatus()));
+        summaryRow("Planned Departure", dispatch.getPlannedDepartureTime() != null ? dispatch.getPlannedDepartureTime().format(dateTimeFormatter) : "N/A");
+        summaryRow("Estimated Arrival", dispatch.getEstimatedArrivalTime() != null ? dispatch.getEstimatedArrivalTime().format(dateTimeFormatter) : "N/A");
+        summaryRow("Total Distance", String.format("%.2f km", dispatch.getTotalDistanceKm()));
+        summaryRow("Est. Travel Time", String.format("%.0f min", dispatch.getEstimatedTravelTimeMinutes()));
+        summaryRow("Route Points", String.valueOf(dispatch.getRoute() != null ? dispatch.getRoute().size() : 0));
+        System.out.println("╚" + line + "╝");
+    }
+
+    private static final int SUMMARY_WIDTH = 61;
+
+    /** Prints one row of the summary box, padded so the right border lines up. */
+    private static void summaryRow(String label, String value) {
+        String text = value.isEmpty() ? label : String.format("%-19s %s", label + ":", value);
+        if (text.length() > SUMMARY_WIDTH) text = text.substring(0, SUMMARY_WIDTH);
+        System.out.printf("║ %-" + SUMMARY_WIDTH + "s ║%n", text);
     }
 
     private static void displayRouteDetails(TrainDispatch dispatch) {

@@ -11,6 +11,9 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        // The UI is in English, so format numbers and dates the same way on every machine (e.g. 12.50, not 12,50)
+        java.util.Locale.setDefault(java.util.Locale.US);
+
         AppInitializer appInitializer = new AppInitializer();
 
         System.out.println("Initializing dataset...");

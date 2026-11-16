@@ -201,9 +201,9 @@ INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand
 INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn, start_facility) VALUES
     (5036, 2, 2, 'Marina', 'Stadler', 'E4000', 2017, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400, 50);
 INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn, start_facility) VALUES
-    (335.001, 3, 2, 'No_Name', 'Stadler', 'E4000', 2019, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400, 5);
+    (335001, 3, 2, 'No_Name', 'Stadler', 'E4000', 2019, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400, 5);
 INSERT INTO LOCOMOTIVE (locomotive_id, operator_id, locomotive_type, name, brand, model, year, power_kw, acceleration_ms2, length_m, width_m, height_m, max_weight_t, max_speed_kmh, operational_speed_kmh, total_weight_t, num_bogies, bogie_type, traction_kn, start_facility) VALUES
-    (335.003, 3, 2, 'No_Name', 'Stadler', 'E4000', 2019, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400, 5);
+    (335003, 3, 2, 'No_Name', 'Stadler', 'E4000', 2019, 3178, 0.3, 23.02, 3000, 4.264, 124, 120, 100, 124, 3, 'Co-Co', 400, 5);
 COMMIT;
 -- ORDER_LINE depende de ORDER e ITEM (sku)
 INSERT INTO ORDER_LINE (order_line_id, order_id, sku, qty) VALUES (1, 1, 'ELEC001', 10);
@@ -368,8 +368,8 @@ COMMIT;
 INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (1903, 4882);
 INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (5034, 6700);
 INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (5036, 6700);
-INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (335.001, 6700);
-INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (335.003, 6700);
+INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (335001, 6700);
+INSERT INTO LOCOMOTIVE_DIESEL (locomotive_id, fuel_capacity_l) VALUES (335003, 6700);
 COMMIT;
 --LOCOMOTIVE_ELECTRIC depende de LOCOMOTIVE
 INSERT INTO LOCOMOTIVE_ELECTRIC (locomotive_id, voltage, frequency_hz) VALUES (5621, 25, 50);
@@ -384,9 +384,9 @@ INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5630, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (1903, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5034, 1);
 INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (5036, 1);
-INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.001, 1);
-INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.003, 1);
-INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335.003, 2);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335001, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335003, 1);
+INSERT INTO LOCOMOTIVE_GAUGE (locomotive_id, gauge_id) VALUES (335003, 2);
 COMMIT;
 -- WAREHOUSE_AISLE depende de WAREHOUSE
 INSERT INTO WAREHOUSE_AISLE (aisle_id, warehouse_id, aisle_no, unique_code) VALUES (1, 1, 1, 'A1');
