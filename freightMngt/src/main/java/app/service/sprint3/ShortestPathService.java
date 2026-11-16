@@ -228,10 +228,15 @@ public class ShortestPathService {
                 return sb.toString();
             }
 
-            StringBuilder sb = new StringBuilder();
+            StringBuilder route = new StringBuilder("Route: ");
+            StringBuilder legs = new StringBuilder("Legs:\n");
 
-            // Path with individual costs
+            // Path with individual costs: each station appears once in the route,
+            // and every leg is listed with its own cost
             double total = 0.0;
+            if (!path.isEmpty()) {
+                route.append(String.format("%s (%d)", path.get(0).getName(), path.get(0).getFacilityId()));
+            }
             for (int i = 0; i < path.size() - 1; i++) {
                 Station from = path.get(i);
                 Station to = path.get(i + 1);
@@ -251,16 +256,21 @@ public class ShortestPathService {
                 }
                 total += cost;
 
-                sb.append(String.format("%s(ID:%d) -> %s(ID:%d) [%.2f]",
-                        from.getName(), from.getFacilityId(),
-                        to.getName(), to.getFacilityId(), cost));
-
-                if (i < path.size() - 2) {
-                    sb.append(" -> ");
-                }
+                route.append(String.format(" -> %s (%d)", to.getName(), to.getFacilityId()));
+                legs.append(String.format(Locale.US, "  %2d. %-28s -> %-28s %8.2f%n",
+                        i + 1,
+                        from.getName() + " (" + from.getFacilityId() + ")",
+                        to.getName() + " (" + to.getFacilityId() + ")",
+                        cost));
             }
 
-            sb.append("\nTotal cost: ").append(String.format("%.2f", total));
+            StringBuilder sb = new StringBuilder();
+            sb.append(route).append("\n\n");
+            if (path.size() > 1) {
+                sb.append(legs).append("\n");
+            }
+            sb.append("Stops: ").append(path.size())
+              .append(" | Total cost: ").append(String.format(Locale.US, "%.2f", total));
             return sb.toString();
         }
     }

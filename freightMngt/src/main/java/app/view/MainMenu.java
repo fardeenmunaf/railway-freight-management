@@ -40,7 +40,7 @@ public class MainMenu {
             try {
                 choice = Integer.parseInt(input);
                 if (choice < 0 || choice > 18) {
-                    System.out.println("Invalid choice. Please enter a number between 0 and 17.");
+                    System.out.println("Invalid choice. Please enter a number between 0 and 18.");
                 } else if (choice == 0) {
                     System.out.println("Exiting the system. Goodbye!");
                     System.exit(0);

@@ -201,27 +201,27 @@ public class CartRepositoryTest {
 
         Cart smallCart = repository.getCartById(1);
         assertNotNull(smallCart);
-        assertEquals("Carrinho Pequeno", smallCart.getName());
+        assertEquals("Small Cart", smallCart.getName());
         assertEquals(5.5, smallCart.getMaxWeight(), 0.01);
 
         Cart mediumCart = repository.getCartById(2);
         assertNotNull(mediumCart);
-        assertEquals("Carrinho Médio", mediumCart.getName());
+        assertEquals("Medium Cart", mediumCart.getName());
         assertEquals(10.0, mediumCart.getMaxWeight(), 0.01);
 
         Cart largeCart = repository.getCartById(3);
         assertNotNull(largeCart);
-        assertEquals("Carrinho Grande", largeCart.getName());
+        assertEquals("Large Cart", largeCart.getName());
         assertEquals(20.0, largeCart.getMaxWeight(), 0.01);
 
         Cart extraLargeCart = repository.getCartById(4);
         assertNotNull(extraLargeCart);
-        assertEquals("Carrinho Extra Grande", extraLargeCart.getName());
+        assertEquals("Extra Large Cart", extraLargeCart.getName());
         assertEquals(35.0, extraLargeCart.getMaxWeight(), 0.01);
 
         Cart forklift = repository.getCartById(5);
         assertNotNull(forklift);
-        assertEquals("Empilhadora", forklift.getName());
+        assertEquals("Forklift", forklift.getName());
         assertEquals(50.0, forklift.getMaxWeight(), 0.01);
     }
 

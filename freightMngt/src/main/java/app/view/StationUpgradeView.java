@@ -16,38 +16,69 @@ public class StationUpgradeView {
     private static final String BELGIAN_STATIONS_CSV = "src/main/java/app/sampleDataset/stations.csv";
     private static final String BELGIAN_LINES_CSV    = "src/main/java/app/sampleDataset/lines.csv";
 
-    // Scanner não é usado aqui, mas fica na assinatura para ser consistente com o menu
+    private static final int MAX_LISTED = 25;
+
     public static void display(Scanner scanner) {
         System.out.println("\n╔════════════════════════════════════════════════════════════╗");
         System.out.println("║     BELGIAN STATION UPGRADE SCHEDULING (USEI11)            ║");
         System.out.println("╚════════════════════════════════════════════════════════════╝");
+        System.out.println("Stations must be upgraded in an order that respects their dependencies");
+        System.out.println("(topological sort). Circular dependencies make such an order impossible,");
+        System.out.println("so the algorithm also detects and reports them.\n");
 
+        while (true) {
+            System.out.println("1. Analyse the full Belgian network (cycle detection)");
+            System.out.println("2. Plan upgrades for an acyclic dependency set (valid order)");
+            System.out.println("0. Return to main menu");
+            System.out.print("Choose an option: ");
+            String option = scanner.nextLine().trim();
+            switch (option) {
+                case "1" -> run(false);
+                case "2" -> run(true);
+                case "0", "b", "B" -> { return; }
+                default -> System.out.println("Invalid option!");
+            }
+            System.out.println();
+        }
+    }
+
+    /**
+     * Loads the Belgian network and runs the upgrade planner.
+     *
+     * @param acyclicOnly when true, every line is kept in a single direction
+     *                    (lower station id -> higher station id), which guarantees a DAG
+     */
+    private static void run(boolean acyclicOnly) {
         try {
             Repositories repos = Repositories.getInstance();
 
-            // 1) Carregar estações e dependências
+            // 1) Load stations and dependencies
             List<Station> stations = loadBelgianStations(repos);
             List<int[]> deps = loadBelgianDependencies();
 
-            System.out.println("Loaded Stations: " + stations.size());
-            System.out.println("Loaded Dependencies: " + deps.size() + "\n");
-
-            // 2) Validar referências inválidas
+            // 2) Validate references
             if (!validateDependencies(stations, deps)) {
-                System.out.println("\nERROR: lines.csv contains edges that reference non‑existing station ids.");
+                System.out.println("\nERROR: lines.csv contains edges that reference non-existing station ids.");
                 System.out.println("Upgrade planning aborted due to invalid data.\n");
                 return;
             }
 
-            // 3) Construir grafo de estações
+            if (acyclicOnly) {
+                deps = deps.stream().filter(d -> d[0] < d[1]).collect(Collectors.toList());
+                System.out.println("\nUsing each line in one direction only (lower id -> higher id).");
+            }
+
+            System.out.println("\nStations:     " + stations.size());
+            System.out.println("Dependencies: " + deps.size());
+
+            // 3) Build the station graph and plan the upgrades
             StationGraphBuilder builder = new StationGraphBuilder();
             MatrixGraph<Station, Double> graph = builder.buildGraph(stations, deps);
 
-            // 4) Calcular plano de upgrades (serviço de domínio)
             StationDependencyService service = new StationDependencyService();
             StationDependencyService.Result<Double> result = service.planUpgrades(graph);
 
-            // 5) Mostrar resultado conforme haja ciclos ou não
+            // 4) Show the result
             if (!result.hasCycles()) {
                 displayValidOrder(result);
             } else {
@@ -56,31 +87,46 @@ public class StationUpgradeView {
 
         } catch (Exception e) {
             System.out.println("Error during station upgrade scheduling: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
     private static void displayValidOrder(StationDependencyService.Result<Double> result) {
-        System.out.println("\nNo cycles detected.");
-        System.out.println("Valid upgrade order of stations:\n");
+        List<Station> order = result.getTopoOrder();
+        System.out.println("\n✓ No circular dependencies — a valid upgrade order exists.");
+        System.out.println("Upgrade order (first " + Math.min(MAX_LISTED, order.size()) + " of " + order.size() + " stations):\n");
 
-        int i = 1;
-        for (Station s : result.getTopoOrder()) {
-            System.out.printf("%3d. %4d - %s%n", i++, s.getFacilityId(), s.getName());
+        for (int i = 0; i < order.size() && i < MAX_LISTED; i++) {
+            Station s = order.get(i);
+            System.out.printf("%4d. %-28s (id %d)%n", i + 1, s.getName(), s.getFacilityId());
+        }
+        if (order.size() > MAX_LISTED) {
+            System.out.println("   ... and " + (order.size() - MAX_LISTED) + " more");
         }
     }
 
     private static void displayCycles(StationDependencyService.Result<Double> result) {
-        System.out.println("\nGRAPH HAS CYCLES — upgrade schedule impossible.\n");
+        int nStations = result.getCycleStations().size();
+        int nEdges = result.getCycleEdges().size();
+        System.out.println("\n✗ Circular dependencies detected — no upgrade order can satisfy every dependency.");
+        System.out.println("  " + nStations + " stations are part of cycles (" + nEdges + " dependencies).");
+        System.out.println("  These cycles must be broken before an upgrade plan can be produced.\n");
 
-        System.out.println("Stations involved in cycles (" + result.getCycleStations().size() + "):");
+        System.out.println("Stations in cycles (first " + Math.min(MAX_LISTED, nStations) + "):");
         result.getCycleStations().stream()
                 .sorted(Comparator.comparingInt(Station::getFacilityId))
-                .forEach(s -> System.out.println(" • " + s.getFacilityId() + " - " + s.getName()));
+                .limit(MAX_LISTED)
+                .forEach(s -> System.out.printf("   • %-28s (id %d)%n", s.getName(), s.getFacilityId()));
+        if (nStations > MAX_LISTED) {
+            System.out.println("   ... and " + (nStations - MAX_LISTED) + " more");
+        }
 
-        System.out.println("\nCycle Edges (" + result.getCycleEdges().size() + "):");
-        result.getCycleEdges().forEach(e ->
-                System.out.println(" → " + e.getVOrig().getFacilityId() + " -> " + e.getVDest().getFacilityId()));
+        System.out.println("\nExample dependencies inside cycles:");
+        result.getCycleEdges().stream()
+                .limit(10)
+                .forEach(e -> System.out.printf("   %s -> %s%n", e.getVOrig().getName(), e.getVDest().getName()));
+        if (nEdges > 10) {
+            System.out.println("   ... and " + (nEdges - 10) + " more");
+        }
     }
 
     // ================== Helpers de carregamento/validação ==================

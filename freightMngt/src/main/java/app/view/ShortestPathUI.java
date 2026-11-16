@@ -21,9 +21,9 @@ public class ShortestPathUI {
 
     public static void display(Scanner scanner) throws IOException {
         ShortestPathUI ui = new ShortestPathUI(scanner);
-        System.out.println("Dados carregados com sucesso!");
-        System.out.println("Total de estações: " + ui.dataService.getTotalStations());
-        System.out.println("Total de linhas: " + ui.dataService.getTotalConnections());
+        System.out.println("Network loaded successfully!");
+        System.out.println("Stations: " + ui.dataService.getTotalStations());
+        System.out.println("Lines:    " + ui.dataService.getTotalConnections());
         System.out.println();
         ui.showMenu();
     }
@@ -31,11 +31,11 @@ public class ShortestPathUI {
     private void showMenu() {
         boolean exit = false;
         while (!exit) {
-            System.out.println("=== CÁLCULO DE CAMINHOS ===");
-            System.out.println("1. Calcular caminho mais curto");
-            System.out.println("2. Listar estações disponíveis");
-            System.out.println("0. Voltar ao menu principal");
-            System.out.print("Escolha uma opção: ");
+            System.out.println("=== RISK-AWARE SHORTEST PATHS ===");
+            System.out.println("1. Calculate shortest path");
+            System.out.println("2. List available stations");
+            System.out.println("0. Return to main menu");
+            System.out.print("Choose an option: ");
             try {
                 int option = scanner.nextInt();
                 scanner.nextLine();
@@ -48,80 +48,77 @@ public class ShortestPathUI {
                         break;
                     case 0:
                         exit = true;
-                        System.out.println("A voltar ao menu principal...");
+                        System.out.println("Returning to main menu...");
                         break;
                     default:
-                        System.out.println("Opção inválida!");
+                        System.out.println("Invalid option!");
                 }
             } catch (Exception e) {
                 scanner.nextLine();
-                System.out.println("Entrada inválida! Por favor, insira um número.");
+                System.out.println("Invalid input! Please enter a number.");
             }
             System.out.println();
         }
     }
 
     private void calculatePath() {
-        System.out.println("\n=== CÁLCULO DO CAMINHO MAIS CURTO ===");
-        Integer departureId = getStationId("partida");
-        Integer arrivalId = getStationId("chegada");
+        System.out.println("\n=== SHORTEST PATH ===");
+        Integer departureId = getStationId("departure");
+        Integer arrivalId = getStationId("arrival");
 
         if (departureId == null || arrivalId == null) {
             return;
         }
 
-        System.out.println("\nA calcular o melhor caminho...");
+        System.out.println("\nCalculating the best path...");
         ShortestPathService.PathResultWithAlgorithm result = pathService.calculateBestPath(departureId, arrivalId);
 
         if (result == null) {
-            System.out.println("Não foi possível calcular o caminho.");
-            System.out.println("   (Estações não existem ou sem caminho conectado)");
+            System.out.println("Could not calculate a path.");
+            System.out.println("   (the stations do not exist or are not connected)");
             return;
         }
 
-        System.out.println("\n--- RESULTADO ---");
-        System.out.println("Algoritmo usado: " + result.getAlgorithmUsed());
+        System.out.println("\n--- RESULT ---");
+        System.out.println("Algorithm used: " + result.getAlgorithmUsed());
         System.out.println();
 
         ShortestPathService.PathResult pathResult = result.getPathResult();
 
         if (result.hasNegativeCycle()) {
-            System.out.println("AVISO: Ciclo negativo detectado!");
-            System.out.println("O grafo contém inconsistências de configuração.");
+            System.out.println("WARNING: negative cycle detected!");
+            System.out.println("The network configuration is inconsistent.");
             System.out.println();
-            System.out.println(pathResult.formatPath());
-        } else {
-            System.out.println(pathResult.formatPath());
         }
+        System.out.println(pathResult.formatPath());
     }
 
-    private Integer getStationId(String tipo) {
-        System.out.print("ID da estação de " + tipo + ": ");
+    private Integer getStationId(String type) {
+        System.out.print("Enter " + type + " station ID: ");
         try {
             Integer id = scanner.nextInt();
             scanner.nextLine();
             if (!dataService.stationExists(id)) {
-                System.out.println("Estação com ID " + id + " não existe!");
+                System.out.println("Station with ID " + id + " does not exist!");
                 return null;
             }
-            System.out.println("Estação " + id + " encontrada!");
             return id;
         } catch (Exception e) {
             scanner.nextLine();
-            System.out.println("ID inválido!");
+            System.out.println("Invalid ID!");
             return null;
         }
     }
 
     private void listStations() {
-        System.out.println("\n=== ESTAÇÕES DISPONÍVEIS ===");
+        System.out.println("\n=== AVAILABLE STATIONS ===");
         if (dataService.getTotalStations() == 0) {
-            System.out.println("Nenhuma estação carregada.");
+            System.out.println("No stations loaded.");
             return;
         }
 
         List<String> formattedStations = dataService.getFormattedStationList();
         formattedStations.forEach(System.out::println);
-        System.out.println("\nTotal: " + dataService.getTotalStations() + " estações");
+        System.out.println("\nTotal: " + dataService.getTotalStations() + " stations");
     }
 }

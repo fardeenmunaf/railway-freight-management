@@ -57,8 +57,8 @@ public class MaxFlowView {
         sb.append("MaxFlow Result:\n");
         sb.append("  Source key: ").append(srcKeyStr).append("\n");
         sb.append("  Sink key:   ").append(sinkKeyStr).append("\n");
-        sb.append("  Source:     ").append(res.source == null ? "null" : res.source.toString()).append("\n");
-        sb.append("  Sink:       ").append(res.sink == null ? "null" : res.sink.toString()).append("\n");
+        sb.append("  Source:     ").append(describe(res.source)).append("\n");
+        sb.append("  Sink:       ").append(describe(res.sink)).append("\n");
         sb.append("  Max flow:   ").append(res.maxFlow == null ? "null" : res.maxFlow.toString()).append("\n");
         sb.append("  Message:    ").append(res.message == null ? "" : res.message).append("\n");
         sb.append("  Complexity: ").append(res.complexity == null ? "" : res.complexity).append("\n");
@@ -73,6 +73,15 @@ public class MaxFlowView {
      * @param <V> vertex type
      * @param <E> capacity type
      */
+    /** Short, readable description of a vertex: "NAME (id)" for stations, toString() otherwise. */
+    private static String describe(Object vertex) {
+        if (vertex == null) return "null";
+        if (vertex instanceof Station s) {
+            return s.getName() + " (" + s.getFacilityId() + ")";
+        }
+        return vertex.toString();
+    }
+
     public static <V, E> void printResult(MaxFlow.Result<V, E> res, Mode mode) {
         System.out.println(formatResult(res, mode));
     }
@@ -90,14 +99,14 @@ public class MaxFlowView {
         List<Station> stations = MaxFlowService.getProjectGraphStations();
         if (stations == null) {
             System.err.println("Project graph not available. MaxFlow requires the project's graph (StationLoaderService.getGraph()). Ensure the application initialized the graph.");
-            System.out.println("Pressione Enter para voltar ao menu...");
+            System.out.println("Press Enter to return to the menu...");
             scanner.nextLine();
             return;
         }
 
         if (stations.isEmpty()) {
             System.err.println("Project graph has no stations loaded. Ensure StationLoaderService populated the graph.");
-            System.out.println("Pressione Enter para voltar ao menu...");
+            System.out.println("Press Enter to return to the menu...");
             scanner.nextLine();
             return;
         }
@@ -115,7 +124,7 @@ public class MaxFlowView {
             sinkId = Integer.parseInt(scanner.nextLine().trim());
         } catch (NumberFormatException e) {
             System.err.println("Invalid number. Returning to menu.");
-            System.out.println("Pressione Enter para voltar ao menu...");
+            System.out.println("Press Enter to return to the menu...");
             scanner.nextLine();
             return;
         }
@@ -132,7 +141,7 @@ public class MaxFlowView {
             }
         }
 
-        System.out.println("Pressione Enter para voltar ao menu...");
+        System.out.println("Press Enter to return to the menu...");
         scanner.nextLine();
     }
 }

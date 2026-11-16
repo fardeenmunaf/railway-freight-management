@@ -235,7 +235,7 @@ class MSTControllerTest {
             assertTrue(result.getMstResult().getConnectedComponents().isEmpty());
 
             String summary = result.getSummaryReport();
-            assertFalse(summary.contains("Total Distance: 0.00"));
+            assertTrue(summary.contains("Total Distance: 0.00"));
             assertTrue(summary.contains("Connected Components: 0"));
         }
 

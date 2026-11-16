@@ -118,7 +118,7 @@ public class MSTController {
         public String getSummaryReport() {
             StringBuilder report = new StringBuilder();
             report.append("=== MST Computation Summary ===\n");
-            report.append("Total Distance: ").append(String.format("%.2f", mstResult.getTotalDistance())).append("\n");
+            report.append("Total Distance: ").append(String.format(java.util.Locale.US, "%.2f", mstResult.getTotalDistance())).append("\n");
             report.append("Connected Components: ").append(mstResult.getConnectedComponents().size()).append("\n");
             report.append("Time Complexity: ").append(mstResult.getTimeComplexity()).append("\n");
             report.append("Vertices in MST: ").append(mstResult.getMstGraph().numVertices()).append("\n");

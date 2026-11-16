@@ -1,5 +1,6 @@
 # Railway Freight Management System
 
+[![CI](https://github.com/fardeenmunaf/railway-freight-management/actions/workflows/ci.yml/badge.svg)](https://github.com/fardeenmunaf/railway-freight-management/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java_23-ED8B00?logo=openjdk&logoColor=white)
 ![Oracle](https://img.shields.io/badge/Oracle_SQL%20%26%20PL%2FSQL-F80000?logo=oracle&logoColor=white)
 ![RISC-V](https://img.shields.io/badge/RISC--V_Assembly-283272)
@@ -10,39 +11,43 @@
 
 A system for managing freight on a European railway network: warehouses at train stations, picking and dispatching stock, planning and assembling trains, and analysing the rail network with graph algorithms. It also includes low-level code that controls track signals on a microcontroller.
 
-## What it does
+![Minimum spanning tree of the Belgian railway network](freightMngt/outputs/belgian_railway_mst.svg)
 
-**Warehouse and logistics**
-- Unloads wagons into warehouse bays and dispatches stock using FEFO/FIFO rules (first expiring / first in, first out)
-- Plans order picking, relocates stock and handles returned goods with quarantine and quality inspection
-- Writes an audit log of every return decision
+*Minimum spanning tree of the Belgian railway network (559 stations), computed by the app and exported to Graphviz.*
 
-**Stations and spatial search** (62 000+ European stations)
-- Balanced 2D-tree over latitude and longitude
-- Nearest-station, radius and rectangular range searches using the Haversine distance
+## Highlights
 
-**Rail network analysis** (graph algorithms)
-- Travel time between stations for a given locomotive
-- Risk-aware shortest paths that allow negative costs (Bellman-Ford)
-- Minimum spanning tree for a minimal backbone network, exported to Graphviz DOT and SVG
-- Topological sort for station upgrade plans
-- Hub centrality ranking (betweenness, harmonic closeness, strength)
-- Maximum throughput between two hubs (max flow)
-- Train dispatch scheduling
+- **Graph algorithms on real data:** shortest paths with negative costs (Bellman-Ford), max flow (Edmonds-Karp), hub centrality (Brandes betweenness and harmonic closeness), minimum spanning tree and topological sort with cycle detection, on a 559-station Belgian network
+- **Spatial search over 62 000+ European stations** with a balanced 2D-tree: nearest neighbours, radius and range queries in microseconds to milliseconds
+- **Warehouse logistics:** FEFO/FIFO stock dispatch, picking plans and a returns workflow with an audit log
+- **Oracle database:** 47-table relational model with PL/SQL functions and triggers, runnable locally with one Docker command
+- **Low-level programming:** RISC-V assembly routines and C programs that drive track light signals on a Raspberry Pi Pico
+- **2062 automated tests**, run on every push by GitHub Actions
 
-**Database** (Oracle SQL and PL/SQL)
-- Relational model with 47 tables, sample data, queries, triggers, functions and procedures
-- Train assembly that picks locomotives and wagons and validates the composition with PL/SQL functions
+## Example
 
-**Embedded systems** (RISC-V assembly and C)
-- Circular buffers, sorting, median and encryption routines in RISC-V assembly
-- A track manager that reads sensors, controls track light signals and talks to a Raspberry Pi Pico board
+Option 15 finds the cheapest route between two Belgian stations. Some legs have negative costs, so it uses Bellman-Ford instead of Dijkstra:
+
+```text
+--- RESULT ---
+Algorithm used: Bellman-Ford
+
+Route: ANTWERPEN-C (37) -> ANTW-OOST (61) -> ANTW-BERCHEM (139) -> MORTSEL (863) -> ...
+
+Legs:
+   1. ANTWERPEN-C (37)             -> ANTW-OOST (61)                   0.82
+   2. ANTW-OOST (61)               -> ANTW-BERCHEM (139)               5.74
+   3. ANTW-BERCHEM (139)           -> MORTSEL (863)                    2.62
+   4. MORTSEL (863)                -> LIERSESTWG (877)                 3.63
+   5. LIERSESTWG (877)             -> HOVE (590)                      -2.25
+   ...
+```
 
 ## Repository layout
 
 | Folder | Contents |
 |---|---|
-| [`freightMngt/`](freightMngt) | Java console application (Maven) and its 2062 unit tests |
+| [`freightMngt/`](freightMngt) | Java console application (Maven) and its 2062 unit tests. See its [README](freightMngt/README.md) for the full menu |
 | [`sql-scripts/`](sql-scripts) | Oracle schema, sample data, queries and PL/SQL, one folder per user story |
 | [`asm/`](asm) | RISC-V assembly and C programs, plus the Raspberry Pi Pico code |
 | [`doc/`](doc) | Scrum artefacts and user story documentation |
@@ -60,8 +65,6 @@ java -cp "target/classes:$(cat cp.txt)" app.Main
 ```
 
 The app loads its sample data from CSV files on start-up (about 3 seconds) and opens a menu with 18 options. Everything except option 18 runs in memory, so no database is needed.
-
-Option 16 (Rail Hub Centrality) computes metrics over the whole network and takes up to a minute.
 
 ### Database (only for option 18, Train Assembly)
 

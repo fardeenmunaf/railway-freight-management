@@ -101,12 +101,12 @@ public class TravelTimeFeature {
 
             Double locomotiveMaxSpeed = locomotive.getMaxSpeed();
             if (locomotiveMaxSpeed == null || locomotiveMaxSpeed <= 0) {
-                throw new InvalidSpeedException("Locomotiva com velocidade máxima inválida: " + locomotiveId);
+                throw new InvalidSpeedException("Locomotive has an invalid maximum speed: " + locomotiveId);
             }
 
             PathResult result = findShortestTimePath(station1.getFacilityId(), station2.getFacilityId(), locomotiveMaxSpeed);
             if (result == null) {
-                throw new NoDirectConnectionException("Não existe ligação entre " + station1.getFacilityId() + " e " + station2.getFacilityId());
+                throw new NoDirectConnectionException("No direct connection between " + station1.getFacilityId() + " and " + station2.getFacilityId());
             }
 
             this.distance = result.totalDistanceKm;
@@ -245,10 +245,10 @@ public class TravelTimeFeature {
         private Facility validateStation(Integer facilityId) {
             Facility facility = facilityRepository.getFacilityById(facilityId);
             if (facility == null) {
-                throw new NoDirectConnectionException("Estação não encontrada: " + facilityId);
+                throw new NoDirectConnectionException("Station not found: " + facilityId);
             }
             if (facility.getFacilityType() == null || facility.getFacilityType().getFacilityTypeId() != 2) {
-                throw new NoDirectConnectionException("Instalação não é uma estação: " + facilityId);
+                throw new NoDirectConnectionException("Facility is not a station: " + facilityId);
             }
             return facility;
         }
@@ -263,7 +263,7 @@ public class TravelTimeFeature {
         private Locomotive validateLocomotive(Integer locomotiveId) {
             Locomotive locomotive = locomotiveRepository.getLocomotiveById(locomotiveId);
             if (locomotive == null) {
-                throw new InvalidSpeedException("Locomotiva não encontrada: " + locomotiveId);
+                throw new InvalidSpeedException("Locomotive not found: " + locomotiveId);
             }
             return locomotive;
         }
